@@ -1,6 +1,6 @@
 @extends('marketplace.marketplace')
 @section('page-title')
-    {{ __('WorkDo-Dash') }}
+    {{ __('DAA ERP-Dash') }}
 @endsection
 @section('content')
 <!-- wrapper start -->

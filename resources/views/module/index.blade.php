@@ -18,8 +18,8 @@
         <div class="card">
             <div class="card-body package-card-inner  d-flex align-items-center">
                 <div class="package-itm theme-avtar">
-                    <a href="https://workdo.io/product-category/dash-saas-addon/?utm_source=dash-main-file&utm_medium=superadmin&utm_campaign=plan-btn-all" target="new">
-                        <img src="https://workdo.io/wp-content/uploads/2023/03/favicon.jpg" alt="">
+                    <a href="https://DAA ERP.io/product-category/dash-saas-addon/?utm_source=dash-main-file&utm_medium=superadmin&utm_campaign=plan-btn-all" target="new">
+                        <img src="https://DAA ERP.io/wp-content/uploads/2023/03/favicon.jpg" alt="">
                     </a>
                 </div>
                 <div class="package-content flex-grow-1  px-3">
@@ -27,7 +27,7 @@
                     <div class="text-muted">{{ __('+'.count($modules).' Premium Add-on')}}</div>
                 </div>
                 <div class="price text-end">
-                  <a class="btn btn-primary" href="https://workdo.io/product-category/dash-saas-addon/?utm_source=dash-main-file&utm_medium=superadmin&utm_campaign=plan-btn-all" target="new">
+                  <a class="btn btn-primary" href="https://DAA ERP.io/product-category/dash-saas-addon/?utm_source=dash-main-file&utm_medium=superadmin&utm_campaign=plan-btn-all" target="new">
                     {{ __('Buy More Add-on')}}
                   </a>
                 </div>

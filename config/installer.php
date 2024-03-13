@@ -51,7 +51,7 @@ return [
         'resources/lang'         => '777',
         'uploads/'               => '777',
         'Modules/'               => '777',
-        'modules_statuses.json'               => '777',
+        // 'modules_statuses.json'               => '777',
     ],
 
     /*

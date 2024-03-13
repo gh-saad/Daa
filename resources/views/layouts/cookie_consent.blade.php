@@ -87,7 +87,7 @@
 
                 onChange: function(cookie, changed_preferences) {},
                 onAccept: function(cookie) {
-                    if (!getCookie('workdo_dash_cookie_status'))
+                    if (!getCookie('DAA ERP_dash_cookie_status'))
                     {
                         var cookie = cookie.level;
                         $.ajax({
@@ -97,7 +97,7 @@
                                 cookie: cookie,
                             },
                         })
-                        setCookie('workdo_dash_cookie_status', '1', 182, '/');
+                        setCookie('DAA ERP_dash_cookie_status', '1', 182, '/');
                     }
                 },
 

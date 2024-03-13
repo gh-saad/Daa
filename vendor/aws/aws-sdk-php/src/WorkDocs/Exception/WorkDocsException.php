@@ -1,9 +1,9 @@
 <?php
-namespace Aws\WorkDocs\Exception;
+namespace Aws\DAA ERPcs\Exception;
 
 use Aws\Exception\AwsException;
 
 /**
- * Represents an error interacting with the **Amazon WorkDocs** service.
+ * Represents an error interacting with the **Amazon DAA ERPcs** service.
  */
-class WorkDocsException extends AwsException {}
+class DAA ERPcsException extends AwsException {}

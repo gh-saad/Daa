@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
-    <title><?php if(trim($__env->yieldContent('template_title'))): ?><?php echo $__env->yieldContent('template_title'); ?> | <?php endif; ?> <?php echo e(__('Workdo Dash SaaS')); ?></title>
+    <title><?php if(trim($__env->yieldContent('template_title'))): ?><?php echo $__env->yieldContent('template_title'); ?> | <?php endif; ?> <?php echo e(__('DAA ERP')); ?></title>
     <link rel="icon" type="image/png" href="<?php echo e(asset('installer/img/favicon/favicon.png')); ?>" sizes="32x32"/>
     <link href="<?php echo e(asset('installer/css/style.min.css')); ?>" rel="stylesheet"/>
     <?php echo $__env->yieldContent('style'); ?>

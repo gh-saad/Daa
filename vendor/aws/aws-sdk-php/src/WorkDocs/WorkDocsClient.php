@@ -1,10 +1,10 @@
 <?php
-namespace Aws\WorkDocs;
+namespace Aws\DAA ERPcs;
 
 use Aws\AwsClient;
 
 /**
- * This client is used to interact with the **Amazon WorkDocs** service.
+ * This client is used to interact with the **Amazon DAA ERPcs** service.
  * @method \Aws\Result abortDocumentVersionUpload(array $args = [])
  * @method \GuzzleHttp\Promise\Promise abortDocumentVersionUploadAsync(array $args = [])
  * @method \Aws\Result activateUser(array $args = [])
@@ -88,4 +88,4 @@ use Aws\AwsClient;
  * @method \Aws\Result updateUser(array $args = [])
  * @method \GuzzleHttp\Promise\Promise updateUserAsync(array $args = [])
  */
-class WorkDocsClient extends AwsClient {}
+class DAA ERPcsClient extends AwsClient {}

@@ -17,7 +17,7 @@
                         <div class="col-lg-12">
                             <div class="invoice-title">
                                 <div class="invoice-number">
-                                    <img src="{{ get_file(sidebar_logo()) }}" alt="{{ config('app.name', 'WorkDo') }}"
+                                    <img src="{{ get_file(sidebar_logo()) }}" alt="{{ config('app.name', 'DAA ERP') }}"
                                         class="logo logo-lg"style="max-width: 200px">
                                 </div>
                             </div>

@@ -1,5 +1,5 @@
 <?php
-// System : WorkDo Dash SaaS
+// System : DAA ERP
 // System Version : 3.0.1
 
 function getPhpVersionInfo()

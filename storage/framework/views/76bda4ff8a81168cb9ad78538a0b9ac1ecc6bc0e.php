@@ -1,10 +1,10 @@
 <?php $__env->startSection('template_title'); ?>
-        <?php echo e(__('Workdo Dash SaaS')); ?>
+        <?php echo e(__('DAA ERP')); ?>
 
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startSection('title'); ?>
-    <?php echo e(__('Workdo Dash SaaS')); ?>
+    <?php echo e(__('DAA ERP')); ?>
 
 <?php $__env->stopSection(); ?>
 

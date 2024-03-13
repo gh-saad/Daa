@@ -1,11 +1,11 @@
 @extends('vendor.installer.layouts.master')
 
 @section('template_title')
-        {{ __('Workdo Dash SaaS') }}
+        {{ __('DAA ERP') }}
 @endsection
 
 @section('title')
-    {{ __('Workdo Dash SaaS') }}
+    {{ __('DAA ERP') }}
 @endsection
 
 @section('container')

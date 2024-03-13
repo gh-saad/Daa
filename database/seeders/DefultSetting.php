@@ -159,8 +159,8 @@ class DefultSetting extends Seeder
                 "defult_currancy_symbol" => "$",
                 "defult_language" => "en",
                 "defult_timezone" => "Asia/Kolkata",
-                "title_text" => !empty(env('APP_NAME')) ? env('APP_NAME') : 'WorkDo Dash',
-                "footer_text" => "Copyright © ".(!empty(env('APP_NAME')) ? env('APP_NAME') : 'WorkDo Dash'),
+                "title_text" => !empty(env('APP_NAME')) ? env('APP_NAME') : 'DAA ERP',
+                "footer_text" => "Copyright © ".(!empty(env('APP_NAME')) ? env('APP_NAME') : 'DAA ERP'),
                 "landing_page" => "on",
                 "site_rtl" => "off",
                 "cust_darklayout" => "off",
@@ -187,8 +187,8 @@ class DefultSetting extends Seeder
 
                 // for cookie
 
-                "meta_title" => "WorkDo Dash SaaS - Open Source ERP with Multi-Workspace",
-                "meta_keywords" => "WorkDo Dash,SaaS solution,Multi-workspace functionality, Cloud-based access,Scalability,Multi-addons,Collaboration tool,Data management,Business productivity,Operational effectiveness",
+                "meta_title" => "DAA ERP",
+                "meta_keywords" => "DAA ERP,SaaS solution,Multi-workspace functionality, Cloud-based access,Scalability,Multi-addons,Collaboration tool,Data management,Business productivity,Operational effectiveness",
                 "meta_description" => "Discover the efficiency of Dash, a user-friendly web application by Rajodiya Apps. Streamline project management, organize tasks, collaborate seamlessly, and track progress effortlessly. Boost productivity with Dash's intuitive interface and comprehensive features. Revolutionize your project management process today. Try Dash!",
 
                 "storage_setting" => "local",
