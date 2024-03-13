@@ -32,11 +32,13 @@ class HomeController extends Controller
                 {
                     if(module_is_active('LandingPage'))
                     {
-                        return view('landingpage::layouts.landingpage');
+                        // return view('landingpage::layouts.landingpage');
+                        return redirect('login');
                     }
                     else
                     {
-                        return view('marketplace.landing');
+                        // return view('marketplace.landing');
+                        return redirect('login');
                     }
                 }
                 else

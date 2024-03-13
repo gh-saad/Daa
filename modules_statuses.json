@@ -1,11 +1,10 @@
 {
     "ProductService": true,
-    "LandingPage": true,
-    "Taskly": true,
+    "LandingPage": false,
+    "Taskly": false,
     "Account": true,
     "Hrm": true,
-    "Lead": true,
-    "Pos": true,
-    "Stripe": true,
-    "Paypal": true
+    "Pos": false,
+    "Stripe": false,
+    "Paypal": false
 }
