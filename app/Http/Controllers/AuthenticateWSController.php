@@ -89,13 +89,32 @@ class AuthenticateWSController extends Controller
         // Construct JSON response
         $response = [];
         foreach ($users as $member) {
+            // Split the name into first name and last name
+            $name_parts = explode(' ', $member->name);
+            $first_name = $name_parts[0]; // First part is the first name
+            $last_name = implode(' ', array_slice($name_parts, 1)); // Join remaining parts as last name
+            
             $response[] = [
-                'id' => $member->id,
-                'name' => $member->name,
-                'email' => $member->email,
+                'member_id' => $member->member_id,
+                'first_name' => $first_name,
+                'last_name' => $last_name,
+                'email_id' => $member->email,
+                'company_name' => $member->company_name,
+                'authentication_ref_id' => $member->authentication_ref_id,
+                'contact_no' => $member->contact_no,
+                'address' => $member->address,
+                'address1' => $member->address1,
+                'country' => $member->country,
+                'state' => $member->state,
+                'city' => $member->city,
+                'gender' => $member->gender,
+                'balance_privilege_point' => $member->balance_privilege_point,
+                'member_type' => $member->type,
+                'account_renewal_date' => $member->plan_expire_date,
             ];
         }
-        
+
+        // Return success response with all members data as an array
         return response()->json($response, 200);
     }
 
