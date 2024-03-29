@@ -446,3 +446,7 @@ Route::get('/config-cache', function()
 
 Route::post('helpdesk-ticket/{id}', ['as' => 'helpdesk-ticket.reply','uses' =>'HelpdeskTicketController@reply']);
 Route::get('helpdesk-ticket-show/{id}', [HelpdeskTicketController::class, 'show'])->name('helpdesk.view');
+
+// Added by Saad
+Route::get('synchronizer/auth',  'SynchronizerController@auth')->name('synchronizer.auth');
+Route::get('synchronizer/get-vechiles',  'SynchronizerController@get_vehicles')->name('synchronizer.get-vechiles');

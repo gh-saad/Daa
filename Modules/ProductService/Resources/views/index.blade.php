@@ -66,16 +66,27 @@
                     <table class="table mb-0 pc-dt-simple" id="products">
                         <thead>
                         <tr>
-                            <th >{{__('Image')}}</th>
+                            <th >Chasis No</th>
                             <th >{{__('Name')}}</th>
-                            <th >{{__('Sku')}}</th>
-                            <th>{{__('Sale Price')}}</th>
-                            <th>{{__('Purchase Price')}}</th>
-                            <th>{{__('Tax')}}</th>
-                            <th>{{__('Category')}}</th>
-                            <th>{{__('Unit')}}</th>
-                            <th>{{__('Quantity')}}</th>
-                            <th>{{__('Type')}}</th>
+                            <th>Type</th>
+                            <th >Colour</th>
+                            <th >Fuel</th>
+                            <th >Year</th>
+                            <th >Engine CC</th>
+                            <th >Engine No</th>
+                            <th>Push Price</th>
+                            <th>Purchased by</th>
+                            <th>Purchased Status</th>
+                            <th>Bid No</th>
+                            <th>Bid Date</th>
+                            <th>Status</th>
+
+                            {{-- <th>{{__('Purchase Price')}}</th> --}}
+                            {{-- <th>{{__('Tax')}}</th> --}}
+                            
+                            {{-- <th>{{__('Unit')}}</th> --}}
+                            {{-- <th>{{__('Quantity')}}</th> --}}
+                            {{-- <th>{{__('Type')}}</th> --}}
                             @if (Gate::check('product&service delete') || Gate::check('product&service edit'))
                                 <th>{{__('Action')}}</th>
                             @endif
@@ -83,24 +94,23 @@
                         </thead>
                         <tbody>
                         @foreach ($productServices as $productService)
-                            <?php
-                                if(check_file($productService->image) == false){
-                                    $path = asset('Modules/ProductService/Resources/assets/image/img01.jpg');
-                                }else{
-                                    $path = get_file($productService->image);
-                                }
-                            ?>
                             <tr class="font-style">
-                                <td>
-                                    <a href="{{ $path }}" target="_blank">
-                                        <img src=" {{ $path }} " class="wid-75 rounded me-3">
-                                    </a>
-                                </td>
-                                <td class="text-center">{{ $productService->name}}</td>
                                 <td class="text-center">{{ $productService->sku }}</td>
+                                <td class="text-center">{{ $productService->name}}</td>
+                                <td>{{ !empty($productService->category)?$productService->category->name:'' }}</td>
+                                <td class="text-center">{{ $productService->colour}}</td>
+                                <td class="text-center">{{ $productService->fuel}}</td>
+                                <td class="text-center">{{ $productService->mfg_year}}</td>
+                                <td class="text-center">{{ $productService->engine_cc}}</td>
+                                <td class="text-center">{{ $productService->engine_no}}</td>
                                 <td>{{ currency_format_with_sym($productService->sale_price) }}</td>
-                                <td>{{ currency_format_with_sym($productService->purchase_price )}}</td>
-                                <td>
+                                <td class="text-center">{{ $productService->purchased_by}}</td>
+                                <td class="text-center">{{ $productService->purchased_status}}</td>
+                                <td class="text-center">{{ $productService->bid_no}}</td>
+                                <td class="text-center">{{ $productService->bid_date}}</td>
+                                <td class="text-center">{{ $productService->vehicle_status}}</td>
+                                {{-- <td>{{ currency_format_with_sym($productService->purchase_price )}}</td> --}}
+                                {{-- <td>
                                     @if(!empty($productService->tax_id))
                                         @php
                                             $taxes=Modules\ProductService\Entities\Tax::tax($productService->tax_id);
@@ -112,15 +122,15 @@
                                     @else
                                         -
                                     @endif
-                                </td>
-                                <td>{{ !empty($productService->category)?$productService->category->name:'' }}</td>
-                                <td>{{ !empty($productService->unit())?$productService->unit()->name:'' }}</td>
-                                @if($productService->type == 'product')
+                                </td> --}}
+                                
+                                {{-- <td>{{ !empty($productService->unit())?$productService->unit()->name:'' }}</td> --}}
+                                {{-- @if($productService->type == 'product')
                                         <td>{{$productService->quantity}}</td>
                                     @else
                                         <td>-</td>
                                     @endif
-                                <td>{{ $productService->type }}</td>
+                                <td>{{ $productService->type }}</td> --}}
                                 @if (Gate::check('product&service delete') || Gate::check('product&service edit'))
                                    <td class="Action">
                                     @if(module_is_active('Pos'))
