@@ -52,6 +52,8 @@ return new class extends Migration
             $table->dropColumn('city');
             $table->dropColumn('zip_code');
             $table->dropColumn('gender');
+            $table->dropColumn('personal_access_token');
+            $table->dropColumn('token_expires_at');
             $table->dropColumn('balance_privilege_point');
         });
     }
