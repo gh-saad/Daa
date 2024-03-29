@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class MembersWsController extends Controller
 {
-    public function auth() {
+    function auth() {
         $result = [
             "status" => "ok",
         ];
@@ -37,9 +37,5 @@ class MembersWsController extends Controller
             }
         }
         return json_encode($result);
-    }
-
-    public function get_members() {
-        //
     }
 }

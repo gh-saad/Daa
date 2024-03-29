@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\HelpdeskTicketController;
 use App\Http\Controllers\LanguageController;
-use App\Http\Controllers\MembersWsController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -448,5 +447,4 @@ Route::get('/config-cache', function()
 Route::post('helpdesk-ticket/{id}', ['as' => 'helpdesk-ticket.reply','uses' =>'HelpdeskTicketController@reply']);
 Route::get('helpdesk-ticket-show/{id}', [HelpdeskTicketController::class, 'show'])->name('helpdesk.view');
 
-Route::get('membersws/auth',  [MembersWsController::class, 'auth'])->name('membersws.auth');
-Route::get('membersws/get-members',  [MembersWsController::class, 'get_members'])->name('membersws.get_members');
+Route::get('membersws/auth', 'MembersWsController@auth')->name('membersws.auth');
