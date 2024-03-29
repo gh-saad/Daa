@@ -449,4 +449,4 @@ Route::post('helpdesk-ticket/{id}', ['as' => 'helpdesk-ticket.reply','uses' =>'H
 Route::get('helpdesk-ticket-show/{id}', [HelpdeskTicketController::class, 'show'])->name('helpdesk.view');
 
 Route::get('membersws/auth',  [MembersWsController::class, 'auth'])->name('membersws.auth');
-Route::get('membersws/get-members',  [MembersWsController::class, 'get-members'])->name('membersws.get-members');
+Route::get('membersws/get-members',  [MembersWsController::class, 'get_members'])->name('membersws.get_members');
