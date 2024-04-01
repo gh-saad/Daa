@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+
 
 class SynchronizerController extends Controller
 {
@@ -113,6 +115,81 @@ class SynchronizerController extends Controller
         }else{
             $result = [
                 "status" => "faild",
+                "Message" => "Authentication failed"
+            ];
+        }
+        return json_encode($result);
+    }
+
+    function get_members(){
+        $db_table = "users";
+        $auth_response = $this->auth();
+        $auth_response = json_decode($auth_response);
+        if($auth_response->status == "ok"){
+            $response = Http::post(env("AAA_MEMBERS_URL"), [
+                "emailId" => env("AAA_USERNAME"),
+                "jwtToken" => session()->get("AAA_jwtToken"),
+                "memberType" => 1,
+                "fromDate" => "2024-01-01",
+                "toDate" => "2024-03-29" 
+            ]);
+            if ($response->successful()) {
+                $response_data = $response->json();
+                foreach ($response_data["ENTITY_LIST"]["memberDetailList"] as $member){
+                    $member_data = [
+                        "password" => Hash::make('1234'), # password
+                        "is_enable_login" => 0, # disable login for now
+                        "created_by" => 2, # admin user id
+                        "workspace_id" => 1, # workspace id
+                        "active_workspace" => 1, # active workspace id
+                        "member_id" => $member[0], # member_id
+                        "name" => $member[1]." ".$member[2], # member name
+                        "role" => $member[3], # member role
+                        "email" => $member[4], # email address of the member
+                        "company_name" => $member[5], # company name
+                        "contact_no" => $member[6], # contact number of the member
+                        "address" => $member[7], # address of the member
+                        "address1" => $member[8], # address again of the member
+                        "country" => $member[9], # country of the member
+                        "state" => $member[10], # state of the member
+                        "city" => $member[11], # city of the member
+                        "gender" => $member[12], # gender of the member
+                        "balance_privilege_point" => $member[13], # balance privilege point
+                        "type" =>  $member[14], # type of member
+                        "plan_expire_date" => $member[15], # account renewal date
+                        "created_at" => now(),
+                        "updated_at" => now() 
+                    ];
+                   
+                    $db_member = DB::table($db_table)->where("email", $member[4])->first();
+                    if ($db_member){
+                        // update
+                        unset($member_data["created_at"]);
+                        unset($member_data["password"]);
+                        DB::table($db_table)
+                        ->where("id", $db_member->id)
+                        ->update($member_data);
+                    }else{
+                        // create
+                        DB::table($db_table)->insert($member_data);
+                    }
+                }
+                
+            }else{
+                $response_data = $response->json();
+                if($response_data["APISTATUS"]["status"] == "401"){
+                    $result = [
+                        "status" => "ok",
+                        "Message" => $response_data["APISTATUS"]["Message"],
+                    ];
+                }
+            }
+            $result = [
+                "status" => "ok",
+            ];
+        }else{
+            $result = [
+                "status" => "failed",
                 "Message" => "Authentication failed"
             ];
         }

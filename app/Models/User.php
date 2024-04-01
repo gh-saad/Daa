@@ -60,6 +60,21 @@ class User extends Authenticatable implements JWTSubject,MustVerifyEmail
         'is_disable',
         'trial_expire_date',
         'is_trial_done',
+        'city',
+        'member_id',
+        'role',
+        'company_name',
+        'authentication_ref_id',
+        'contact_no',
+        'address',
+        'address1',
+        'country',
+        'state',
+        'zip_code',
+        'gender',
+        'personal_access_token',
+        'balance_privilege_point',
+        'token_expires_at',
     ];
 
     /**
