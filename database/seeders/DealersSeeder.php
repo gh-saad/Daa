@@ -5,7 +5,7 @@ use App\Models\Dealer;
 use App\Models\User;
 use Faker\Factory as Faker;
 
-class DealerSeeder extends Seeder
+class DealersSeeder extends Seeder
 {
     /**
      * Run the database seeds.
