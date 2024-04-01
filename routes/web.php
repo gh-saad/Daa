@@ -446,6 +446,7 @@ Route::get('/config-cache', function()
 Route::post('helpdesk-ticket/{id}', ['as' => 'helpdesk-ticket.reply','uses' =>'HelpdeskTicketController@reply']);
 Route::get('helpdesk-ticket-show/{id}', [HelpdeskTicketController::class, 'show'])->name('helpdesk.view');
 
+
 Route::get('synchronizer/get-members', 'SynchronizerController@get_members')->name('synchronizer.get-members');
 
 // Added by Saad
@@ -462,3 +463,4 @@ Route::get('/dealers/accepted/list/view', 'DealersController@accepted_list')->na
 // show denied
 Route::get('/dealers/denied', 'DealersController@denied_grid')->name('backend.dealers.denied.grid');
 Route::get('/dealers/denied/list/view', 'DealersController@denied_list')->name('backend.dealers.denied.list');
+
