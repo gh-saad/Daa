@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
+use App\Models\Dealer;
 use Illuminate\Http\Request;
 
 class DealersController extends Controller
@@ -16,25 +16,8 @@ class DealersController extends Controller
     {
         if(Auth::user()->can('user manage'))
         {
-
-            if(Auth::user()->type == 'super admin')
-            {
-                $users = User::where('type','company')->get();
-            }
-            else
-            {
-                if(Auth::user()->can('workspace manage'))
-                {
-                    $users = User::where('created_by',creatorId())->where('workspace_id',getActiveWorkSpace())->get();
-
-                }
-                else
-                {
-
-                    $users = User::where('created_by',creatorId())->get();
-                }
-            }
-            return view('dealers.grid',compact('users'));
+            $dealers = Dealer::all()->sortBy('id'); 
+            return view('dealers.grid',compact('dealers'));
         }
         else
         {
@@ -46,22 +29,8 @@ class DealersController extends Controller
     {
         if(Auth::user()->can('user manage'))
         {
-            if(Auth::user()->type == 'super admin')
-            {
-                $users = User::where('type','company')->get();
-            }
-            else
-            {
-                if(Auth::user()->can('workspace manage'))
-                {
-                    $users = User::where('created_by',creatorId())->where('workspace_id',getActiveWorkSpace())->get();
-                }
-                else
-                {
-                    $users = User::where('created_by',creatorId())->get();
-                }
-            }
-            return view('dealers.list',compact('users'));
+            $dealers = Dealer::all()->sortBy('id'); 
+            return view('dealers.list',compact('dealers'));
         }
         else
         {
@@ -75,25 +44,8 @@ class DealersController extends Controller
     {
         if(Auth::user()->can('user manage'))
         {
-
-            if(Auth::user()->type == 'super admin')
-            {
-                $users = User::where('type','company')->get();
-            }
-            else
-            {
-                if(Auth::user()->can('workspace manage'))
-                {
-                    $users = User::where('created_by',creatorId())->where('workspace_id',getActiveWorkSpace())->get();
-
-                }
-                else
-                {
-
-                    $users = User::where('created_by',creatorId())->get();
-                }
-            }
-            return view('dealers.accepted.grid',compact('users'));
+            $dealers = Dealer::where('status','Approved')->get(); 
+            return view('dealers.accepted.grid',compact('dealers'));
         }
         else
         {
@@ -105,22 +57,8 @@ class DealersController extends Controller
     {
         if(Auth::user()->can('user manage'))
         {
-            if(Auth::user()->type == 'super admin')
-            {
-                $users = User::where('type','company')->get();
-            }
-            else
-            {
-                if(Auth::user()->can('workspace manage'))
-                {
-                    $users = User::where('created_by',creatorId())->where('workspace_id',getActiveWorkSpace())->get();
-                }
-                else
-                {
-                    $users = User::where('created_by',creatorId())->get();
-                }
-            }
-            return view('dealers.accepted.list',compact('users'));
+            $dealers = Dealer::where('status','Approved')->get(); 
+            return view('dealers.accepted.list',compact('dealers'));
         }
         else
         {
@@ -134,25 +72,8 @@ class DealersController extends Controller
     {
         if(Auth::user()->can('user manage'))
         {
-
-            if(Auth::user()->type == 'super admin')
-            {
-                $users = User::where('type','company')->get();
-            }
-            else
-            {
-                if(Auth::user()->can('workspace manage'))
-                {
-                    $users = User::where('created_by',creatorId())->where('workspace_id',getActiveWorkSpace())->get();
-
-                }
-                else
-                {
-
-                    $users = User::where('created_by',creatorId())->get();
-                }
-            }
-            return view('dealers.denied.grid',compact('users'));
+            $dealers = Dealer::where('status','Rejected')->get(); 
+            return view('dealers.denied.grid',compact('dealers'));
         }
         else
         {
@@ -164,22 +85,8 @@ class DealersController extends Controller
     {
         if(Auth::user()->can('user manage'))
         {
-            if(Auth::user()->type == 'super admin')
-            {
-                $users = User::where('type','company')->get();
-            }
-            else
-            {
-                if(Auth::user()->can('workspace manage'))
-                {
-                    $users = User::where('created_by',creatorId())->where('workspace_id',getActiveWorkSpace())->get();
-                }
-                else
-                {
-                    $users = User::where('created_by',creatorId())->get();
-                }
-            }
-            return view('dealers.denied.list',compact('users'));
+            $dealers = Dealer::where('status','Rejected')->get(); 
+            return view('dealers.denied.list',compact('dealers'));
         }
         else
         {

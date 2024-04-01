@@ -25,5 +25,7 @@ class DatabaseSeeder extends Seeder
         $this->call(DefultSetting::class);
         $this->call(CustomFieldListTableSeeder::class);
         $this->call(LanguageTableSeeder::class);
+        // added dealer seeder
+        $this->call(DealersSeeder::class);
     }
 }
