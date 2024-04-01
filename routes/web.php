@@ -443,7 +443,6 @@ Route::get('/config-cache', function()
 
 })->name('config.cache');
 
-
 Route::post('helpdesk-ticket/{id}', ['as' => 'helpdesk-ticket.reply','uses' =>'HelpdeskTicketController@reply']);
 Route::get('helpdesk-ticket-show/{id}', [HelpdeskTicketController::class, 'show'])->name('helpdesk.view');
 
@@ -452,3 +451,14 @@ Route::get('synchronizer/get-members', 'SynchronizerController@get_members')->na
 // Added by Saad
 Route::get('synchronizer/auth',  'SynchronizerController@auth')->name('synchronizer.auth');
 Route::get('synchronizer/get-vechiles',  'SynchronizerController@get_vehicles')->name('synchronizer.get-vechiles');
+
+// for Dealers //
+// show all
+Route::get('/dealers', 'DealersController@grid')->name('backend.dealers.grid');
+Route::get('/dealers/list/view', 'DealersController@list')->name('backend.dealers.list');
+// show accepted
+Route::get('/dealers/accepted', 'DealersController@accepted_grid')->name('backend.dealers.accepted.grid');
+Route::get('/dealers/accepted/list/view', 'DealersController@accepted_list')->name('backend.dealers.accepted.list');
+// show denied
+Route::get('/dealers/denied', 'DealersController@denied_grid')->name('backend.dealers.denied.grid');
+Route::get('/dealers/denied/list/view', 'DealersController@denied_list')->name('backend.dealers.denied.list');
