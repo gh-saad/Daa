@@ -85,7 +85,7 @@
                             {{-- <th>{{__('Tax')}}</th> --}}
                             
                             {{-- <th>{{__('Unit')}}</th> --}}
-                            {{-- <th>{{__('Quantity')}}</th> --}}
+                            <th>{{__('Quantity')}}</th>
                             {{-- <th>{{__('Type')}}</th> --}}
                             @if (Gate::check('product&service delete') || Gate::check('product&service edit'))
                                 <th>{{__('Action')}}</th>
@@ -125,12 +125,12 @@
                                 </td> --}}
                                 
                                 {{-- <td>{{ !empty($productService->unit())?$productService->unit()->name:'' }}</td> --}}
-                                {{-- @if($productService->type == 'product')
+                                @if($productService->type == 'product')
                                         <td>{{$productService->quantity}}</td>
                                     @else
                                         <td>-</td>
                                     @endif
-                                <td>{{ $productService->type }}</td> --}}
+                                <td>{{ $productService->type }}</td>
                                 @if (Gate::check('product&service delete') || Gate::check('product&service edit'))
                                    <td class="Action">
                                     @if(module_is_active('Pos'))

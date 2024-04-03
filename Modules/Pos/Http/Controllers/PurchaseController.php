@@ -92,8 +92,9 @@ class PurchaseController extends Controller
                 $product_type=[];
                 if(module_is_active('ProductService'))
                 {
-                    $product_services =  \Modules\ProductService\Entities\ProductService::where('created_by', creatorId())->where('workspace_id',getActiveWorkSpace())->get()->pluck('name', 'id');
-                    $product_services->prepend('Select Items', '');
+                    $product_services =  \Modules\ProductService\Entities\ProductService::where('created_by', creatorId())->where('workspace_id',getActiveWorkSpace())->select('sku', 'name', 'id')->get();
+                    $product_services->prepend(['id'=>null, 'sku' => "Select Items", 'name'=>null]);
+                    
                     $product_type =\Modules\ProductService\Entities\ProductService::$product_type;
                 }
 
@@ -128,6 +129,7 @@ class PurchaseController extends Controller
                         'purchase_date' => 'required',
                         'category_id' => 'required',
                         'items' => 'required',
+                        'lot_number'=> 'required',
                     ]
                 );
             }elseif(!empty($request->vender_name))
@@ -139,6 +141,7 @@ class PurchaseController extends Controller
                         'purchase_date' => 'required',
                         'category_id' => 'required',
                         'items' => 'required',
+                        'lot_number'=> 'required',
                     ]
                 );
             }
@@ -162,6 +165,7 @@ class PurchaseController extends Controller
             $purchase->category_id     = $request->category_id;
             $purchase->workspace       = getActiveWorkSpace();
             $purchase->created_by      = creatorId();
+            $purchase->lot_number      = $request->lot_number;
             $purchase->save();
 
             if(module_is_active('CustomField'))

@@ -52,7 +52,7 @@
                         <table class="table mb-0 pc-dt-simple" id="assets">
                             <thead>
                             <tr>
-                                <th> {{__('Purchase')}}</th>
+                                <th> {{__('Lot Number')}}</th>
                                 <th> {{__('Vendor')}}</th>
                                 <th> {{__('Category')}}</th>
                                 <th> {{__('Purchase Date')}}</th>
@@ -67,7 +67,7 @@
                                 @foreach ($purchases as $purchase)
                                 <tr>
                                     <td class="Id">
-                                        <a href="{{ route('purchase.show',\Crypt::encrypt($purchase->id)) }}" class="btn btn-outline-primary">{{ \Modules\Pos\Entities\Purchase::purchaseNumberFormat($purchase->purchase_id) }}</a>
+                                        <a href="{{ route('purchase.show',\Crypt::encrypt($purchase->id)) }}" class="btn btn-outline-primary">{{ '#'.$purchase->lot_number }}</a>
 
                                     </td>
                                     @if(!empty($purchase->vender_name))

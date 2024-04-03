@@ -377,7 +377,7 @@
 
                     // Initialize your searchBox here if needed
                     Items(selector.parent().parent().find('.product_id'));
-                    selector.parent().parent().find(".js-searchBox").searchBox({ elementWidth: '250' });
+                    selector.parent().parent().find(".js-searchBox").searchBox({ elementWidth: '450' });
                     selector.parent().parent().find('.unit.input-group-text').text("");
                     selector.parent().parent().find('.taxes .product_tax').text("");
                 }
@@ -440,10 +440,18 @@
                                     </div>
                                 </div>
 
-                                <div class="col-lg-6 col-12">
+                                {{-- <div class="col-lg-4 col-12">
                                     <div class="form-group">
                                         {{ Form::label('purchase_number', __('Purchase Number'),['class'=>'form-label']) }}
                                         <input type="text" class="form-control" value="{{$purchase_number}}" readonly>
+
+                                    </div>
+                                </div> --}}
+
+                                <div class="col-lg-6 col-12">
+                                    <div class="form-group">
+                                        {{ Form::label('purchase_lot_number', "Lot Number", ['class'=>'form-label']) }}
+                                        <input type="text" class="form-control" name="lot_number" placeholder="LOT0001" required>
 
                                     </div>
                                 </div>
@@ -484,9 +492,9 @@
                         <table class="table mb-0" data-repeater-list="items" id="sortable-table">
                             <thead>
                             <tr>
-                                <th>{{ __('Item Type') }}</th>
+                                {{-- <th>{{ __('Item Type') }}</th> --}}
                                 <th>{{__('Items')}}</th>
-                                <th>{{__('Quantity')}}</th>
+                                {{-- <th>{{__('Quantity')}}</th> --}}
                                 <th>{{__('Price')}} </th>
                                 <th>{{__('Tax')}} (%)</th>
                                 <th>{{__('Discount')}}</th>
@@ -496,25 +504,28 @@
                             </thead>
                             <tbody class="ui-sortable" data-repeater-item>
                             <tr>
-                                <td  class="form-group pt-0">
+                                
+                                {{-- <td  class="form-group pt-0">
                                     {{ Form::select('product_type', $product_type, null, ['class' => 'form-control product_type ', 'required' => 'required', 'placeholder' => '--']) }}
-                                </td>
-                                <td width="25%" class="form-group pt-0 product_div">
+                                </td> --}}
+                                <td width="40%" class="form-group pt-0 product_div">
+                                    <input type="hidden" name="product_type" value="product">
                                     <select name="item" class="form-control product_id item  js-searchBox" data-url="{{route('purchase.product')}}" required>
-                                        @foreach ($product_services as $key =>$product_service)
-                                            <option value="{{$key}}">{{$product_service}}</option>
+                                        @foreach ($product_services as $product_service)
+                                            <option value="{{$product_service['id']}}">{{$product_service['sku']}} {{$product_service['name']}}</option>
                                         @endforeach
                                     </select>
                                 </td>
-                                <td>
+                                {{-- <td>
                                     <div class="form-group price-input input-group search-form">
                                         {{ Form::text('quantity','', array('class' => 'form-control quantity','required'=>'required','placeholder'=>__('Qty'),'required'=>'required')) }}
-
+                                        
                                         <span class="unit input-group-text bg-transparent"></span>
                                     </div>
-                                </td>
+                                </td> --}}
                                 <td>
                                     <div class="form-group price-input input-group search-form">
+                                        <input type="hidden" name="quantity" value="1">
                                         {{ Form::text('price','', array('class' => 'form-control price','required'=>'required','placeholder'=>__('Price'),'required'=>'required')) }}
                                         <span class="input-group-text bg-transparent">{{company_setting('defult_currancy_symbol')}}</span>
                                     </div>
@@ -551,7 +562,7 @@
                                 <td colspan="2">
                                     <div class="form-group">{{ Form::textarea('description', null, ['class'=>'form-control pro_description','rows'=>'2','placeholder'=>__('Description')]) }}</div>
                                 </td>
-                                <td colspan="5"></td>
+                                <td colspan="4"></td>
                             </tr>
                             </tbody>
                             <tfoot>
