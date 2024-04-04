@@ -225,38 +225,49 @@ class SidebarMenu extends Seeder
             ],
 
             2 => [
+                'title'      => __('Dealer Management'),
+                'icon'       => 'ti ti-users',
+                'parent_id'  => '0',
+                'sort_order' => '200',
+                'route'      => '',
+                'is_visible' => 1,
+                'permissions'=> 'user manage',
+                'module'     => 'Base'
+            ],
+
+            3 => [
                 'title'      => __('Proposal'),
                 'icon'       => 'ti ti-replace',
                 'parent_id'  => '0',
-                'sort_order' => '200',
+                'sort_order' => '300',
                 'route'      => 'proposal.index',
                 'is_visible' => 1,
                 'permissions'=> 'proposal manage',
                 'module'     => 'Base',
                 'dependency' => 'Account,Taskly'
             ],
-            3 => [
+            4 => [
                 'title'      => __('Invoice'),
                 'icon'       => 'ti ti-file-invoice',
                 'parent_id'  => '0',
-                'sort_order' => '300',
+                'sort_order' => '400',
                 'route'      => 'invoice.index',
                 'is_visible' => 1,
                 'permissions'=> 'invoice manage',
                 'module'     => 'Base',
                 'dependency' => 'Account,Taskly'
             ],
-            4 => [
+            5 => [
                 'title'      => __('Messenger'),
                 'icon'       => 'ti ti-brand-hipchat',
                 'parent_id'  => '0',
-                'sort_order' => '500',
+                'sort_order' => '600',
                 'route'      => 'chatify',
                 'is_visible' => 1,
                 'permissions'=> 'user chat manage',
                 'module'     => 'Base'
             ],
-            5 => [
+            6 => [
                 'title'      => __('Helpdesk'),
                 'icon'       => 'ti ti-headphones',
                 'parent_id'  => '0',
@@ -266,7 +277,7 @@ class SidebarMenu extends Seeder
                 'permissions'=> 'helpdesk ticket manage',
                 'module'     => 'Base'
             ],
-            6 => [
+            7 => [
                 'title'      => __('Settings'),
                 'icon'       => 'ti ti-settings',
                 'parent_id'  => '0',
@@ -326,7 +337,7 @@ class SidebarMenu extends Seeder
                 'permissions'=> 'user manage',
                 'module'     => 'Base'
             ],
-            2 => [
+            1 => [
                 'title'      => __('Role'),
                 'icon'       => '',
                 'parent'     => __('User Management'),
@@ -336,7 +347,37 @@ class SidebarMenu extends Seeder
                 'permissions'=> 'roles manage',
                 'module'     => 'Base'
             ],
+            2 => [
+                'title'      => __('Approved'),
+                'icon'       => '',
+                'parent'     => __('Dealer Management'),
+                'sort_order' => '10',
+                'route'      => 'backend.dealers.accepted.grid',
+                'is_visible' => 1,
+                'permissions'=> 'user manage',
+                'module'     => 'Base'
+            ],
             3 => [
+                'title'      => __('All'),
+                'icon'       => '',
+                'parent'     => __('Dealer Management'),
+                'sort_order' => '20',
+                'route'      => 'backend.dealers.grid',
+                'is_visible' => 1,
+                'permissions'=> 'user manage',
+                'module'     => 'Base'
+            ],
+            4 => [
+                'title'      => __('Rejected'),
+                'icon'       => '',
+                'parent'     => __('Dealer Management'),
+                'sort_order' => '30',
+                'route'      => 'backend.dealers.denied.grid',
+                'is_visible' => 1,
+                'permissions'=> 'user manage',
+                'module'     => 'Base'
+            ],
+            5 => [
                 'title'      => __('System Settings'),
                 'icon'       => '',
                 'parent'     => __('Settings'),
@@ -346,7 +387,7 @@ class SidebarMenu extends Seeder
                 'permissions'=> 'setting manage',
                 'module'     => 'Base'
             ],
-            4 => [
+            6 => [
                 'title'      => __('Setup Subscription Plan'),
                 'icon'       => '',
                 'parent'     => __('Settings'),
@@ -356,7 +397,7 @@ class SidebarMenu extends Seeder
                 'permissions'=> 'plan manage',
                 'module'     => 'Base'
             ],
-            5 => [
+            7 => [
                 'title'      => __('Order'),
                 'icon'       => '',
                 'parent'     => __('Settings'),

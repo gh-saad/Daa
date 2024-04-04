@@ -11,7 +11,7 @@
         </a>
         <div class="dropdown-menu dash-h-dropdown dropdown-menu-end">
             @foreach (languages() as $key => $language)
-                <a href="{{ route('register', $key) }}"
+                <a href="{{ route('register.agent', $key) }}"
                     class="dropdown-item @if ($lang == $key) text-primary @endif">
                     <span>{{ Str::ucfirst($language) }}</span>
                 </a>
@@ -22,11 +22,11 @@
 @endsection
 @section('content')
     <div class="card">
-        <form method="POST" action="{{ route('register') }}" class="needs-validation" novalidate="">
+        <form method="POST" action="{{ route('register.agent') }}" class="needs-validation" novalidate="">
             @csrf
             <div class="card-body">
                 <div class="">
-                    <h2 class="mb-3 f-w-600">{{ __('Register') }}</h2>
+                    <h2 class="mb-3 f-w-600">{{ __('Register As Agent') }}</h2>
                 </div>
                 <div class="">
                     <div class="form-group mb-3">

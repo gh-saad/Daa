@@ -12,19 +12,13 @@
     }
 @endphp
 @section('page-title')
-{{$plural_name}}
+    {{ $plural_name }}
 @endsection
 @section('page-breadcrumb')
-{{ $plural_name}}
+    {{ $plural_name }}
 @endsection
 @section('page-action')
 <div>
-    @can('user logs history')
-        <a href="{{ route('users.userlog.history') }}" class="btn btn-sm btn-primary"
-                data-bs-toggle="tooltip" data-bs-placement="top" title="{{ __('User Logs History') }}"><i class="ti ti-user-check"></i>
-        </a>
-    @endcan
-
     @can('user import')
         <a href="#" class="btn btn-sm btn-primary" data-ajax-popup="true" data-title="{{ __('Import') }}"
             data-url="{{ route('users.file.import') }}" data-toggle="tooltip" title="{{ __('Import') }}"><i
@@ -32,13 +26,12 @@
         </a>
     @endcan
     @can('user manage')
-        <a href="{{ route('backend.dealers.grid') }}" data-bs-toggle="tooltip" data-bs-original-title="{{ __('Grid View') }}"
-            class="btn btn-sm btn-primary btn-icon">
+        <a href="{{ route('backend.dealers.grid') }}" data-bs-toggle="tooltip" data-bs-original-title="{{ __('Grid View') }}" class="btn btn-sm btn-primary btn-icon">
             <i class="ti ti-layout-grid"></i>
         </a>
     @endcan
     @can('user create')
-        <a href="#" class="btn btn-sm btn-primary" data-ajax-popup="true" data-size="md" data-title="{{ __('Create New '.($singular_name)) }}"  data-url="{{ route('users.create') }}" data-bs-toggle="tooltip"  data-bs-original-title="{{ __('Create') }}">
+        <a href="{{ route('backend.dealers.create') }}" data-bs-toggle="tooltip"  data-bs-original-title="{{ __('Create') }}" class="btn btn-sm btn-primary btn-icon">
             <i class="ti ti-plus"></i>
         </a>
     @endcan
@@ -55,78 +48,71 @@
                                 <thead>
                                     <tr>
                                         <th scope="col">#</th>
-                                        <th scope="col">{{ __('Picture') }}</th>
-                                        <th scope="col">{{ __('Name') }}</th>
-                                        <th scope="col">{{ __('Email') }}</th>
-                                        <th scope="col">{{ __('Role') }}</th>
+                                        <th scope="col">{{ __('Image') }}</th>
+                                        <th scope="col">{{ __('User Name') }}</th>
+                                        <th scope="col">{{ __('Company Name') }}</th>
+                                        <th scope="col">{{ __('Reason') }}</th>
+                                        <th scope="col">{{ __('Status') }}</th>
                                         @if (Gate::check('user edit') || Gate::check('user delete'))
                                             <th width="10%"> {{ __('Action') }}</th>
                                         @endif
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($users as $index => $user)
+                                    @foreach($dealers as $index => $dealer)
                                         <tr>
                                             <th scope="row">{{++$index}}</th>
                                             <td>
                                                 <a>
-                                                    <img src="{{ check_file($user->avatar) ? get_file($user->avatar) :get_file('uploads/users-avatar/avatar.png') }}" class="img-fluid rounded-circle card-avatar" width="35" id="blah3">
+                                                    <img src="{{ check_file($dealer->logo) ? get_file($dealer->logo) :get_file('uploads/dealers-logo/logo.png') }}" class="img-fluid rounded-circle card-avatar" width="35" id="blah3">
                                                 </a>
                                             </td>
-                                            <td>{{$user->name}}</td>
-                                            <td>{{$user->email}}</td>
+                                            <td>{{$dealer->user->name}}</td>
+                                            <td>{{$dealer->company_name}}</td>
+                                            <td>{{$dealer->reason}}</td>
                                             <td>
-                                                <span class="badge bg-primary p-2 px-3 rounded rounded">
-                                                    {{ $user->type }}
-                                                </span>
+                                                <!-- add an if condition if @dealer has status -->
+                                                @if ($dealer->status == 'Rejected')
+                                                    <span class="badge bg-danger p-2 px-3 rounded rounded">rejected</span>
+                                                @elseif ($dealer->status == 'Approved')
+                                                    <span class="badge bg-primary p-2 px-3 rounded rounded">approved</span>
+                                                @else
+                                                    <span class="badge bg-warning p-2 px-3 rounded rounded">pending</span>
+                                                @endif
                                             </td>
-                                            <td class="text-end me-3">
-                                                @if($user->is_disable == 1 || Auth::user()->type == 'super admin')
+                                            <td class="text-center me-3">
+                                                @if($dealer->user->is_disable == 1 || Auth::user()->type == 'super admin')
                                                     @if(Auth::user()->type == "super admin")
+                                                        <!-- dont know what to do here so leave it as it is -->
                                                         <div class="action-btn bg-primary ms-2">
-                                                            <a data-url="{{ route('company.info',$user->id) }}" class="mx-3 btn btn-sm d-inline-flex align-items-center"  data-ajax-popup="true" data-size="lg" data-bs-toggle="tooltip" data-title="{{ __('Admin Hub')}}"> <span class="text-white"><i class="ti ti-replace"></i></a>
+                                                            <a data-url="{{ route('company.info',$dealer->id) }}" class="mx-3 btn btn-sm d-inline-flex align-items-center"  data-ajax-popup="true" data-size="lg" data-bs-toggle="tooltip" data-title="{{ __('Admin Hub')}}"> <span class="text-white"><i class="ti ti-replace"></i></a>
                                                         </div>
                                                         <div class="action-btn bg-secondary ms-2">
-                                                            <a href="{{ route('login.with.company',$user->id) }}" class="mx-3 btn btn-sm d-inline-flex align-items-center"   data-bs-toggle="tooltip" data-bs-original-title="{{ __('Login As Company')}}"> <span class="text-white"><i class="ti ti-replace"></i></a>
+                                                            <a href="{{ route('login.with.company',$dealer->id) }}" class="mx-3 btn btn-sm d-inline-flex align-items-center"   data-bs-toggle="tooltip" data-bs-original-title="{{ __('Login As Company')}}"> <span class="text-white"><i class="ti ti-replace"></i></a>
                                                         </div>
                                                     @endif
-                                                    @can('user reset password')
-                                                        <div class="action-btn bg-warning  ms-2">
-                                                            <a href="#" class="mx-3 btn btn-sm d-inline-flex align-items-center" data-url="{{ route('users.reset', \Crypt::encrypt($user->id)) }}" data-ajax-popup="true"  data-bs-toggle="tooltip" data-bs-original-title="{{ __('Reset Password')}}"> <span class="text-white"><i class="ti ti-adjustments"></i></a>
-                                                        </div>
-                                                    @endcan
-                                                    @can('user login manage')
-                                                        @if ($user->is_enable_login == 1)
-                                                            <div class="action-btn bg-danger ms-2">
-                                                                <a href="{{ route('users.login', \Crypt::encrypt($user->id)) }}" class="mx-3 btn btn-sm d-inline-flex align-items-center"   data-bs-toggle="tooltip" data-bs-original-title="{{ __('Login Disable')}}"> <span class="text-white"><i class="ti ti-road-sign"></i></a>
-                                                            </div>
-                                                        @elseif ($user->is_enable_login == 0 && $user->password == null)
-                                                            <div class="action-btn bg-secondary ms-2">
-                                                                <a href="#" data-url="{{ route('users.reset', \Crypt::encrypt($user->id)) }}"
-                                                                    data-ajax-popup="true" data-size="md" class="mx-3 btn btn-sm d-inline-flex align-items-center login_enable" data-title="{{ __('New Password') }}" data-bs-toggle="tooltip" data-bs-original-title="{{ __('New Password')}}"> <span class="text-white"><i class="ti ti-road-sign"></i></a>
-                                                            </div>
-                                                        @else
-                                                            <div class="action-btn bg-success ms-2">
-                                                                <a href="{{ route('users.login', \Crypt::encrypt($user->id)) }}"
-                                                                    class="mx-3 btn btn-sm d-inline-flex align-items-center login_enable"  data-bs-toggle="tooltip" data-bs-original-title="{{ __('Login Enable')}}"> <span class="text-white">                                                            <i class="ti ti-road-sign"></i>
-                                                                </a>
-                                                            </div>
-                                                        @endif
-                                                    @endcan
                                                     @can('user edit')
+
+                                                        <!-- view button -->
                                                         <div class="action-btn bg-info ms-2">
-                                                            <a href="#" class="mx-3 btn btn-sm d-inline-flex align-items-center" data-url="{{ route('users.edit', $user->id) }}" class="dropdown-item" data-ajax-popup="true" data-title="{{ __('Update '.($singular_name)) }}" data-bs-toggle="tooltip" data-bs-original-title="{{ __('Edit')}}"> <span class="text-white"> <i class="ti ti-edit"></i></span></a>
+                                                            <a href="{{ route('backend.dealers.view', $dealer->id) }}" class="mx-3 btn btn-sm d-inline-flex align-items-center" data-title="{{ __('View '.($singular_name)) }}" data-bs-toggle="tooltip" data-bs-original-title="{{ __('View')}}"> <span class="text-white"> <i class="ti ti-eye"></i></span></a>
                                                         </div>
+                                                        
+                                                        <!-- edit button -->
+                                                        <div class="action-btn bg-warning ms-2">
+                                                            <a href="{{ route('backend.dealers.edit', $dealer->id) }}" class="mx-3 btn btn-sm d-inline-flex align-items-center" data-title="{{ __('Edit '.($singular_name)) }}" data-bs-toggle="tooltip" data-bs-original-title="{{ __('Edit')}}"> <span class="text-white"> <i class="ti ti-edit"></i></span></a>
+                                                        </div>
+
                                                     @endcan
                                                     @can('user delete')
                                                     <div class="action-btn bg-danger ms-2">
-                                                        {{ Form::open(['route' => ['users.destroy', $user->id], 'class' => 'm-0']) }}
+                                                        {{ Form::open(['route' => ['backend.dealers.destroy', $dealer->id], 'class' => 'm-0']) }}
                                                         @method('DELETE')
                                                         <a href="#"
                                                             class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
                                                             data-bs-toggle="tooltip" title=""
                                                             data-bs-original-title="Delete" aria-label="Delete"
-                                                            data-confirm-yes="delete-form-{{ $user->id }}"><i
+                                                            data-confirm-yes="delete-form-{{ $dealer->id }}"><i
                                                                 class="ti ti-trash text-white text-white"></i></a>
                                                         {{ Form::close() }}
                                                     </div>
@@ -148,26 +134,3 @@
         </div>
     <!-- [ Main Content ] end -->
 @endsection
-@push('scripts')
-{{-- Password  --}}
-<script>
-    $(document).on('change', '#password_switch', function() {
-        if($(this).is(':checked'))
-        {
-            $('.ps_div').removeClass('d-none');
-            $('#password').attr("required",true);
-
-        } else {
-            $('.ps_div').addClass('d-none');
-            $('#password').val(null);
-            $('#password').removeAttr("required");
-        }
-    });
-    $(document).on('click', '.login_enable', function() {
-        setTimeout(function() {
-             $('.modal-body').append($('<input>', {type: 'hidden',val: 'true',name: 'login_enable' }));
-        }, 1000);
-    });
-</script>
-
-@endpush

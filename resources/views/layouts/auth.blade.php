@@ -114,9 +114,7 @@
             </header>
             <main class="custom-wrapper">
                 <div class="custom-row">
-                    <div class="card">
-                        @yield('content')
-                    </div>
+                    @yield('content')
                 </div>
             </main>
             <footer>
