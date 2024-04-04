@@ -7,7 +7,7 @@
 
 /* custom css */
 .master {
-    background: linear-gradient(to bottom, #0CAF60 0 50%, transparent 50% 100%);
+    background: linear-gradient(to bottom, #EE1D23 0 50%, transparent 50% 100%);
     overflow-x: hidden;
     position: relative;
     z-index: 1;
@@ -49,7 +49,7 @@
  .step__item.active .step__icon,
  .step__item.active~.step__divider,
  .step__item.active~.step__item .step__icon {
-    background-color: #0CAF60;
+    background-color: #EE1D23;
  }
 
  .main {
@@ -95,7 +95,7 @@
 
  .step__item.active .step__icon:hover,
  .step__item.active~.step__item .step__icon:hover {
-    background-color: #0CAF60 !important;
+    background-color: #EE1D23 !important;
  }
 
  .main h5 {

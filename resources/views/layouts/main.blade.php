@@ -199,5 +199,32 @@
         @if(admin_setting('enable_cookie') == 'on')
             @include('layouts.cookie_consent')
         @endif
+
+        <script>
+            // ajax
+            $('#sync-btn').click(function() {
+                $('#sync-btn i').addClass('ti-refresh-animate');
+                fetch("{{url('synchronizer/get-data')}}").then(response => {
+                    if (!response.ok) {
+                        $('#sync-btn i').removeClass('ti-refresh-animate');
+                        toastrs('Error', 'Network response was not ok', 'error');
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                }).then(data => {
+                    $('#sync-btn i').removeClass('ti-refresh-animate');
+                    if (data.status =='ok') {
+                        toastrs('Success', 'System is up to date :)', 'success');
+                    }else{
+                        toastrs('Error', 'API Is not Working', 'error');
+                    }
+                }).catch(error => {
+                    $('#sync-btn i').removeClass('ti-refresh-animate');
+                    toastrs('Error', 'There was a problem with the fetch operation:', 'error');
+                    console.error(error);
+                });
+                
+            });
+        </script>
     </body>
 </html>

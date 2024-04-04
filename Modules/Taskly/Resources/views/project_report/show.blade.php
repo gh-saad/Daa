@@ -543,7 +543,7 @@
                 height: 250,
                 type: 'bar',
             },
-            colors: ['#6fd943', '#ff3a6e', '#3ec9d6'],
+            colors: ['#ee1d23', '#ff3a6e', '#3ec9d6'],
             plotOptions: {
                 bar: {
 

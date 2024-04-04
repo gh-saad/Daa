@@ -105,7 +105,7 @@ class SynchronizerController extends Controller
                 if($response_data["APISTATUS"]["status"] == "401"){
                     $result = [
                         "status" => "ok",
-                        "Message" => $response_data["APISTATUS"]["Message"],
+                        "message" => $response_data["APISTATUS"]["Message"],
                     ];
                 }
             }
@@ -115,7 +115,7 @@ class SynchronizerController extends Controller
         }else{
             $result = [
                 "status" => "faild",
-                "Message" => "Authentication failed"
+                "message" => "Authentication failed"
             ];
         }
         return json_encode($result);
@@ -180,7 +180,7 @@ class SynchronizerController extends Controller
                 if($response_data["APISTATUS"]["status"] == "401"){
                     $result = [
                         "status" => "ok",
-                        "Message" => $response_data["APISTATUS"]["Message"],
+                        "message" => $response_data["APISTATUS"]["Message"],
                     ];
                 }
             }
@@ -190,9 +190,28 @@ class SynchronizerController extends Controller
         }else{
             $result = [
                 "status" => "failed",
-                "Message" => "Authentication failed"
+                "message" => "Authentication failed"
             ];
         }
         return json_encode($result);
+    }
+
+    function get_data(){
+        $member_status = $this->get_members();
+        $vehicle_status = $this->get_vehicles();
+        $member_status = json_decode($member_status);
+        $vehicle_status = json_decode($vehicle_status);
+        if ($member_status->status == "ok" and $vehicle_status->status == "ok") {
+            $result = [
+                "status" => "ok",
+            ];
+        }else{
+            $result = [
+                "status" => "failed",
+                "Message" => $member_status['message'].' '.$vehicle_status['message']
+            ];
+        }
+        return json_encode($result);
+
     }
 }

@@ -9,3 +9,9 @@ php artisan migrate --path=/database/migrations/2024_03_28_072156_alter_users_ta
 ## Purchase
 
 php artisan migrate --path=/database/migrations/2024_04_01_111229_alter_purchase_table.php
+
+
+## Dealer Manegment
+
+php artisan migrate --path=/database/migrations/2023_11_21_111634_create_dealers_table.php\
+php artisan db:seed --class=SidebarMenu

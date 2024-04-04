@@ -446,20 +446,16 @@ Route::get('/config-cache', function()
 Route::post('helpdesk-ticket/{id}', ['as' => 'helpdesk-ticket.reply','uses' =>'HelpdeskTicketController@reply']);
 Route::get('helpdesk-ticket-show/{id}', [HelpdeskTicketController::class, 'show'])->name('helpdesk.view');
 
-
-Route::get('synchronizer/get-members', 'SynchronizerController@get_members')->name('synchronizer.get-members');
-
 // Added by Saad
-Route::get('synchronizer/auth',  'SynchronizerController@auth')->name('synchronizer.auth');
-Route::get('synchronizer/get-vechiles',  'SynchronizerController@get_vehicles')->name('synchronizer.get-vechiles');
+Route::get('synchronizer/get-data',  'SynchronizerController@get_data')->name('synchronizer.get-data');
 
-// for Dealers //
 Route::get('/dealers/edit/{id}', 'DealersController@edit')->name('backend.dealers.edit')->middleware(['auth']);
 Route::get('/dealers/view/{id}', 'DealersController@view')->name('backend.dealers.view')->middleware(['auth']);
 Route::get('/dealers/create', 'DealersController@create')->name('backend.dealers.create')->middleware(['auth']);
 Route::delete('/dealers/delete/{id}', 'DealersController@destroy')->name('backend.dealers.destroy')->middleware(['auth']);
 Route::post('/dealers/update/{id}', 'DealersController@update')->name('backend.dealers.update')->middleware(['auth']);
 Route::post('/dealers/store', 'DealersController@store')->name('backend.dealers.store')->middleware(['auth']);
+
 // show all
 Route::get('/dealers', 'DealersController@grid')->name('backend.dealers.grid');
 Route::get('/dealers/list', 'DealersController@list')->name('backend.dealers.list');

@@ -41,6 +41,12 @@
                 </div>
              </li>
 
+            <li class="dash-h-item">
+                <a class="dash-head-link me-0" href="#" id="sync-btn">
+                    <i class="ti ti-refresh"></i>
+                    <span>Run Synchronizer</span>
+                </a>
+            </li>
           </ul>
        </div>
        <div class="ms-auto">
@@ -59,27 +65,27 @@
                             ->where('seen', 0)
                             ->count();
                     @endphp
-                <li class="dash-h-item">
+                {{-- <li class="dash-h-item">
                     <a class="dash-head-link me-0" href="{{ url('/chatify') }}">
                         <i class="ti ti-message-circle"></i>
                         <span
                             class="bg-danger dash-h-badge message-counter custom_messanger_counter">{{ $unseenCounter }}<span
                                 class="sr-only"></span>
                     </a>
-                </li>
+                </li> --}}
               @endcan
                 @can('workspace create')
                     @if(PlanCheck('Workspace',Auth::user()->id) == true)
-                        <li class="dash-h-item">
+                        {{-- <li class="dash-h-item">
                             <a href="#!" class="dash-head-link dropdown-toggle arrow-none me-0 cust-btn" data-url="{{ route('workspace.create') }}" data-ajax-popup="true" data-title="{{__('Create New Workspace')}}">
                                 <i class="ti ti-circle-plus"></i>
                                 <span class="hide-mob">{{ __('Create Workspace')}}</span>
                             </a>
-                        </li>
+                        </li> --}}
                     @endif
                 @endcan
               @can('workspace manage')
-                    <li class="dropdown dash-h-item drp-language">
+                    {{-- <li class="dropdown dash-h-item drp-language">
                         <a class="dash-head-link dropdown-toggle arrow-none me-0 cust-btn" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false" data-bs-placement="bottom" data-bs-original-title="Select your bussiness">
                             <i class="ti ti-apps"></i>
                             <span class="hide-mob">{{ Auth::user()->ActiveWorkspaceName() }}</span>
@@ -136,7 +142,7 @@
                                 @endcan
                             @endif
                         </div>
-                    </li>
+                    </li> --}}
                 @endcan
 
              <li class="dropdown dash-h-item drp-language">
@@ -178,3 +184,4 @@
        </div>
     </div>
  </header>
+
