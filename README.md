@@ -1,5 +1,4 @@
-<h2><b>Project:</b> Daa</h2>
-<h2><b>Task:</b> Dealer Management Functionality</h2>
+<h2>Project: Daa<br>Task: Dealer Management Functionality</h2>
 <hr>
 <h2>Commands to run:</h2>
 <ul>

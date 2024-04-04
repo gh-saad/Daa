@@ -274,7 +274,7 @@ class RegisteredUserController extends Controller
                 $user->created_by = 2; // default user
                 $user->save();
             }
-        
+            
             // create a new dealer and assign it with the created user
             $dealer = Dealer::create([
                 'user_id' => $user->id,
