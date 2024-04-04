@@ -1,4 +1,5 @@
-<h1>Project: Daa, Task: Dealer Management Functionality</h1>
+<h2><b>Project:</b> Daa</h2>
+<h2><b>Task:</b> Dealer Management Functionality</h2>
 <hr>
 <h2>Commands to run:</h2>
 <ul>
@@ -13,6 +14,7 @@
     <li>updated routes for all things related to dealers</li>
     <li>updated the registration form to have two options agency or agent</li>
     <li>added functionality for the agency registration form</li>
+    <li>added proper validation for all file upload forms and inputs for the agency registration form</li>
     <li>added file upload functionality for the document forms</li>
     <li>added edit dealer page</li>
     <li>added view dealer page</li>
