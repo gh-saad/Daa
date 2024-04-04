@@ -67,7 +67,7 @@
                 </div>
                 @if (empty( admin_setting('signup')) ||  admin_setting('signup') == "on")
                     <p class="my-4 text-center">{{ __("Don't have an account?") }}
-                        <a href="{{route('register')}}" class="my-4 text-primary">{{__('Register')}}</a>
+                        <a href="{{ route('register.select') }}" class="my-4 text-primary">{{__('Register')}}</a>
                     </p>
                 @endif
             </div>

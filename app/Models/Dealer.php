@@ -12,7 +12,6 @@ class Dealer extends Model
 
     protected $fillable = [
         'user_id',
-        'registration_no',
         'company_name',
         'logo',
         'relational_manager',
@@ -20,17 +19,13 @@ class Dealer extends Model
         'company_whatsapp',
         'GM_whatsapp',
         'marketing_director_no',
+        'dealer_document',
+        'passport_copy',
         'trade_license',
-        'trno_expiry',
-        'agency_license_number',
-        'trno_issue_place',
+        'emirates_document',
+        'tax_document',
+        'security_cheque_copy',
         'po_box',
-        'trn_certificate',
-        'rera_certificate',
-        'passport',
-        'emirates_id',
-        'rara_card',
-        'brokage_agreement',
         'is_agreement_signed',
         'bank_name',
         'ac_name',
@@ -45,7 +40,7 @@ class Dealer extends Model
         'reason'
     ];
 
-    protected $dates = ['trno_expiry', 'deleted_at'];
+    protected $dates = ['deleted_at'];
 
     /**
      * Get the user that owns the dealer.

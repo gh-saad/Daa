@@ -22,44 +22,39 @@ class DealersSeeder extends Seeder
         $users = User::all();
 
         // Define number of dealers you want to create
-        $numberOfDealers = 10;
+        $numberOfDealers = 18;
 
         for ($i = 0; $i < $numberOfDealers; $i++) {
             $user = $users->random(); // Randomly assign a user
 
             Dealer::create([
                 'user_id' => $user->id,
-                'registration_no' => $faker->randomNumber(),
                 'company_name' => $faker->company,
                 'logo' => $faker->imageUrl(),
-                'relational_manager' => $faker->randomElement([$user->id, null]),
+                'relational_manager' => $faker->randomElement($users)->id,
                 'website' => $faker->url,
                 'company_whatsapp' => $faker->phoneNumber,
                 'GM_whatsapp' => $faker->phoneNumber,
                 'marketing_director_no' => $faker->phoneNumber,
-                'trade_license' => $faker->word,
-                'trno_expiry' => $faker->date(),
-                'agency_license_number' => $faker->word,
-                'trno_issue_place' => $faker->word,
+                'dealer_document' => $faker->imageUrl(),
+                'passport_copy' => $faker->imageUrl(),
+                'trade_license' => $faker->imageUrl(),
+                'emirates_document' => $faker->imageUrl(),
+                'tax_document' => $faker->imageUrl(),
+                'security_cheque_copy' => $faker->imageUrl(),
                 'po_box' => $faker->postcode,
-                'trn_certificate' => $faker->word,
-                'rera_certificate' => $faker->word,
-                'passport' => $faker->word,
-                'emirates_id' => $faker->word,
-                'rara_card' => $faker->word,
-                'brokage_agreement' => $faker->word,
                 'is_agreement_signed' => $faker->boolean(),
                 'bank_name' => $faker->word,
                 'ac_name' => $faker->name,
-                'branch_name' => $faker->word,
+                'branch_name' => $faker->company,
                 'branch_address' => $faker->address,
                 'currency' => $faker->currencyCode,
                 'swift_code' => $faker->swiftBicNumber,
-                'iban' => $faker->iban,
-                'created_by' => $user->id,
+                'iban' => $faker->iban('AE'),
+                'created_by' => 2, // You can change this to the desired user ID
                 'status' => $faker->randomElement(['pending', 'Approved', 'Rejected']),
                 'is_submitted' => $faker->boolean(),
-                'reason' => $faker->sentence
+                'reason' => $faker->sentence,
             ]);
         }
     }
