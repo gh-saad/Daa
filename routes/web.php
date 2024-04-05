@@ -160,7 +160,7 @@ Route::group(['middleware' => ['verified']], function ()
 
 
     // Module Install
-    Route::get('modules', 'ModuleController@index')->name('module.index')->middleware(['auth']);
+    Route::get('modules/list', 'ModuleController@index')->name('module.index')->middleware(['auth']);
     Route::get('modules/add', 'ModuleController@add')->name('module.add')->middleware(['auth']);
     Route::post('install-modules', 'ModuleController@install')->name('module.install')->middleware(['auth']);
     Route::post('remove-modules/{module}', 'ModuleController@remove')->name('module.remove')->middleware(['auth']);

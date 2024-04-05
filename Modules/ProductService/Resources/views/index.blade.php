@@ -1,23 +1,23 @@
 @extends('layouts.main')
 @section('page-title')
-{{__('Manage Product & Services')}}
+{{__('Manage Vehicle')}}
 @endsection
 @section('page-breadcrumb')
-{{ __('Product And Services') }}
+{{ __('Vehicle') }}
 @endsection
 @section('page-action')
 @can('product&service create')
 <div>
         @stack('addButtonHook')
         @can('product&service import')
-            <a href="#"  class="btn btn-sm btn-primary" data-ajax-popup="true" data-title="{{__('Product & Service Import')}}" data-url="{{ route('product-service.file.import') }}"  data-toggle="tooltip" title="{{ __('Import') }}"><i class="ti ti-file-import"></i>
-            </a>
+            {{-- <a href="#"  class="btn btn-sm btn-primary" data-ajax-popup="true" data-title="{{__('Product & Service Import')}}" data-url="{{ route('product-service.file.import') }}"  data-toggle="tooltip" title="{{ __('Import') }}"><i class="ti ti-file-import"></i>
+            </a> --}}
         @endcan
-        <a href="{{ route('product-service.grid') }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-title="{{__('Grid View')}}" title="{{ __('Grid View') }}"><i class="ti ti-layout-grid text-white"></i></a>
+        {{-- <a href="{{ route('product-service.grid') }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-title="{{__('Grid View')}}" title="{{ __('Grid View') }}"><i class="ti ti-layout-grid text-white"></i></a> --}}
 
         <a href="{{ route('category.index') }}"data-size="md"  class="btn btn-sm btn-primary" data-bs-toggle="tooltip"data-title="{{__('Setup')}}" title="{{__('Setup')}}"><i class="ti ti-settings"></i></a>
 
-        <a href="{{ route('productstock.index') }}"data-size="md"  class="btn btn-sm btn-primary" data-bs-toggle="tooltip"data-title="{{__(' Product Stock')}}" title="{{__('Product Stock')}}"><i class="ti ti-shopping-cart"></i></a>
+        {{-- <a href="{{ route('productstock.index') }}"data-size="md"  class="btn btn-sm btn-primary" data-bs-toggle="tooltip"data-title="{{__(' Product Stock')}}" title="{{__('Product Stock')}}"><i class="ti ti-shopping-cart"></i></a> --}}
 
         <a  class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="{{__('Create')}}" data-ajax-popup="true" data-size="lg" data-title="{{ __('Create New Product') }}" data-url="{{ route('product-service.create') }}">
             <i class="ti ti-plus"></i>
@@ -126,11 +126,11 @@
                                 
                                 {{-- <td>{{ !empty($productService->unit())?$productService->unit()->name:'' }}</td> --}}
                                 @if($productService->type == 'product')
-                                        <td>{{$productService->quantity}}</td>
-                                    @else
-                                        <td>-</td>
-                                    @endif
-                                <td>{{ $productService->type }}</td>
+                                    <td>{{$productService->quantity}}</td>
+                                @else
+                                    <td>-</td>
+                                @endif
+                                {{-- <td>{{ $productService->type }}</td> --}}
                                 @if (Gate::check('product&service delete') || Gate::check('product&service edit'))
                                    <td class="Action">
                                     @if(module_is_active('Pos'))

@@ -1,6 +1,6 @@
 @extends('layouts.main')
 @section('page-title')
-    {{ __('Manage Product & Services') }}
+    {{ __('Manage Vehicle') }}
 @endsection
 @section('title')
     {{ __('Product & Services') }}
