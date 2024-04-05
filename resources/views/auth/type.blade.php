@@ -25,16 +25,16 @@
         <div class="card-body">
             <div>
                 <h2 class="mb-3 f-w-600">{{ __('Do You Want to Register as Agency or Agent?') }}</h2>
-                <small>Register as <b>Agency</b> reguires all company documents for example: trade license, Bank details etc..</small>
+                <small>Register as <b>Dealer</b> reguires all company documents for example: trade license, Bank details etc..</small>
                 <hr>
                 <div class="d-flex justify-content-around">
                     <a href="{{ route('register.agency') }}" class="btn btn-lg btn-primary btn-icon">
                         <i class="fa fa-users"></i>
-                        <span class="text-white" style="text-transform: uppercase;">agency</span>
+                        <span class="text-white" style="text-transform: uppercase;">Dealer</span>
                     </a>
                     <a href="{{ route('register.agent') }}" class="btn btn-lg btn-primary btn-icon">
                         <i class="fa fa-user"></i>
-                        <span class="text-white" style="text-transform: uppercase;">agent</span>
+                        <span class="text-white" style="text-transform: uppercase;">Agent</span>
                     </a>
                 </div>
             </div>
