@@ -24,7 +24,7 @@
     <div class="card">
         <div class="card-body">
             <div>
-                <h2 class="mb-3 f-w-600">{{ __('Do You Want to Register as Agency or Agent?') }}</h2>
+                <h2 class="mb-3 f-w-600">Do You Want to Register as Dealer or Agent?</h2>
                 <small>Register as <b>Dealer</b> reguires all company documents for example: trade license, Bank details etc..</small>
                 <hr>
                 <div class="d-flex justify-content-around">
