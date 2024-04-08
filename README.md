@@ -3,10 +3,16 @@
 <h2>Commands to run:</h2>
 <ul>
     <li>php artisan migrate --path=/database/migrations/2023_11_21_111634_create_dealers_table.php</li>
+    <li>php artisan db:seed --class=DealersSeeder</li>
+    <li>php artisan db:seed --class=SidebarMenu</li>
 </ul>
 <hr>
 <h2>ChangeLog:</h2>
-<p>from 1-Apr-2024 to 4-Apr-2024: V1 (Latest)</p>
+<p>8-Apr-2024: V2 (Latest)</p>
+<ul>
+    <li>added the functionality  of adding a new dealer, editing an existing dealer and deleting a dealer from the database</li>
+</ul>
+<p>from 1-Apr-2024 to 6-Apr-2024: V1</p>
 <ul>
     <li>added dealer management tab on sidebar</li>
     <li>added approved, all, rejected sub-tabs for dealer management tab</li>

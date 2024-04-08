@@ -64,7 +64,7 @@
                                             <th scope="row">{{++$index}}</th>
                                             <td>
                                                 <a>
-                                                    <img src="{{ check_file($dealer->logo) ? get_file($dealer->logo) :get_file('uploads/dealers-logo/logo.png') }}" class="img-fluid rounded-circle card-avatar" width="35" id="blah3">
+                                                    <img src="{{ check_file($dealer->logo) ? get_file($dealer->logo) :get_file('uploads/dealer-logos/default.png') }}" class="img-fluid rounded-circle card-avatar" width="35" id="blah3">
                                                 </a>
                                             </td>
                                             <td>{{$dealer->user->name}}</td>

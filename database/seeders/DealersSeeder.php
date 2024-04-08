@@ -30,7 +30,7 @@ class DealersSeeder extends Seeder
             Dealer::create([
                 'user_id' => $user->id,
                 'company_name' => $faker->company,
-                'logo' => $faker->imageUrl(),
+                'logo' => 'uploads/dealer-logos/default.png',
                 'relational_manager' => $faker->randomElement($users)->id,
                 'website' => $faker->url,
                 'company_whatsapp' => $faker->phoneNumber,
