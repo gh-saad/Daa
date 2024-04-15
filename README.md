@@ -1,4 +1,4 @@
-<h2>Project: Daa<br>Task: Dealer Management Functionality</h2>
+<h2>Project: Daa<br>Task: Contract and invoice</h2>
 <hr>
 <h2>Commands to run:</h2>
 <ul>
@@ -8,7 +8,12 @@
 </ul>
 <hr>
 <h2>ChangeLog:</h2>
-<p>8-Apr-2024: V2 (Latest)</p>
+<p>15-Apr 2024: V3 (Latest)</p>
+<ul>
+    <li>generated a pull request to stay updated with main branch</li>
+    <li>created a customer seeder and seeded the customer seeder database</li>
+</ul>
+<p>8-Apr-2024: V2</p>
 <ul>
     <li>added the functionality  of adding a new dealer, editing an existing dealer and deleting a dealer from the database</li>
 </ul>
