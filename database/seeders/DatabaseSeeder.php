@@ -27,5 +27,7 @@ class DatabaseSeeder extends Seeder
         $this->call(LanguageTableSeeder::class);
         // added dealer seeder
         $this->call(DealersSeeder::class);
+        // added customer seeder
+        $this->call(CustomersTableSeeder::class);
     }
 }
