@@ -8,7 +8,7 @@
     <div class="row">
         <div class="col-md-6">
             <div class="form-group">
-                {{ Form::label('name', __('Name'), ['class' => 'form-label']) }}<span class="text-danger">*</span>
+                {{ Form::label('name', "Make Model", ['class' => 'form-label']) }}<span class="text-danger">*</span>
                 <div class="form-icon-user">
                     {{ Form::text('name', '', ['class' => 'form-control', 'required' => 'required']) }}
                 </div>
@@ -16,7 +16,7 @@
         </div>
         <div class="col-md-6">
             <div class="form-group">
-                {{ Form::label('sku', __('SKU'), ['class' => 'form-label']) }}<span class="text-danger">*</span>
+                {{ Form::label('sku', "Chasis No", ['class' => 'form-label']) }}<span class="text-danger">*</span>
                 <div class="form-icon-user">
                     {{ Form::text('sku', '', ['class' => 'form-control', 'required' => 'required']) }}
                 </div>

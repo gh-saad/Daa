@@ -1,5 +1,5 @@
 .plan-package .plan-package-title h3 span{
-    color: #0CAF60;
+    color: #EE1D23;
 }
 .plan-switch label{
     color: #000;
@@ -144,7 +144,7 @@
     border-radius: 0 0 15px 15px;
 }
 .compare-plan-opction li.plan-btn a.btn{
-    background-color: #0CAF60;
+    background-color: #EE1D23;
     border-radius: 11px;
     color:#fff !important;
     max-width:200px;
@@ -185,7 +185,7 @@
 .basic-plan-card-wrap-scrollbar::-webkit-scrollbar-thumb{
 	border-radius: 10px;
 	-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
-	background-color: #0CAF60;
+	background-color: #EE1D23;
 }
 .basic-plan-card-wrap-scrollbar::-webkit-scrollbar{
 	height: 10px;
@@ -213,7 +213,7 @@
     .basic-plan-card-wrap::-webkit-scrollbar-thumb{
         border-radius: 10px;
         -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);
-        background-color: #0CAF60;
+        background-color: #EE1D23;
     }
     .basic-plan-card-wrap::-webkit-scrollbar{
         height: 10px;

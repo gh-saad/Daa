@@ -214,7 +214,7 @@
 
 
                 series: {!! json_encode($arrProcessPer) !!},
-                colors: ['#FF3A6E', '#6fd943', '#ffa21d'],
+                colors: ['#FF3A6E', '#ee1d23', '#ffa21d'],
                 labels: {!! json_encode($arrProcessLabel) !!},
                 grid: {
                     borderColor: '#e7e7e7',

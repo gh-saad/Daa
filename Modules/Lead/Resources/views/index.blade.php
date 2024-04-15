@@ -102,7 +102,7 @@
                     categories:{!! json_encode($dealdata['date']) !!},
 
                 },
-                colors: ['#6fd943','#2633cb'],
+                colors: ['#ee1d23','#2633cb'],
 
                 grid: {
                     strokeDashArray: 4,
@@ -151,7 +151,7 @@
                     categories:{!! json_encode($chartcall['date']) !!},
 
                 },
-                colors: ['#6fd943','#2633cb'],
+                colors: ['#ee1d23','#2633cb'],
 
                 grid: {
                     strokeDashArray: 4,

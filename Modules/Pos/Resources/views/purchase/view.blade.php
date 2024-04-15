@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="{{ Module::asset('Pos:Resources/assets/css/dropzone.min.css') }}">
     <style>
         .border-primary {
-            border-color: #0CAF60 !important;
+            border-color: #EE1D23 !important;
         }
     </style>
 @endpush

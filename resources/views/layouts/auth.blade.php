@@ -78,8 +78,8 @@
      <!-- [custom-login] start -->
      <div class="custom-login">
         <div class="login-bg-img">
-            <img src="{{ asset('images/'.$color.'.svg') }}" class="login-bg-1">
-            <img src="{{ asset('images/common.svg') }}" class="login-bg-2">
+            <img src="{{ asset('images/login-1.svg') }}" class="login-bg-1">
+            <img src="{{ asset('images/login-2.svg') }}" class="login-bg-2">
         </div>
         <div class="bg-login bg-primary"></div>
         <div class="custom-login-inner">

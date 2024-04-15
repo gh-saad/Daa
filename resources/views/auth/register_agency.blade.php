@@ -26,7 +26,7 @@
             @csrf
             <div class="card-body" style="max-width: 100% !important;">
                 <div class="text-center">
-                    <h2 class="mb-3 f-w-600">{{ __('Register As Agency') }}</h2>
+                    <h2 class="mb-3 f-w-600">Register As Dealer</h2>
                 </div>
                 <hr>
                 <div class="row">

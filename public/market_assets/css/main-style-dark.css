@@ -21,7 +21,7 @@
 /* ============================================= */
 /* !!!!         VARIABLES STYLE CSS         !!!! */
 /* ============================================= */
-/* --theme1: #0CAF60;
+/* --theme1: #EE1D23;
     --theme2: #75C251;
     --theme3: #584ED2;
     --theme4: #145388;
@@ -35,9 +35,9 @@
 :root {
     --first-font: 'Overpass', sans-serif;
     --second-font: 'Overpass', sans-serif;
-    --theme-color: #0CAF60;
+    --theme-color: #EE1D23;
     --second-color: #e3dfdf;
-    --light-color: #0CAF606F;
+    --light-color: #EE1D236F;
     --border-color: #3E3F4A;
     --black: #05103B;
     --white: #ffffff;
@@ -57,10 +57,10 @@
 }
 
 body.theme-1 {
-    --theme-color: #0CAF60;
+    --theme-color: #EE1D23;
     --second-color: #e3dfdf;
     --black: #000000;
-    --light-color: #0CAF606F;
+    --light-color: #EE1D236F;
     --box-shadow: -2.37901px 23.6244px 43px var(--light-color);
 }
 

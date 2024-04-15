@@ -6,7 +6,7 @@
   } */
 
   :root{
-    --theme1-color: #0CAF60;
+    --theme1-color: #EE1D23;
     --theme2-color: #75C251;
     --theme3-color: #584ED2;
     --theme4-color: #145388;
@@ -550,11 +550,11 @@ body.theme-10 .btn-check:checked + .btn-outline-primary,
 
 /*company side plan page  */
 .active_module {
-    border: 1.9px solid #6fd943 !important;
+    border: 1.9px solid #ee1d23 !important;
 }
 /*super admin side Modules page  */
 .enable_module {
-    border: 1.9px solid #6fd943 !important;
+    border: 1.9px solid #ee1d23 !important;
 }
 .disable_module {
     border: 1.9px solid #ff3a6e !important;
@@ -891,7 +891,7 @@ body.theme-10 .slider{
 
 body.theme-1 .formTextbox:focus{
     border-color: var(--theme1-color);
-    box-shadow: 0 0 0 0.2rem rgb(12,175,96);
+    box-shadow: 0 0 0 0.2rem rgba(238, 29, 35)
 }
 body.theme-2 .formTextbox:focus{
     border-color: var(--theme2-color);
@@ -1405,10 +1405,10 @@ a.b-brand {
 
 /* border-color */
 body.theme-1 .border-primary {
-    border-color: #0CAF60 !important;
+    border-color: #EE1D23 !important;
 }
 body.theme-2 .border-primary {
-    border-color: #6fd943 !important;
+    border-color: #ee1d23 !important;
 }
 body.theme-3 .border-primary {
     border-color: #584ed2 !important;
@@ -1439,3 +1439,23 @@ body.theme-10 .border-primary {
 .btn-apply {
     font-size: 31px;
 }
+
+@keyframes rotateIcon {
+    from {
+      transform: rotate(360deg);
+    }
+    to {
+      transform: rotate(0deg);
+    }
+  }
+  
+  /* Apply the rotation animation to the icon */
+  .ti-refresh-animate {
+    /* Set the icon's display type, background color, and size */
+    display: inline-block;
+    /* background-color: #333; */
+    /* width: 50px; */
+    /* height: 50px; */
+    /* Apply the animation */
+    animation: rotateIcon 2s linear infinite;
+  }
