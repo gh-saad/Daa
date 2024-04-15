@@ -105,7 +105,7 @@
                         </div>
                     </div>
                     <div class="card-body  text-center">
-                        <img src="{{ check_file($dealer->logo) ? get_file($dealer->logo) :get_file('uploads/dealers-logo/logo.png') }}"
+                        <img src="{{ check_file($dealer->logo) ? get_file($dealer->logo) :get_file('uploads/dealer-logos/default.png') }}"
                             alt="dealer-image" class="img-fluid rounded-circle" width="120px">
                         <h4 class="mt-2">{{ $dealer->user->name }}</h4>
                         <h4 class="mt-2">{{ $dealer->company_name }}</h4>
