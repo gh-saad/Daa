@@ -244,6 +244,9 @@ Route::group(['middleware' => ['verified', 'check.contract.status']], function (
     Route::get('/dealers/denied', 'DealersController@denied_grid')->name('backend.dealers.denied.grid');
     Route::get('/dealers/denied/list', 'DealersController@denied_list')->name('backend.dealers.denied.list');
 
+    // contract approval routes
+    Route::post('/approval/submit', 'ApprovalController@submit')->name('approval.submit');
+
     Route::group(['middleware' => 'PlanModuleCheck:Account-Taskly'], function ()
     {
             // invoice

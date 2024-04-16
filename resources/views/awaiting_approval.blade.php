@@ -6,7 +6,7 @@
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <form method="POST" action="{{ route('register.agency') }}" class="needs-validation" novalidate="" enctype="multipart/form-data">
+            <form id="approval-form" method="POST" action="{{ route('approval.submit') }}" class="needs-validation" novalidate="" enctype="multipart/form-data">
                 @csrf
                 <div class="card-body text-center">
                     <h2>ONE FINAL STEP</h2>
@@ -27,9 +27,11 @@
                     <hr style="margin: 0px 0px;">
                     <div class="row mt-4">
                         <div class="col-md-6 col-sm-12">
-                            <button class="btn btn-secondary btn-block" type="cancel">Cancel</button>
+                            <!-- Cancel button -->
+                            <a class="btn btn-secondary btn-block text-white" href="{{ route('logout') }}">Cancel</a>
                         </div>
                         <div class="col-md-6 col-sm-12">
+                            <!-- Submit button -->
                             <button class="btn btn-primary btn-block" type="submit">Submit</button>
                         </div>
                     </div>

@@ -35,4 +35,6 @@ return [
         'secret' => '',
         'url' => 'https://sandbox.cashfree.com/pg/orders',
     ],
+    
+    'admin_email' => env('ADMIN_EMAIL'),
 ];

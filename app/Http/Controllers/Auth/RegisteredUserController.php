@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Events\DefaultData;
+use App\Events\NewUserRegistered;
 use App\Http\Controllers\Controller;
 use App\Models\EmailTemplate;
 use App\Models\User;
@@ -18,6 +19,9 @@ use App\Models\WorkSpace;
 use App\Events\GivePermissionToRole;
 use App\Models\Plan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\UserRegisteredAdminNotification;
+use App\Mail\UserRegisteredUserNotification;
 use Illuminate\Validation\ValidationException;
 
 class RegisteredUserController extends Controller
@@ -292,6 +296,9 @@ class RegisteredUserController extends Controller
                 'created_by' => 2,
                 'status' => 'pending',
             ]);
+            
+            // send email to admin to notify registration of new user
+            event(new NewUserRegistered($user));
 
             return redirect('dashboard');
         } catch (ValidationException $e) {
