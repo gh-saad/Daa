@@ -233,7 +233,7 @@ class RegisteredUserController extends Controller
                 'emirate_document.required' => "Emirates ID/Visa Image is required.",
                 'emirate_document.mimes' => "Only jpeg, png and pdf are allowed.",
                 'security_deposit_cheque_copy.required' => "Security Deposit Cheque Image is required.",
-                'security_deposit_cheque_copy.mimes' => "Only jpeg, png and pdf are allowed."
+                'security_deposit_cheque_copy.mimes' => "Only jpeg, png and pdf are allowed.",
             ]);
         
             if(module_is_active('GoogleCaptcha') && admin_setting('google_recaptcha_is_on') == 'on') {
@@ -259,6 +259,7 @@ class RegisteredUserController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
             ]);
+            $user->setAttribute('contract-status', 'pending'); // Set contract-status attribute
             Auth::login($user);
         
             $role_r = Role::findByName('company');
@@ -291,8 +292,8 @@ class RegisteredUserController extends Controller
                 'created_by' => 2,
                 'status' => 'pending',
             ]);
-        
-            return redirect('plans');
+
+            return redirect('dashboard');
         } catch (ValidationException $e) {
             // Redirect back with errors if validation fails
             return redirect()->back()->withErrors($e->errors())->withInput();

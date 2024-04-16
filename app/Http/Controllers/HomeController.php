@@ -68,11 +68,19 @@ class HomeController extends Controller
                 $data = Sidebar::GetDashboardRoute();
                 if($data['status'] == true && $data['route'] != 'dashboard')
                 {
-                    return redirect()->route($data['route']);
+                    if(Auth::user()->{'contract-status'} == 'pending'){
+                        return view('awaiting_approval');
+                    }else{
+                        return redirect()->route($data['route']);
+                    }
                 }
                 else
                 {
-                    return view('dashboard');
+                    if(Auth::user()->{'contract-status'} == 'pending'){
+                        return view('awaiting_approval');
+                    }else{
+                        return view('dashboard');
+                    }
                 }
             }
         }
