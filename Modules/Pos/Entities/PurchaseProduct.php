@@ -31,4 +31,10 @@ class PurchaseProduct extends Model
     {
         return \Modules\Pos\Database\factories\PurchaseProductFactory::new();
     }
+
+    // added by saad
+
+    public function purchase() {
+        return $this->hasOne(\Modules\Pos\Entities\Purchase::class, 'id', 'purchase_id')->first();
+    }
 }

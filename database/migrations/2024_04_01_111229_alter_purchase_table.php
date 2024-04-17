@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::table('purchases', function (Blueprint $table) {
             $table->string('lot_number')->nullable();
+            $table->string('bl_number')->nullable();
         });
     }
 
@@ -27,6 +28,7 @@ return new class extends Migration
     {
         Schema::table('purchases', function (Blueprint $table) {
             $table->dropColumn('lot_number');
+            $table->dropColumn('bl_number');
         });
     }
 };

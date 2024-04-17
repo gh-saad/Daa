@@ -167,7 +167,7 @@
                                             <h4>{{__('Purchase')}}</h4>
                                         </div>
                                         <div class="col-xs-12 col-sm-12 col-nd-6 col-lg-6 col-12 text-end">
-                                            <h4 class="invoice-number">{{ \Modules\Pos\Entities\Purchase::purchaseNumberFormat($purchase->purchase_id) }}</h4>
+                                            <h4 class="invoice-number">#{{ $purchase->lot_number ? $purchase->lot_number : 'LOT00#'; }}</h4>
                                         </div>
                                         <div class="col-12">
                                             <hr>

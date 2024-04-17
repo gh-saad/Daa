@@ -122,4 +122,15 @@ class ProductService extends Model
         $stocks->workspace      = getActiveWorkSpace();
         $stocks->save();
     }
+
+    // added by Saad
+    public function purchase_product()
+    {
+      if(module_is_active('Pos'))
+      {
+        // 'product_id' -> 'purchase_products:purchase_id' -> 'purchases:lot_number'
+
+        return $this->hasOne(\Modules\Pos\Entities\PurchaseProduct::class, 'product_id', 'id')->first();
+      }
+    }
 }

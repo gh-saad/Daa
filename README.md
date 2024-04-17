@@ -16,3 +16,8 @@ php artisan migrate --path=/database/migrations/2024_04_01_111229_alter_purchase
 
 php artisan migrate --path=/database/migrations/2023_11_21_111634_create_dealers_table.php
 php artisan db:seed --class=SidebarMenu
+
+## run after 17-April 2014
+
+php artisan migrate:rollback --path=/database/migrations/2024_04_01_111229_alter_purchase_table.php
+php artisan migrate: --path=/database/migrations/2024_04_01_111229_alter_purchase_table.php
