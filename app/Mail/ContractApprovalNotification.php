@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
-class UserWelcome extends Mailable
+class ContractApprovalNotification extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -31,6 +31,6 @@ class UserWelcome extends Mailable
      */
     public function build()
     {
-        return $this->markdown('emails.user.welcome')->subject('Welcome');
+        return $this->markdown('emails.user.contract_approval')->subject('Account Activated');
     }
 }

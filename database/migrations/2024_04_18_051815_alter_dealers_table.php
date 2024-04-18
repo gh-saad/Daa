@@ -13,9 +13,8 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('contract-status')->nullable()->after('email_verified_at');
-            $table->integer('balance-amount')->default(0);
+        Schema::table('dealers', function (Blueprint $table) {
+            $table->string('contract')->nullable()->after('security_cheque_copy');
         });
     }
 
@@ -26,9 +25,8 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('contract-status');
-            $table->dropColumn('balance-amount');
+        Schema::table('dealers', function (Blueprint $table) {
+            $table->dropColumn('contract');
         });
     }
 };

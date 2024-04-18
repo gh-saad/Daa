@@ -1,15 +1,7 @@
 @extends('layouts.main')
 @php
-    if(Auth::user()->type=='super admin')
-    {
-        $plural_name = __('Customers');
-        $singular_name = __('Customer');
-    }
-    else{
-
-        $plural_name =__('Dealers');
-        $singular_name =__('Dealer');
-    }
+    $plural_name =__('Dealers');
+    $singular_name =__('Dealer');
 @endphp
 
 @section('page-title')
@@ -29,6 +21,90 @@
 <div style="margin: 40px 0px;">
     <form method="POST" action="{{ route('backend.dealers.update', $dealer->id) }}" class="needs-validation" novalidate="" enctype="multipart/form-data">
         @csrf
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 col-sm-12">
+                                <!-- show information of the request -->
+                                <h2>Dealer Request Information 
+                                    <!-- add an if condition if @dealer has status -->
+                                    @if ($dealer->status == 'Rejected')
+                                        <span class="badge bg-danger p-2 px-3 rounded rounded" style="margin:0px 10px; text-transform: uppercase;">rejected</span>
+                                    @elseif ($dealer->status == 'Approved')
+                                        <span class="badge bg-success p-2 px-3 rounded rounded" style="margin:0px 10px; text-transform: uppercase;">approved</span>
+                                    @else
+                                        <span class="badge bg-warning p-2 px-3 rounded rounded" style="margin:0px 10px; text-transform: uppercase;">pending</span>
+                                    @endif
+                                </h2>
+                            </div>
+                            <div class="col-md-2 col-sm-0"></div>
+                            <div class="col-md-4 col-sm-12">
+                                <!-- radio buttons to approve, reject or keep it pending -->
+                                <div class="form-group" style="margin: 0px 0px !important;">
+                                    <div class="btn-box">
+                                        <label class="d-block form-label">Status</label>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-check form-check-inline">
+                                                    <input type="radio" class="form-check-input type" id="customRadio5" name="status" value="pending" checked="checked">
+                                                    <label class="custom-control-label form-label" for="customRadio5">Dont Change</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check form-check-inline">
+                                                    <input type="radio" class="form-check-input type" id="customRadio6" name="status" value="approve">
+                                                    <label class="custom-control-label form-label" for="customRadio6">Approve</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check form-check-inline">
+                                                    <input type="radio" class="form-check-input type" id="customRadio7" name="status" value="reject">
+                                                    <label class="custom-control-label form-label" for="customRadio7">Reject</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6 col-sm-12">
+                                <h5><b>Request Submitted by: </b>{{ $dealer->user->name }} - {{ $dealer->user->email }}<h5>
+                                <h5><b>Dealer Name: </b>{{ $dealer->company_name }}<h5>
+                                <h5><b>Contract Status: </b>
+                                    <!-- add an if condition for $dealer->user->contract-status -->
+                                    @if ($dealer->user->{ 'contract-status' } == 'inactive')
+                                        <span class="badge bg-danger p-2 px-3 rounded rounded" style="margin:0px 10px; text-transform: uppercase;">inactive</span>
+                                    @elseif (!$dealer->user->{ 'contract-status' })
+                                        <span class="" style="margin:0px 10px; text-transform: uppercase; color: red;">error no contract found!</span>
+                                    @elseif ($dealer->user->{ 'contract-status' } == 'active')
+                                        <span class="badge bg-success p-2 px-3 rounded rounded" style="margin:0px 10px; text-transform: uppercase;">active</span>
+                                    @else
+                                        <span class="badge bg-warning p-2 px-3 rounded rounded" style="margin:0px 10px; text-transform: uppercase;">pending</span>
+                                    @endif
+                                <h5>
+                            </div>
+                            <div class="col-md-2 col-sm-0"></div>
+                            <div class="col-md-4 col-sm-12">
+                                <!-- dealer current balance amount -->
+                                <div class="form-group mb-3">
+                                    <label class="form-label">{{ __('Dealer Balance') }}</label>
+                                    <input id="dealer_balance" type="number" class="form-control @error('dealer_balance') is-invalid @enderror" name="dealer_balance" value="{{ $dealer->user->{'balance-amount'} }}" required autocomplete="dealer_balance" autofocus>
+                                    @error('dealer_balance')
+                                        <span class="error invalid-name text-danger" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div id="main" class="row">
             <div class="col-md-6 col-sm-12">
                 <!-- edit the dealer -->
@@ -137,7 +213,7 @@
                                     </label>
                                     <input type="file" accept="image/png, image/gif, image/jpeg, image/jpg" class="form-control @error('dealer_logo') is-invalid @enderror" name="dealer_logo" id="dealer-logo-input" onchange="previewImage(this)">
                                 </div>
-                                <img id="dealer-logo-preview" src="{{ url($dealer->logo) }}" alt="dealer-logo" class="rounded-circle img-thumbnail m-2 w-25">
+                                <img id="dealer-logo-preview" src="{{ asset($dealer->logo) }}" alt="dealer-logo" class="rounded-circle img-thumbnail m-2 w-25">
                             </div>
                             @error('dealer_logo')
                             <span class="invalid-feedback" role="alert">
@@ -232,12 +308,25 @@
                                 <!-- dealer document -->
                                 <div class="form-group mb-3">
                                     <label class="form-label">{{ __('Dealer Registration Document') }} <span style="color: red;">*</span></label>
-                                    <input id="dealer_document" type="file" class="form-control @error('dealer_document') is-invalid @enderror" name="dealer_document" placeholder="Enter Dealer Registration Document" required autocomplete="dealer_document" autofocus>
+                                    <input id="dealer_document" type="file" class="form-control @error('dealer_document') is-invalid @enderror" name="dealer_document" value="{{ asset($dealer->dealer_document) }}" required autocomplete="dealer_document" autofocus>
                                     @error('dealer_document')
                                         <span class="error invalid-name text-danger" role="alert">
                                             <strong>{{ $message }}</strong>
                                         </span>
                                     @enderror
+                                    @php
+                                        $extension = pathinfo($dealer->dealer_document, PATHINFO_EXTENSION);
+                                    @endphp
+                                    @if($extension === 'pdf')
+                                        <!-- if the document is pdf -->
+                                        <embed id="document-preview" src="{{ asset($dealer->dealer_document) }}" type="application/pdf" width="100%" height="300px" />
+                                    @elseif(in_array($extension, ['png', 'jpg', 'jpeg']))
+                                        <!-- if the document is png/jpg -->
+                                        <img id="document-preview" src="{{ asset($dealer->dealer_document) }}" alt="dealer-document-photo" class="img-thumbnail m-2 w-25">
+                                    @else
+                                        <!-- Handle other file types here -->
+                                        <p>Unsupported file type</p>
+                                    @endif
                                 </div>
                                 <!-- passport copy -->
                                 <div class="form-group mb-3">
@@ -248,6 +337,19 @@
                                             <strong>{{ $message }}</strong>
                                         </span>
                                     @enderror
+                                    @php
+                                        $extension = pathinfo($dealer->passport_copy, PATHINFO_EXTENSION);
+                                    @endphp
+                                    @if($extension === 'pdf')
+                                        <!-- if the document is pdf -->
+                                        <embed id="document-preview" src="{{ asset($dealer->passport_copy) }}" type="application/pdf" width="100%" height="300px" />
+                                    @elseif(in_array($extension, ['png', 'jpg', 'jpeg']))
+                                        <!-- if the document is png/jpg -->
+                                        <img id="document-preview" src="{{ asset($dealer->passport_copy) }}" alt="dealer-document-photo" class="img-thumbnail m-2 w-25">
+                                    @else
+                                        <!-- Handle other file types here -->
+                                        <p>Unsupported file type</p>
+                                    @endif
                                 </div>
                                 <!-- trade license document -->
                                 <div class="form-group mb-3">
@@ -258,6 +360,19 @@
                                             <strong>{{ $message }}</strong>
                                         </span>
                                     @enderror
+                                    @php
+                                        $extension = pathinfo($dealer->trade_license, PATHINFO_EXTENSION);
+                                    @endphp
+                                    @if($extension === 'pdf')
+                                        <!-- if the document is pdf -->
+                                        <embed id="document-preview" src="{{ asset($dealer->trade_license) }}" type="application/pdf" width="100%" height="300px" />
+                                    @elseif(in_array($extension, ['png', 'jpg', 'jpeg']))
+                                        <!-- if the document is png/jpg -->
+                                        <img id="document-preview" src="{{ asset($dealer->trade_license) }}" alt="dealer-document-photo" class="img-thumbnail m-2 w-25">
+                                    @else
+                                        <!-- Handle other file types here -->
+                                        <p>Unsupported file type</p>
+                                    @endif
                                 </div>
                             </div>
                             <div class="col-md-6 col-sm-12">
@@ -270,6 +385,19 @@
                                             <strong>{{ $message }}</strong>
                                         </span>
                                     @enderror
+                                    @php
+                                        $extension = pathinfo($dealer->emirates_document, PATHINFO_EXTENSION);
+                                    @endphp
+                                    @if($extension === 'pdf')
+                                        <!-- if the document is pdf -->
+                                        <embed id="document-preview" src="{{ asset($dealer->emirates_document) }}" type="application/pdf" width="100%" height="300px" />
+                                    @elseif(in_array($extension, ['png', 'jpg', 'jpeg']))
+                                        <!-- if the document is png/jpg -->
+                                        <img id="document-preview" src="{{ asset($dealer->emirates_document) }}" alt="dealer-document-photo" class="img-thumbnail m-2 w-25">
+                                    @else
+                                        <!-- Handle other file types here -->
+                                        <p>Unsupported file type</p>
+                                    @endif
                                 </div>
                                 <!-- tax document -->
                                 <div class="form-group mb-3">
@@ -280,6 +408,19 @@
                                             <strong>{{ $message }}</strong>
                                         </span>
                                     @enderror
+                                    @php
+                                        $extension = pathinfo($dealer->tax_document, PATHINFO_EXTENSION);
+                                    @endphp
+                                    @if($extension === 'pdf')
+                                        <!-- if the document is pdf -->
+                                        <embed id="document-preview" src="{{ asset($dealer->tax_document) }}" type="application/pdf" width="100%" height="300px" />
+                                    @elseif(in_array($extension, ['png', 'jpg', 'jpeg']))
+                                        <!-- if the document is png/jpg -->
+                                        <img id="document-preview" src="{{ asset($dealer->tax_document) }}" alt="dealer-document-photo" class="img-thumbnail m-2 w-25">
+                                    @else
+                                        <!-- Handle other file types here -->
+                                        <p>Unsupported file type</p>
+                                    @endif
                                 </div>
                                 <!-- security deposit cheque copy -->
                                 <div class="form-group mb-3">
@@ -290,6 +431,42 @@
                                             <strong>{{ $message }}</strong>
                                         </span>
                                     @enderror
+                                    @php
+                                        $extension = pathinfo($dealer->security_cheque_copy, PATHINFO_EXTENSION);
+                                    @endphp
+                                    @if($extension === 'pdf')
+                                        <!-- if the document is pdf -->
+                                        <embed id="document-preview" src="{{ asset($dealer->security_cheque_copy) }}" type="application/pdf" width="100%" height="300px" />
+                                    @elseif(in_array($extension, ['png', 'jpg', 'jpeg']))
+                                        <!-- if the document is png/jpg -->
+                                        <img id="document-preview" src="{{ asset($dealer->security_cheque_copy) }}" alt="dealer-document-photo" class="img-thumbnail m-2 w-25">
+                                    @else
+                                        <!-- Handle other file types here -->
+                                        <p>Unsupported file type</p>
+                                    @endif
+                                </div>
+                                <!-- contract -->
+                                <div class="form-group mb-3">
+                                    <label class="form-label">{{ __('Contract') }} <span style="color: red;">*</span></label>
+                                    <input id="contract" type="file" class="form-control @error('contract') is-invalid @enderror" name="contract" placeholder="Enter Contract" required autocomplete="contract" autofocus>
+                                    @error('contract')
+                                        <span class="error invalid-name text-danger" role="alert">
+                                            <strong>{{ $message }}</strong>
+                                        </span>
+                                    @enderror
+                                    @php
+                                        $extension = pathinfo($dealer->contract, PATHINFO_EXTENSION);
+                                    @endphp
+                                    @if($extension === 'pdf')
+                                        <!-- if the document is pdf -->
+                                        <embed id="document-preview" src="{{ asset($dealer->contract) }}" type="application/pdf" width="100%" height="300px" />
+                                    @elseif(in_array($extension, ['png', 'jpg', 'jpeg']))
+                                        <!-- if the document is png/jpg -->
+                                        <img id="document-preview" src="{{ asset($dealer->contract) }}" alt="dealer-document-photo" class="img-thumbnail m-2 w-25">
+                                    @else
+                                        <!-- Handle other file types here -->
+                                        <p>Unsupported file type</p>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -306,18 +483,4 @@
 @endsection
 
 @push('scripts')
-<script>
-    function previewImage(input) {
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-
-            reader.onload = function (e) {
-                $('#dealer-logo-preview')
-                    .attr('src', e.target.result);
-            };
-
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-</script>
 @endpush

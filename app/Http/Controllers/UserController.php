@@ -11,6 +11,7 @@ use App\Models\EmailTemplate;
 use App\Models\LoginDetail;
 use App\Models\User;
 use App\Models\WorkSpace;
+use App\Models\Dealer;
 use Illuminate\Http\Request;
 use DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -906,6 +907,13 @@ class UserController extends Controller
         {
             return response()->json(['error' => __('Permission denied.')], 401);
         }
+    }
+
+    public function logout_new(Request $request)
+    {
+        // Log out the user
+        Auth::logout();
+        return redirect('/');
     }
 
     public function UserUnable(Request $request)
