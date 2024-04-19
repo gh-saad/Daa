@@ -32,4 +32,5 @@ class WarehouseProduct extends Model
     {
         return \Modules\Pos\Database\factories\WarehouseProductFactory::new();
     }
+
 }

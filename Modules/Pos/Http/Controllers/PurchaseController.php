@@ -130,6 +130,7 @@ class PurchaseController extends Controller
                         'category_id' => 'required',
                         'items' => 'required',
                         'lot_number'=> 'required',
+                        'bl_number'=> 'required',
                     ]
                 );
             }elseif(!empty($request->vender_name))
@@ -142,6 +143,7 @@ class PurchaseController extends Controller
                         'category_id' => 'required',
                         'items' => 'required',
                         'lot_number'=> 'required',
+                        'bl_number'=> 'required',
                     ]
                 );
             }
@@ -166,6 +168,7 @@ class PurchaseController extends Controller
             $purchase->workspace       = getActiveWorkSpace();
             $purchase->created_by      = creatorId();
             $purchase->lot_number      = $request->lot_number;
+            $purchase->bl_number      = $request->bl_number;
             $purchase->save();
 
             if(module_is_active('CustomField'))

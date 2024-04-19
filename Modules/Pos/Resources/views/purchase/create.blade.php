@@ -432,7 +432,7 @@
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-lg-6 col-12">
+                                <div class="col-lg-4 col-12">
                                     <div class="form-group">
                                         {{ Form::label('purchase_date', __('Purchase Date'),['class'=>'form-label']) }}
                                         {{Form::date('purchase_date',date('Y-m-d'),array('class'=>'form-control ','required'=>'required'))}}
@@ -448,14 +448,22 @@
                                     </div>
                                 </div> --}}
 
-                                <div class="col-lg-6 col-12">
+                                <div class="col-lg-4 col-12">
                                     <div class="form-group">
                                         {{ Form::label('purchase_lot_number', "Lot Number", ['class'=>'form-label']) }}
                                         <input type="text" class="form-control" name="lot_number" placeholder="LOT0001" required>
 
                                     </div>
                                 </div>
+                                
+                                <div class="col-lg-4 col-12">
+                                    <div class="form-group">
+                                        {{ Form::label('purchase_bl_number', "BL Number", ['class'=>'form-label']) }}
+                                        <input type="text" class="form-control" name="bl_number" placeholder="BL 0001" required>
 
+                                    </div>
+                                </div>
+                                
                                 @if(module_is_active('CustomField') && !$customFields->isEmpty())
                                 <div class="col-md-12 form-group">
                                     <div class="tab-pane fade show form-label" id="tab-2" role="tabpanel">

@@ -194,8 +194,8 @@ class ProductServiceController extends Controller
                 'sale_price' => 'required|numeric',
                 'purchase_price' => 'required|numeric',
                 'category_id' => 'required',
-                'unit_id' => 'required',
-                'type' => 'required',
+                // 'unit_id' => 'required',
+                // 'type' => 'required',
             ];
 
             $validator = \Validator::make($request->all(), $rules);
@@ -211,10 +211,25 @@ class ProductServiceController extends Controller
             $productService->sku            = $request->sku;
             $productService->sale_price     = $request->sale_price;
             $productService->purchase_price = $request->purchase_price;
-            $productService->tax_id         = !empty($request->tax_id) ? implode(',', $request->tax_id) : '';
-            $productService->unit_id        = $request->unit_id;
-            $productService->quantity        = $request->quantity;
-            $productService->type           = $request->type;
+
+            // $productService->tax_id         = !empty($request->tax_id) ? implode(',', $request->tax_id) : '';
+            // $productService->unit_id        = $request->unit_id;
+            // $productService->quantity        = $request->quantity;
+            // $productService->type           = $request->type;
+             
+            $productService->colour = $request->colour; 
+            $productService->fuel = $request->fuel;
+            $productService->mfg_year = $request->mfg_year;
+            $productService->vehicle_status = $request->vehicle_status;
+            $productService->purchased_by = $request->purchased_by;
+            $productService->purchased_status = $request->purchased_status;
+            $productService->bid_no = $request->bid_no;
+            $productService->bid_date = $request->bid_date;
+            $productService->engine_no = $request->engine_no;
+            $productService->engine_cc = $request->engine_cc;
+            $productService->sale_type = $request->sale_type;
+            $productService->sale_chartaccount_id = 50;
+            $productService->expense_chartaccount_id  = 59;
             if($request->hasFile('image'))
             {
                 // old file delete
@@ -228,6 +243,7 @@ class ProductServiceController extends Controller
                 $productService->image          = empty($path) ? null : $path['url'];
             }
             $productService->category_id    = $request->category_id;
+            
             $productService->save();
 
             event(new UpdateProduct($request,$productService));
