@@ -57,9 +57,26 @@ class SynchronizerController extends Controller
             if ($response->successful()) {
                 $response_data = $response->json();
                 foreach ($response_data["ENTITY_LIST"]["stockList"] as $vehicle){
+                    $vehicle_type = ucwords($vehicle[1]);
+                    $vehicle_type_data = DB::table('categories')->where("name", $vehicle_type)->first();
+                    if($vehicle_type_data){
+                        $vehicle_type_id = $vehicle_type_data->id;
+                    }else{
+                        $vehicle_type_data = [
+                            'name'  => $vehicle_type,
+                            'type'  => 0,
+                            'color' => '#000000',
+                            'created_by' => 2,
+                            'workspace_id' => 1,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ];
+                        $vehicle_type_id = DB::table('categories')->insertGetId($vehicle_type_data); // Changed insert to insertGetId to get the inserted id directly
+                    }
+
                     $vehicle_data = [
                         "vehicle_id" => $vehicle[0], #  vehicle_id
-                        "category_id" => $vehicle[1], # vehicle_type
+                        "category_id" => $vehicle_type_id, # vehicle_type
                         "name" => $vehicle[2]." ".$vehicle[3], # make_name model_name
                         "colour" => $vehicle[4], # colour 
                         "sku" => $vehicle[5], # chasis_no
@@ -82,7 +99,6 @@ class SynchronizerController extends Controller
                         "workspace_id" => 1,
                         "created_by" => 2,
                         "unit_id" => 1,
-                        "category_id" => 1,
                         "created_at" => now(),
                         "updated_at" => now() 
                     ];

@@ -381,9 +381,10 @@ class PosController extends Controller
                 } else {
                     if($request->cat_id == '0'){
                         // $products = Pos::getallproducts()->where('product_services.name', 'LIKE', "%{$request->search}%")->get();
-                        $products = Pos::getallproducts()->where('product_services.name', 'LIKE', "%{$request->search}%")->whereIn('product_services.id',$ids)->get();
+                        // $products = Pos::getallproducts()->where('product_services.name', 'LIKE', "%{$request->search}%")->whereIn('product_services.id',$ids)->get();
+                        $products = Pos::getallproducts()->where('product_services.sku', 'LIKE', "%{$request->search}%")->whereIn('product_services.id',$ids)->get();
                     }else{
-                        $products = Pos::getallproducts()->where('product_services.name', 'LIKE', "%{$request->search}%")->orWhere('category_id', $request->cat_id)->get();
+                        $products = Pos::getallproducts()->where('product_services.sku', 'LIKE', "%{$request->search}%")->orWhere('category_id', $request->cat_id)->get();
                     }
 
                 }
@@ -422,15 +423,16 @@ class PosController extends Controller
                         $productprice = $product->sale_price != 0 ? $product->sale_price : $product->purchase_price;
                     }
 
-
+                    // <img alt="Image placeholder" src="' . get_file($image_url) . '" class="card-image avatar shadow hover-shadow-lg" style=" height: 6rem; width: 100%;">
+                                        
                     $output .= '
 
                             <div class="col-lg-2 col-md-2 col-sm-3 col-xs-4 col-12">
                                 <div class="tab-pane fade show active toacart w-100" data-url="' . url('add-to-cart/' . $product->id . '/' . $lastsegment) .'">
                                     <div class="position-relative card">
-                                        <img alt="Image placeholder" src="' . get_file($image_url) . '" class="card-image avatar shadow hover-shadow-lg" style=" height: 6rem; width: 100%;">
                                         <div class="p-0 custom-card-body card-body d-flex ">
                                             <div class="card-body my-2 p-2 text-left card-bottom-content">
+                                                <h3 class="mb-2 text-dark product-title-name">' . $product->sku . '</h3>
                                                 <h6 class="mb-2 text-dark product-title-name">' . $product->name . '</h6>
                                                 <small class="badge bg-primary mb-0">' . currency_format_with_sym($productprice) . '</small>
 
@@ -478,6 +480,8 @@ class PosController extends Controller
             }
 
             $productname = $product->name;
+            $productsku = $product->sku;
+            $productcolour = $product->colour;
 
             if ($session_key == 'purchases') {
 
@@ -516,24 +520,26 @@ class PosController extends Controller
 
 
             $model_delete_id = 'delete-form-' . $id;
+// <td class="cart-images">
 
+                            //     <img alt="Image placeholder" src="' .get_file($image_url) . '" class="card-image avatar shadow hover-shadow-lg">
+
+                            // </td>
+                            // <td class="">
+                            //        <span class="quantity buttons_added">
+                            //              <input type="button" value="-" class="minus">
+                            //              <input type="number" step="1" min="1" max="'.$productquantity.'" name="quantity" title="' . __('Quantity') . '" class="input-number" size="4" data-url="' . url('update-cart/') . '" data-id="' . $id . '">
+                            //              <input type="button" value="+" class="plus">
+                            //        </span>
+                            // </td>
             $carthtml = '';
             $carthtml .= '<tr data-product-id="' . $id . '" id="product-id-' . $id . '">
-                            <td class="cart-images">
-
-                                <img alt="Image placeholder" src="' .get_file($image_url) . '" class="card-image avatar shadow hover-shadow-lg">
-
-                            </td>
+                            
 
                             <td class="name">' . $productname . '</td>
+                            <td class="name">' . $productsku . '</td>
 
-                            <td class="">
-                                   <span class="quantity buttons_added">
-                                         <input type="button" value="-" class="minus">
-                                         <input type="number" step="1" min="1" max="'.$productquantity.'" name="quantity" title="' . __('Quantity') . '" class="input-number" size="4" data-url="' . url('update-cart/') . '" data-id="' . $id . '">
-                                         <input type="button" value="+" class="plus">
-                                   </span>
-                            </td>
+                            
 
 
                             <td class="tax">' . $product_tax .' </td>
@@ -561,7 +567,9 @@ class PosController extends Controller
 
                 $cart = [
                     $id => [
+                        "sku" => $productsku,
                         "name" => $productname,
+                        "colour" => $productcolour,
                         "quantity" => 1,
                         "price" => $productprice,
                         "id" => $id,
@@ -1439,7 +1447,9 @@ class PosController extends Controller
 
                 $subtotal = $value['price'] * $value['quantity'];
                 $tax      = ($subtotal * $value['tax']) / 100;
+                $sales['data'][$key]['sku']       = $value['sku'];
                 $sales['data'][$key]['name']       = $value['name'];
+                $sales['data'][$key]['colour']       = $value['colour'];
                 $sales['data'][$key]['quantity']   = $value['quantity'];
                 $sales['data'][$key]['price']      = currency_format_with_sym($value['price']);
                 $sales['data'][$key]['tax']        = $value['tax'] . '%';

@@ -130,9 +130,8 @@
                             <table class="table">
                                 <thead>
                                     <tr>
-                                        <th></th>
+                                        <th class="text-left">{{ __('Chasis No') }}</th>
                                         <th class="text-left">{{ __('Name') }}</th>
-                                        <th class="text-center">{{ __('QTY') }}</th>
                                         <th>{{ 'Tax' }}</th>
                                         <th class="text-center">{{ __('Price') }}</th>
                                         <th class="text-center">{{ __('Sub Total') }}</th>
@@ -155,12 +154,13 @@
                                                 @endphp
 
                                                 <tr data-product-id="{{ $id }}" id="product-id-{{ $id }}">
-                                                    <td class="cart-images">
+                                                    {{-- <td class="cart-images">
                                                         <img alt="Image placeholder" src="{{ get_file($image_url) }}"
                                                             class="card-image avatar rounded-circle-sale shadow hover-shadow-lg">
-                                                    </td>
+                                                    </td> --}}
+                                                    <td class="sku">{{ $product->sku }}</td>
                                                     <td class="name">{{ $details['name'] }}</td>
-                                                    <td>
+                                                    {{-- <td>
                                                         <span class="quantity buttons_added">
                                                             <input type="button" value="-" class="minus">
                                                             <input type="text" step="1" name="quantity"
@@ -171,7 +171,7 @@
                                                                 value="{{ $details['quantity'] }}">
                                                             <input type="button" value="+" class="plus">
                                                         </span>
-                                                    </td>
+                                                    </td> --}}
 
                                                     <td>
                                                         @if (!empty($product->tax_id))

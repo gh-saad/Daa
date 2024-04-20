@@ -27,24 +27,24 @@
                     "product_type": product_type,
                     "_token": "{{ csrf_token() }}",
                 },
-                success: function(data) {
-                    selector.parent().parent().find('.product_id').empty();
-                    var product_select = `<select class="form-control product_id item js-searchBox" name="${itemSelect}"
-                                            placeholder="Select Item" data-url="{{route('purchase.product')}}" required = 'required'>
-                                            </select>`;
-                    selector.parent().parent().find('.product_div').html(product_select);
+                // success: function(data) {
+                //     selector.parent().parent().find('.product_id').empty();
+                //     var product_select = `<select class="form-control product_id item js-searchBox" name="${itemSelect}"
+                //                             placeholder="Select Item" data-url="{{route('purchase.product')}}" required = 'required'>
+                //                             </select>`;
+                //     selector.parent().parent().find('.product_div').html(product_select);
 
-                    selector.parent().parent().find('.product_id').append('<option value="0"> {{ __('Select Item') }} </option>');
-                    $.each(data, function(key, value) {
-                        var selected = (key == id) ? 'selected' : '';
-                        selector.parent().parent().find('.product_id').append('<option value="' + key + '" ' + selected + '>' + value + '</option>');
-                    });
+                //     selector.parent().parent().find('.product_id').append('<option value="0"> {{ __('Select Item') }} </option>');
+                //     $.each(data, function(key, value) {
+                //         var selected = (key == id) ? 'selected' : '';
+                //         selector.parent().parent().find('.product_id').append('<option value="' + key + '" ' + selected + '>' + value + '</option>');
+                //     });
 
-                    changeItem(selector.parent().parent().find('.product_id'));
-                    // Initialize your searchBox here if needed
-                    selector.parent().parent().find(".js-searchBox").searchBox({ elementWidth: '250' });
-                    selector.parent().parent().find('.unit.input-group-text').text("");
-                }
+                //     changeItem(selector.parent().parent().find('.product_id'));
+                //     // Initialize your searchBox here if needed
+                //     selector.parent().parent().find(".js-searchBox").searchBox({ elementWidth: '250' });
+                //     selector.parent().parent().find('.unit.input-group-text').text("");
+                // }
             });
         }
     </script>
@@ -527,19 +527,37 @@
                             </div>
                             <div class="row">
 
-                                <div class="col-md-6">
+                                <div class="col-lg-4 col-12">
                                     <div class="form-group">
-                                        {{ Form::label('purchase_date', __('Purchase Date'), ['class' => 'form-label']) }}
-                                        {{ Form::date('purchase_date', null, ['class' => 'form-control ', 'required' => 'required']) }}
+                                        {{ Form::label('purchase_date', __('Purchase Date'),['class'=>'form-label']) }}
+                                        {{Form::date('purchase_date',date('Y-m-d'),array('class'=>'form-control ','required'=>'required'))}}
+
                                     </div>
                                 </div>
-                                <div class="col-md-6">
+
+                                {{-- <div class="col-lg-4 col-12">
                                     <div class="form-group">
-                                        {{ Form::label('purchase_number', __('Purchase Number'), ['class' => 'form-label']) }}
-                                        <input type="text" class="form-control" value="{{ $purchase_number }}" readonly>
+                                        {{ Form::label('purchase_number', __('Purchase Number'),['class'=>'form-label']) }}
+                                        <input type="text" class="form-control" value="{{$purchase_number}}" readonly>
+
+                                    </div>
+                                </div> --}}
+
+                                <div class="col-lg-4 col-12">
+                                    <div class="form-group">
+                                        {{ Form::label('purchase_lot_number', "Lot Number", ['class'=>'form-label']) }}
+                                        {{ Form::text('lot_number', null, ['class' => 'form-control  ', 'placeholder' => 'LOT0001', 'required'=>'required']) }}
                                     </div>
                                 </div>
-                            </div>
+                                
+                                <div class="col-lg-4 col-12">
+                                    <div class="form-group">
+                                        {{ Form::label('purchase_bl_number', "BL Number", ['class'=>'form-label']) }}
+                                        {{ Form::text('bl_number', null, ['class' => 'form-control  ', 'placeholder' => 'BL00##', 'required'=>'required']) }}
+                                        
+
+                                    </div>
+                                </div>
                             @if (module_is_active('CustomField') && !$customFields->isEmpty())
                                 <div class="col-md-12 form-group">
                                     <div class="tab-pane fade show form-label" id="tab-2" role="tabpanel">
@@ -572,39 +590,42 @@
                         <table class="table  mb-0" data-repeater-list="items" id="sortable-table">
                             <thead>
                                 <tr>
-                                    <th>{{ __('Item Type') }}</th>
-                                    <th>{{ __('Items') }}</th>
-                                    <th>{{ __('Quantity') }}</th>
-                                    <th>{{ __('Price') }} </th>
-                                    <th>{{ __('Tax') }} (%)</th>
-                                    <th>{{ __('Discount') }}</th>
-                                    <th class="text-end">{{ __('Amount') }} <br><small
-                                            class="text-danger font-weight-bold">{{ __('After discount & tax') }}</small>
-                                    </th>
+                                    
+                                     {{-- <th>{{ __('Item Type') }}</th> --}}
+                                    <th>{{__('Items')}}</th>
+                                    {{-- <th>{{__('Quantity')}}</th> --}}
+                                    <th>{{__('Price')}} </th>
+                                    <th>{{__('Tax')}} (%)</th>
+                                    <th>{{__('Discount')}}</th>
+                                    <th class="text-end">{{__('Amount')}} <br><small class="text-danger font-weight-bold">{{__('After discount & tax')}}</small></th>
                                     <th></th>
                                 </tr>
                             </thead>
                             <tbody class="ui-sortable" data-repeater-item>
                                 <tr>
-                                    {{ Form::hidden('id', null, ['class' => 'form-control id']) }}
-                                    <td  class="form-group pt-0">
+                                    {{-- <td  class="form-group pt-0">
                                         {{ Form::select('product_type', $product_type, null, ['class' => 'form-control product_type ', 'required' => 'required', 'placeholder' => '--']) }}
-                                    </td>
-                                    <td width="25%" class="form-group pt-0 product_div">
+                                    </td> --}}
+                                    <td width="40%" class="form-group pt-0 product_div">
+                                        {{ Form::hidden('id', null, ['class' => 'form-control id']) }}
+                                        {{ Form::hidden('product_type', null, ['class' => 'form-control product_type','value' => 'product']) }}
+                                        {{ Form::hidden('quantity', null, ['class' => 'form-control quantity','value' => 1]) }}
+                                        
                                         <select name="item" class="form-control product_id item  js-searchBox" data-url="{{route('purchase.product')}}" required>
                                             @foreach ($product_services as $key =>$product_service)
-                                                <option value="{{$key}}">{{$product_service}}</option>
+                                            <option value="{{$key}}">{{$product_service}}</option>
                                             @endforeach
                                         </select>
                                     </td>
-                                    <td>
+                                    {{-- <td>
                                         <div class="form-group price-input input-group search-form">
                                             {{ Form::text('quantity', null, ['class' => 'form-control quantity', 'required' => 'required', 'placeholder' => __('Qty'), 'required' => 'required']) }}
                                             <span class="unit input-group-text bg-transparent"></span>
                                         </div>
-                                    </td>
+                                    </td> --}}
                                     <td>
                                         <div class="form-group price-input input-group search-form">
+                                            
                                             {{ Form::text('price', null, ['class' => 'form-control price', 'required' => 'required', 'placeholder' => __('Price'), 'required' => 'required']) }}
                                             <span
                                                 class="input-group-text bg-transparent">{{ company_setting('defult_currancy_symbol') }}</span>

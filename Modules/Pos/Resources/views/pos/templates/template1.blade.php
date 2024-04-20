@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{{-- <!DOCTYPE html>
 <html lang="en" dir="{{ $settings['site_rtl'] == 'on'?'rtl':''}}">
 <head>
     <meta charset="utf-8">
@@ -358,8 +358,434 @@
             </div>
         </div>
     </div>
+     --}}
     @if(!isset($preview))
         @include('pos::pos.script');
     @endif
-</body>
-</html>
+
+
+<div class="justify-content-center pt-2 modal-footer">
+    <a href="#" id="print"
+       class="btn btn-primary btn-sm text-right float-right mb-3 ">
+        {{ __('Print') }}
+    </a>
+</div>
+<script>
+    $("#print").click(function () {
+        var print_div = document.getElementById("printarea");
+        $('.row').addClass('d-none');
+        $('.toast').addClass('d-none');
+        $('#print').addClass('d-none');
+        window.print();
+        $('.row').removeClass('d-none');
+        $('#print').removeClass('d-none');
+        $('.toast').removeClass('d-none');
+    });
+</script>
+
+
+
+
+
+
+
+<style type="text/css">
+    @font-face {
+        font-family: 'Optima';
+        src: url('OPTIMA.TTF') format('truetype');
+        /* Add other font formats if available */
+        /* src: url('path/to/optima.woff') format('woff'),
+                url('path/to/optima.woff2') format('woff2'); */
+    }
+
+    :root {
+        --theme-color: #ffffff;
+        --white: #ffffff;
+        --black: #000000;
+    }
+
+    body {
+        font-family: 'Optima', sans-serif;
+    }
+
+    p,
+    li,
+    ul,
+    ol {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        line-height: 1.5;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .invoice-preview-main {
+        max-width: 700px;
+        width: 100%;
+        margin: 0 auto;
+        background: #ffff;
+    }
+
+    .invoice-body tr {
+        border: 3px solid #e9e9e9;
+    }
+
+    .invoice-header tr {
+        border-top: 2px solid #d9d9d9;
+        border-left: 2px solid #d9d9d9;
+        border-right: 2px solid #d9d9d9;
+        background-color: #d9d9d9;
+    }
+
+    .no-space tr td {
+        padding: 0;
+        white-space: nowrap;
+    }
+
+    .view-qrcode {
+        max-width: 139px;
+        height: 139px;
+        width: 100%;
+        margin-left: auto;
+        margin-top: 15px;
+        background: var(--white);
+        padding: 13px;
+        border-radius: 10px;
+    }
+
+    .view-qrcode img {
+        width: 100%;
+        height: 100%;
+    }
+
+    .invoice-header td {
+        padding: 1rem 0.6rem;
+    }
+
+    .invoice-body {
+        padding: 40px 25px 20px 25px;
+        border-bottom: 2px solid #d9d9d9;
+        border-left: 2px solid #d9d9d9;
+        border-right: 2px solid #d9d9d9;
+    }
+
+    .invoice-body .flex {
+        display: flex;
+    }
+
+    .invoice-body .flex .left-table {
+        width: 45%;
+        text-align: center;
+        background-color: #bfbfbf;
+    }
+
+    .invoice-body .flex .left-table tr {
+        border: none;
+    }
+
+    .invoice-body .flex .center-table {
+        width: 5%;
+    }
+
+    .invoice-body .flex .center-table tr {
+        border: none;
+    }
+
+    .invoice-body .flex .right-table {
+        width: 50%;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .invoice-body .flex .right-table tr {
+        border: none;
+    }
+
+    .heading {
+        margin: 40px 0 20px 0;
+    }
+
+    .heading tr {
+        border: 2px solid #bfbfbf;
+    }
+
+    .heading tr td {
+        padding: 0.5rem 0.6rem;
+        font-size: 1.2rem;
+    }
+
+    .main-table {
+        text-align: center;
+        font-size: 1.2rem;
+    }
+
+    .main-table,
+    .main-table tr,
+    .main-table th,
+    .main-table td {
+        border: 1px solid #bfbfbf;
+    }
+
+    .main-table tr td {
+        padding: 0.4rem 0.3rem;
+    }
+    .main-table tbody tr:nth-child(odd){
+        background-color: #f2f2f2;
+    }
+
+    .main-table tr th {
+        padding: 0.4rem 0.3rem;
+    }
+
+    
+
+    .invoice-footer tr {
+        border: none;
+        text-align: center;
+        font-size: 1.3rem;
+    }
+
+    @media (min-width: 576px){
+        .modal-sm {
+            --bs-modal-width: 600px !important;
+        }
+    }
+    
+</style>
+
+
+<div class="invoice-preview-main" id="boxes">
+    <div class="invoice-header">
+        <table>
+            <tbody>
+                <tr>
+                    <td width="50%">
+                        <img src="{{ get_file(sidebar_logo()) }}{{ '?' . time() }}" width="50%">
+                    </td>
+                    
+                    
+                    @if(!empty($settings['registration_number'])){{__('Registration Number')}} : {{$settings['registration_number']}} @endif<br>
+                    @if(!empty($settings['tax_type']) && !empty($settings['vat_number'])){{$settings['tax_type'].' '. __('Number')}} : {{$settings['vat_number']}} <br>@endif
+                    {{-- <td style="color: white; font-size: 32px;">{{company_setting('company_name')}}</td> --}}
+                    <td style="font-weight: bold; font-size: 14px;">
+                        <p>Company Name: @if(!empty($settings['company_name'])){{$settings['company_name']}}@endif</p>
+                        <p>Address: @if(!empty($settings['company_address'])) {{$settings['company_address']}}@endif @if(!empty($settings['company_city'])) {{$settings['company_city']}}, @endif @if(!empty($settings['company_state'])){{$settings['company_state']}}@endif @if(!empty($settings['company_country'])) {{$settings['company_country']}}@endif @if(!empty($settings['company_zipcode'])) - {{$settings['company_zipcode']}}@endif</p>
+                        <p>Email:  @if(!empty($settings['company_email'])){{$settings['company_email']}}@endif</p>
+                        <p>Phone: @if(!empty($settings['company_telephone'])){{$settings['company_telephone']}}@endif</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="invoice-body">
+        <div class="flex">
+            <table class="left-table">
+                <tbody>
+                    <tr>
+                        <td>
+                            <p style="font-size: 1.3rem; color: white;">Invoice</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="center-table">
+                <tbody>
+                    <tr>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="right-table">
+                <tbody>
+                     <tr>
+                        <td style="padding-right: 5px;">Invoice No. </td>
+                        <td style="text-align: center;"> : </td>
+                        <td style="padding-left: 5px;"> {{\Modules\Pos\Entities\Pos::posNumberFormat($pos->pos_id)}}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-right: 5px;">Invoice Date </td>
+                        <td style="text-align: center;"> : </td>
+                        <td style="padding-left: 5px;">  {{company_date_formate($pos->pos_date)}}<</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-right: 5px;">Name </td>
+                        <td style="text-align: center;"> : </td>
+                        <td style="padding-left: 5px;">  {{ !empty($customer->billing_name) ? $customer->billing_name : '' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-right: 5px;">Address </td>
+                        <td style="text-align: center;"> : </td>
+                        <td style="padding-left: 5px;"> {{ !empty($customer->billing_address) ? $customer->billing_address : '' }} {{ !empty($customer->billing_city) ? $customer->billing_city . ' ,' : '' }} {{ !empty($customer->billing_state) ? $customer->billing_state . ' ,' : '' }} {{ !empty($customer->billing_zip) ? $customer->billing_zip : '' }} {{ !empty($customer->billing_country) ? $customer->billing_country : '' }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding-right: 5px;">Email </td>
+                        <td style="text-align: center;"> : </td>
+                        <td style="padding-left: 5px;"> {{ !empty($customer->email) ? $customer->email : '' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding-right: 5px;">Phone </td>
+                        <td style="text-align: center;"> : </td>
+                        <td style="padding-left: 5px;"> {{ !empty($customer->billing_phone) ? $customer->billing_phone : '' }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <table class="heading">
+            <tbody>
+                <tr>
+                    <td>Vehicle Information</td>
+                </tr>
+            </tbody>
+        </table>
+        <table>
+            <tbody>
+                @if(isset($pos->itemData) && count($pos->itemData) > 0)
+                    @foreach($pos->itemData as $key => $item)
+                       
+                        @php $name_parts = explode(' ', $item->name);  @endphp
+                        <tr style="border: none;">
+                            <td style="text-align: right; padding: 0.4rem 0.6rem;"> Make : </td>
+  
+                            <td style="border: 2px solid #bfbfbf; padding: 0.4rem 0.6rem;"> {{ $name_parts[0] ?? '' }} </td>
+                            <td style="text-align: right; padding: 0.4rem 0.6rem;"> Model : </td>
+                            <td style="border: 2px solid #bfbfbf; padding: 0.4rem 0.6rem;"> {{ $name_parts[1] ?? ''}} </td>
+                        </tr>
+                        <tr style="border: none;">
+                            <td style="padding: 0.4rem 0;"></td>
+                        </tr>
+                        <tr style="border: none;">
+                            <td style="text-align: right; padding: 0.4rem 0.6rem;"> Color : </td>
+                            {{-- <td style="border: 2px solid #bfbfbf; padding: 0.4rem 0.6rem;"> {{ $item->colour }} </td> --}}
+                            <td style="text-align: right; padding: 0.4rem 0.6rem;"> Chassis No. : </td>
+                            {{-- <td style="border: 2px solid #bfbfbf; padding: 0.4rem 0.6rem;"> {{ $item->sku }} </td> --}}
+                        </tr>
+                       
+                    @endforeach
+                @endif
+                
+                
+            </tbody>
+        </table>
+
+
+        <table class="heading">
+            <tbody>
+                <tr>
+                    <td>Payment Information</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table class="main-table">
+            <thead>
+                <th style="width: 25%;">No.</th>
+                <th style="width: 45%;">Description</th>
+                <th style="width: 30%;">Price</th>
+            </thead>
+            <tbody>
+                @if(isset($pos->itemData) && count($pos->itemData) > 0)
+                    @foreach($pos->itemData as $key => $item)
+                       
+                        @php $name_parts = explode(' ', $item->name);  @endphp
+                        <tr>
+                            <td>1</td>
+                            <td>Car Price</td>
+                            <td>{{{  $item->price }}}</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Tax {{ $item->tax }}</td>
+                            {{-- <td>{{ $item->tax_amount }}td> --}}
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Rikuso Amount</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>Auction Amount</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td>Recycle Amount</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>6</td>
+                            <td>Redeem Privilege Point-100</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>7</td>
+                            <td>Advance Amount</td>
+                            <td></td>
+                        </tr>
+                       
+                    @endforeach
+                @endif
+               
+                
+            </tbody>
+        </table>
+
+        <table>
+            <tbody>
+                <tr style="border: none;">
+                    <td style="width: 70%; border: none;"></td>
+                    <td style="width: 30%; text-align: center; font-size: 1.2rem; padding: 0.7rem 0.6rem;">Total:
+                    
+                        {{currency_format_with_sym($posPayment->amount)}}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="display: flex;">
+            <table class="no-space">
+                <tbody>
+                    <tr style="border: none;">
+                        <td style="text-decoration: underline; color: red; font-weight: bold;">CONDITIONS OF DEAL:</td>
+                    </tr>
+                    <tr style="border: none;">
+                        <td style="font-size: 0.8rem; font-weight: bold;">1. SINCE IT IS USED VEHICLE, CUSTOMER ARE REQUESTED</td>
+                    </tr>
+                    <tr style="border: none;">
+                        <td style="font-size: 0.8rem; font-weight: bold;">&nbsp;&nbsp; TO CHECK THE VEHICLE THOROUGHLY, THE COMPANY</td>
+                    </tr>
+                    <tr style="border: none;">
+                        <td style="font-size: 0.8rem; font-weight: bold;">&nbsp;&nbsp; IS NOT RESPONSIBLE FOR ANY PROBLEM IN THE</td>
+                    </tr>
+                    <tr style="border: none;">
+                        <td style="font-size: 0.8rem; font-weight: bold;">&nbsp;&nbsp; VEHICLE AFTER THE DEAL OR ATTEND ANY CLAIM.</td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="no-space">
+                <tbody>
+                    <tr style="border: none;">
+                        <td colspan="2">
+                            <div class="view-qrcode">
+                               
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+    </div>
+</div>

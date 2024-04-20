@@ -84,8 +84,8 @@ class ProductServiceController extends Controller
                 'sale_price' => 'required|numeric',
                 'purchase_price' => 'required|numeric',
                 'category_id' => 'required',
-                'unit_id' => 'required',
-                'type' => 'required',
+                // 'unit_id' => 'required',
+                // 'type' => 'required',
             ];
 
             $validator = \Validator::make($request->all(), $rules);
@@ -100,24 +100,41 @@ class ProductServiceController extends Controller
             $productService->name           = $request->name;
             $productService->description    = $request->description;
             $productService->sku            = $request->sku;
-            if($request->hasFile('image')){
-                $name = time() . "_" . $request->image->getClientOriginalName();
-                $path = upload_file($request,'image',$name,'products');
-                $productService->image          = empty($path) ? null : $path['url'];
-            }
-
             $productService->sale_price     = $request->sale_price;
             $productService->purchase_price = $request->purchase_price;
+
             $productService->tax_id         = !empty($request->tax_id) ? implode(',', $request->tax_id) : '';
-            $productService->unit_id        = $request->unit_id;
-            if(!empty($request->quantity))
-            {
-                $productService->quantity        = $request->quantity;
-            }
-            else{
-                $productService->quantity   = 0;
-            }
-            $productService->type           = $request->type;
+            $productService->unit_id        = 1; #  $request->unit_id;
+            // if(!empty($request->quantity))
+            // {
+            //     $productService->quantity        = $request->quantity;
+            // }
+            // else{
+            //     $productService->quantity   = 0;
+            // }
+            $productService->quantity       = 1;
+            $productService->type           = 'product'; #  $request->type;
+             
+            $productService->colour = $request->colour; 
+            $productService->fuel = $request->fuel;
+            $productService->mfg_year = $request->mfg_year;
+            $productService->vehicle_status = $request->vehicle_status;
+            $productService->purchased_by = $request->purchased_by;
+            $productService->purchased_status = $request->purchased_status;
+            $productService->bid_no = $request->bid_no;
+            $productService->bid_date = $request->bid_date;
+            $productService->engine_no = $request->engine_no;
+            $productService->engine_cc = $request->engine_cc;
+            $productService->sale_type = $request->sale_type;
+            $productService->sale_chartaccount_id = 50;
+            $productService->expense_chartaccount_id  = 59;
+
+            // if($request->hasFile('image')){
+            //     $name = time() . "_" . $request->image->getClientOriginalName();
+            //     $path = upload_file($request,'image',$name,'products');
+            //     $productService->image          = empty($path) ? null : $path['url'];
+            // }
+
             $productService->category_id    = $request->category_id;
             $productService->created_by     = creatorId();
             $productService->workspace_id     = getActiveWorkSpace();
