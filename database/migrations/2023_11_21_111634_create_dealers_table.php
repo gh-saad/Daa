@@ -44,9 +44,6 @@ return new class extends Migration
             $table->string('reason', 255)->nullable(); // reason why it was rejected, null otherwise
             $table->timestamp('deleted_at')->nullable(); // deleted at timestamp
             $table->timestamps();
-    
-            $table->index('user_id');
-            $table->index('relational_manager');
         });
     }
     
