@@ -6,6 +6,7 @@ use App\Models\AddOn;
 use App\Models\Order;
 use App\Models\Plan;
 use App\Models\Sidebar;
+use App\Models\Dealer;
 use Illuminate\Support\Facades\Auth;
 use Modules\LandingPage\Entities\MarketplacePageSetting;
 use Nwidart\Modules\Facades\Module;
@@ -68,11 +69,33 @@ class HomeController extends Controller
                 $data = Sidebar::GetDashboardRoute();
                 if($data['status'] == true && $data['route'] != 'dashboard')
                 {
-                    return redirect()->route($data['route']);
+                    if(Auth::user()->{'contract-status'} == 'pending'){
+
+                        $dealer = Dealer::where('user_id', Auth::user()->{'id'})->first();
+
+                        if($dealer->contract !== NULL){
+                            return view('contract_halt');
+                        }else{
+                            return view('awaiting_approval');
+                        }
+                    }else{
+                        return redirect()->route($data['route']);
+                    }
                 }
                 else
                 {
-                    return view('dashboard');
+                    if(Auth::user()->{'contract-status'} == 'pending'){
+                        
+                        $dealer = Dealer::where('user_id', Auth::user()->{'id'})->first();
+
+                        if($dealer->contract !== NULL){
+                            return view('contract_halt');
+                        }else{
+                            return view('awaiting_approval');
+                        }
+                    }else{
+                        return view('dashboard');
+                    }
                 }
             }
         }

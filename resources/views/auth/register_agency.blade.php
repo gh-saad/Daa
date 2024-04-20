@@ -175,7 +175,8 @@
                             @enderror
                         </div>
                     </div>
-                    
+                </div>
+                <div class="row">
                     @if (module_is_active('GoogleCaptcha') && admin_setting('google_recaptcha_is_on') == 'on')
                         <div class="form-group col-lg-12 col-md-12 mt-3">
                             {!! NoCaptcha::display() !!}

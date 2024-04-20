@@ -18,12 +18,12 @@ Route::middleware('guest')->group(function () {
     Route::get('register/agent', [RegisteredUserController::class, 'create_agent'])
                 ->name('register.agent');
 
-    Route::get('register/agency', [RegisteredUserController::class, 'create_agency'])
+    Route::get('register/dealer', [RegisteredUserController::class, 'create_agency'])
                 ->name('register.agency');
 
     Route::post('register/agent', [RegisteredUserController::class, 'store']);
 
-    Route::post('register/agency', [RegisteredUserController::class, 'store_agency']);
+    Route::post('register/dealer', [RegisteredUserController::class, 'store_agency']);
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
                 ->name('login');

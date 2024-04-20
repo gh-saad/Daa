@@ -52,7 +52,7 @@
                             </div>
                         @elseif ($dealer->status == 'Approved')
                             <div class="d-flex align-items-center">
-                                <span class="badge bg-primary p-2 px-3 rounded">approved</span>
+                                <span class="badge bg-success p-2 px-3 rounded">approved</span>
                             </div>
                         @else
                             <div class="d-flex align-items-center">
@@ -105,7 +105,7 @@
                         </div>
                     </div>
                     <div class="card-body  text-center">
-                        <img src="{{ check_file($dealer->logo) ? get_file($dealer->logo) :get_file('uploads/dealer-logos/default.png') }}"
+                        <img src="{{ check_file( $dealer->logo ) ? get_file( $dealer->logo ) :get_file('uploads/dealer-logos/default.png') }}"
                             alt="dealer-image" class="img-fluid rounded-circle" width="120px">
                         <h4 class="mt-2">{{ $dealer->user->name }}</h4>
                         <h4 class="mt-2">{{ $dealer->company_name }}</h4>

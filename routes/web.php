@@ -42,7 +42,7 @@ require __DIR__.'/auth.php';
     Route::get('add-on', 'HomeController@Software')->name('apps.software');
     Route::get('add-on/details/{slug}', 'HomeController@SoftwareDetails')->name('software.details');
     Route::get('pricing', 'HomeController@Pricing')->name('apps.pricing');
-Route::group(['middleware' => ['verified']], function ()
+Route::group(['middleware' => ['verified', 'check.contract.status']], function ()
 {
     if(module_is_active('GoogleAuthentication'))
     {
@@ -225,6 +225,27 @@ Route::group(['middleware' => ['verified']], function ()
 
     // Constant
     Route::post('check-multi-upload', 'SettingController@uploads')->name('check.multi.upload')->middleware(['auth']);
+
+    // only allowed to super admin and one selected company
+    Route::middleware(['allowed.users'])->group(function () {
+        // dealer
+        Route::get('/dealers/edit/{id}', 'DealersController@edit')->name('backend.dealers.edit')->middleware(['auth']);
+        Route::get('/dealers/view/{id}', 'DealersController@view')->name('backend.dealers.view')->middleware(['auth']);
+        Route::get('/dealers/create', 'DealersController@create')->name('backend.dealers.create')->middleware(['auth']);
+        Route::delete('/dealers/delete/{id}', 'DealersController@destroy')->name('backend.dealers.destroy')->middleware(['auth']);
+        Route::post('/dealers/update/{id}', 'DealersController@update')->name('backend.dealers.update')->middleware(['auth']);
+        Route::post('/dealers/store', 'DealersController@store')->name('backend.dealers.store')->middleware(['auth']);
+
+        // show all
+        Route::get('/dealers', 'DealersController@grid')->name('backend.dealers.grid');
+        Route::get('/dealers/list', 'DealersController@list')->name('backend.dealers.list');
+        // show accepted
+        Route::get('/dealers/accepted', 'DealersController@accepted_grid')->name('backend.dealers.accepted.grid');
+        Route::get('/dealers/accepted/list', 'DealersController@accepted_list')->name('backend.dealers.accepted.list');
+        // show denied
+        Route::get('/dealers/denied', 'DealersController@denied_grid')->name('backend.dealers.denied.grid');
+        Route::get('/dealers/denied/list', 'DealersController@denied_list')->name('backend.dealers.denied.list');
+    });
 
     Route::group(['middleware' => 'PlanModuleCheck:Account-Taskly'], function ()
     {
@@ -449,20 +470,8 @@ Route::get('helpdesk-ticket-show/{id}', [HelpdeskTicketController::class, 'show'
 // Added by Saad
 Route::get('synchronizer/get-data',  'SynchronizerController@get_data')->name('synchronizer.get-data');
 
-Route::get('/dealers/edit/{id}', 'DealersController@edit')->name('backend.dealers.edit')->middleware(['auth']);
-Route::get('/dealers/view/{id}', 'DealersController@view')->name('backend.dealers.view')->middleware(['auth']);
-Route::get('/dealers/create', 'DealersController@create')->name('backend.dealers.create')->middleware(['auth']);
-Route::delete('/dealers/delete/{id}', 'DealersController@destroy')->name('backend.dealers.destroy')->middleware(['auth']);
-Route::post('/dealers/update/{id}', 'DealersController@update')->name('backend.dealers.update')->middleware(['auth']);
-Route::post('/dealers/store', 'DealersController@store')->name('backend.dealers.store')->middleware(['auth']);
+// place this outside the middleware that verifies contract status
+Route::get('/logout-without-contract', 'UserController@logout_new')->name('logout.new');
 
-// show all
-Route::get('/dealers', 'DealersController@grid')->name('backend.dealers.grid');
-Route::get('/dealers/list', 'DealersController@list')->name('backend.dealers.list');
-// show accepted
-Route::get('/dealers/accepted', 'DealersController@accepted_grid')->name('backend.dealers.accepted.grid');
-Route::get('/dealers/accepted/list', 'DealersController@accepted_list')->name('backend.dealers.accepted.list');
-// show denied
-Route::get('/dealers/denied', 'DealersController@denied_grid')->name('backend.dealers.denied.grid');
-Route::get('/dealers/denied/list', 'DealersController@denied_list')->name('backend.dealers.denied.list');
-
+// contract approval routes
+Route::post('/approval/submit', 'ApprovalController@submit')->name('approval.submit');

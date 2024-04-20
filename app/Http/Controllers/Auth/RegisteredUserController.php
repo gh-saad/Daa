@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Events\DefaultData;
+use App\Events\EmailVerification;
 use App\Http\Controllers\Controller;
 use App\Models\EmailTemplate;
 use App\Models\User;
@@ -18,6 +19,7 @@ use App\Models\WorkSpace;
 use App\Events\GivePermissionToRole;
 use App\Models\Plan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class RegisteredUserController extends Controller
@@ -124,6 +126,7 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'created_by' => env('SELECTED_USER_ID'),
         ]);
         Auth::login($user);
 
@@ -233,7 +236,7 @@ class RegisteredUserController extends Controller
                 'emirate_document.required' => "Emirates ID/Visa Image is required.",
                 'emirate_document.mimes' => "Only jpeg, png and pdf are allowed.",
                 'security_deposit_cheque_copy.required' => "Security Deposit Cheque Image is required.",
-                'security_deposit_cheque_copy.mimes' => "Only jpeg, png and pdf are allowed."
+                'security_deposit_cheque_copy.mimes' => "Only jpeg, png and pdf are allowed.",
             ]);
         
             if(module_is_active('GoogleCaptcha') && admin_setting('google_recaptcha_is_on') == 'on') {
@@ -258,26 +261,79 @@ class RegisteredUserController extends Controller
                 'name' => $request->company_name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
+                'created_by' => env('SELECTED_USER_ID'),
             ]);
+            $user->setAttribute('contract-status', 'pending'); // Set contract-status attribute
             Auth::login($user);
         
             $role_r = Role::findByName('company');
             if (!empty($user)) {
                 $user->assignRole($role_r);
-                $user->email_verified_at = now(); // mark this account as verified for now.
-                $user->active_workspace = 1; // set current active workspace id
-                $user->workspace_id = 1; // set default workspace id
-                $user->active_plan = 1; // set free plan id to activate the user in free plan mode
-                $user->plan_expire_date = now()->addDays(30); // set expiry date of free plan
-                $user->is_enable_login = 1; // enable login for now will not be the case later
-                $user->is_disable = 1;
-                $user->created_by = 2; // default user
+
+                // WorkSpace slug create on WorkSpace Model
+                $workspace = new WorkSpace();
+                $workspace->name = $request->company_name;
+                $workspace->created_by = $user->id;
+                $workspace->save();
+    
+                $user_work = User::find($user->id);
+                $user_work->active_workspace = $workspace->id;
+                $user_work->workspace_id = $workspace->id;
+                $user_work->save();
+    
+                User::CompanySetting($user->id);
+                $uArr = [
+                    'email'=> $request->email,
+                    'password'=> $request->password,
+                    'company_name'=>$request->name,
+                ];
+                $data= $user->MakeRole();
+                // custom event for role
+                $client_id =$data['client_role']->id;
+                $staff_role =$data['staff_role']->id;
+    
+                if(!empty($user->active_module))
+                {
+                    event(new GivePermissionToRole($client_id,'client',$user->active_module));
+                    event(new GivePermissionToRole($staff_role,'staff',$user->active_module));
+                    event(new DefaultData($user->id,$workspace->id,$user->active_module));
+                }
+    
+                if(!empty($request->type) ? $request->type != "pricing" : '')
+                {
+                    $plan = Plan::where('is_free_plan',1)->first();
+                    if($plan)
+                    {
+                        $user->assignPlan($plan->id,'Month',$plan->modules,0,$user->id);
+                    }
+                }
+    
+                if ( admin_setting('email_verification') == 'on')
+                {
+                    try
+                    {
+                        // send verification mail
+                        $user->sendEmailVerificationNotification();
+                    }
+                    catch(\Exception $e)
+                    {
+                        $smtp_error = __('E-Mail has been not sent due to SMTP configuration');
+                    }
+                }
+                else
+                {
+                    $user_work = User::find($user->id);
+                    $user_work->email_verified_at = date('Y-m-d h:i:s');
+                    $user_work->save();
+                }
+    
                 $user->save();
             }
             
             // create a new dealer and assign it with the created user
             $dealer = Dealer::create([
                 'user_id' => $user->id,
+                'logo' => 'uploads/dealer-logos/default.png',
                 'company_name' => $request->company_name,
                 'relational_manager' => $request->relationship_manager,
                 'company_whatsapp' => $request->company_whatsapp,
@@ -291,8 +347,8 @@ class RegisteredUserController extends Controller
                 'created_by' => 2,
                 'status' => 'pending',
             ]);
-        
-            return redirect('plans');
+
+            return redirect('dashboard');
         } catch (ValidationException $e) {
             // Redirect back with errors if validation fails
             return redirect()->back()->withErrors($e->errors())->withInput();

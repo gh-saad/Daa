@@ -52,7 +52,7 @@
                             </div>
                         @elseif ($dealer->status == 'Approved')
                             <div class="d-flex align-items-center">
-                                <span class="badge bg-primary p-2 px-3 rounded">approved</span>
+                                <span class="badge bg-success p-2 px-3 rounded">approved</span>
                             </div>
                         @else
                             <div class="d-flex align-items-center">

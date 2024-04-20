@@ -355,6 +355,16 @@
                                             </span>
                                         @enderror
                                     </div>
+                                    <!-- contract -->
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">{{ __('Contract') }} <span style="color: red;">*</span></label>
+                                        <input id="contract" type="file" class="form-control @error('contract') is-invalid @enderror" name="contract" placeholder="Enter Contract" required autocomplete="contract" autofocus>
+                                        @error('contract')
+                                            <span class="error invalid-name text-danger" role="alert">
+                                                <strong>{{ $message }}</strong>
+                                            </span>
+                                        @enderror
+                                    </div>
                                 </div>
                             </div>
                         </div>

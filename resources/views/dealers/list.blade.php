@@ -75,7 +75,7 @@
                                                 @if ($dealer->status == 'Rejected')
                                                     <span class="badge bg-danger p-2 px-3 rounded rounded">rejected</span>
                                                 @elseif ($dealer->status == 'Approved')
-                                                    <span class="badge bg-primary p-2 px-3 rounded rounded">approved</span>
+                                                    <span class="badge bg-success p-2 px-3 rounded rounded">approved</span>
                                                 @else
                                                     <span class="badge bg-warning p-2 px-3 rounded rounded">pending</span>
                                                 @endif

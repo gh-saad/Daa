@@ -27,23 +27,25 @@
 
                         @endphp
 
-                        <li class="dash-item dash-hasmenu">
-                            <a href="{{ $route }}" class="dash-link {{ $menu->permissions }}">
-                                <span class="dash-micon"><i class="{{ $menu->icon }}"></i></span>
-                                <span class="dash-mtext">{{ __($menu->title) }}</span>
-                                @if (count($menu->childs) > 1)
-                                    <span class="dash-arrow">
-                                        <i data-feather="chevron-right"></i>
-                                    </span>
-                                @endif
-                            </a>
+                        @if ($menu->title != __('Dealer Management') || in_array(auth()->id(), explode(',', env('DEALER_MANAGEMENT_ALLOWED_USERS'))))
+                            <li class="dash-item dash-hasmenu">
+                                <a href="{{ $route }}" class="dash-link {{ $menu->permissions }}">
+                                    <span class="dash-micon"><i class="{{ $menu->icon }}"></i></span>
+                                    <span class="dash-mtext">{{ __($menu->title) }}</span>
+                                    @if (count($menu->childs) > 1)
+                                        <span class="dash-arrow">
+                                            <i data-feather="chevron-right"></i>
+                                        </span>
+                                    @endif
+                                </a>
 
-                            @if (count($menu->childs) > 1)
-                                @include('partials.submenu', [
-                                    'childs' => $menu->childs,
-                                ])
-                            @endif
-                        </li>
+                                @if (count($menu->childs) > 1)
+                                    @include('partials.submenu', [
+                                        'childs' => $menu->childs,
+                                    ])
+                                @endif
+                            </li>
+                        @endif
                     @endcan
                 @endforeach
                     @stack('custom_side_menu')

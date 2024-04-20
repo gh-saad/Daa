@@ -16,7 +16,6 @@ use Illuminate\Validation\ValidationException;
 
 class DealersController extends Controller
 {
-    
     // to show all dealers
 
     public function grid(Request $request)
@@ -143,6 +142,7 @@ class DealersController extends Controller
                     'swift_code' => 'nullable', // swift code
                     'branch_name' => 'nullable|string|max:255', // branch name
                     'dealer_logo' => 'nullable|mimes:jpeg,png,jpg,gif|max:2048', // image only file
+                    'dealer_balance' => 'nullable', // dealer balance
                     // validating documents
                     'dealer_document' =>  'file|mimes:pdf,png,jpg|max:3072', // dealer document file
                     'passport_copy' =>  'file|mimes:pdf,png,jpg|max:3072', // passport copy file
@@ -150,6 +150,7 @@ class DealersController extends Controller
                     'emirates_document' => 'file|mimes:pdf,png,jpg|max:3072', // emirates document file
                     'tax_document' => 'file|mimes:pdf,png,jpg|max:3072', // tax document file
                     'security_deposit_cheque_copy' => 'file|mimes:pdf,png,jpg|max:3072', // security deposit cheque copy file
+                    'contract' => 'file|mimes:pdf,png,jpg|max:3072', // contract of agreement
                 ], [
                     'dealer_name.required' => "Dealer Name is required.",
                     'dealer_website.url' => "Invalid URL format.",
@@ -175,11 +176,14 @@ class DealersController extends Controller
                     'security_deposit_cheque_copy.required' => "Security Deposit Cheque Image is required.",
                     'security_deposit_cheque_copy.mimes' => "Only JPG/PDF/PNG files are allowed.",
                     'security_deposit_cheque_copy.max' => "File size should not exceed 3MB.",
+                    'contract.required' => "Contract is required.",
+                    'contract.mimes' => "Only JPG/PDF/PNG files are allowed.",
+                    'contract.max' => "File size should not exceed 3MB.",
                 ]);
 
                 // save provided documents to storage and get the file paths
                 $documentPaths = [];
-                $inputs = ['dealer_document', 'passport_copy', 'trade_license_document', 'emirates_document', 'tax_document', 'security_deposit_cheque_copy'];
+                $inputs = ['dealer_document', 'passport_copy', 'trade_license_document', 'emirates_document', 'tax_document', 'security_deposit_cheque_copy', 'contract'];
                 foreach ($inputs as $input) {
                     if ($request->hasFile($input)) {
                         $file = $request->file($input);
@@ -223,16 +227,58 @@ class DealersController extends Controller
                 $dealer->iban = $request->iban;
                 $dealer->swift_code = $request->swift_code;
                 $dealer->branch_name = $request->branch_name;
-                $dealer->dealer_document = 'uploads/documents/' . $documentPaths['dealer_document'];
-                $dealer->trade_license = 'uploads/documents/' . $documentPaths['trade_license_document'];
-                $dealer->tax_document = 'uploads/documents/' . $documentPaths['tax_document'];
-                $dealer->passport_copy = 'uploads/documents/' . $documentPaths['passport_copy'];
-                $dealer->emirates_document = 'uploads/documents/' . $documentPaths['emirates_document'];
-                $dealer->security_cheque_copy = 'uploads/documents/' . $documentPaths['security_deposit_cheque_copy'];
-                if (isset($logo_file_name)) {
+                // Check if files were provided for documents
+                if ($request->hasFile('dealer_document')) {
+                    $dealer->dealer_document = 'uploads/documents/' . $documentPaths['dealer_document'];
+                }
+                if ($request->hasFile('passport_copy')) {
+                    $dealer->passport_copy = 'uploads/documents/' . $documentPaths['passport_copy'];
+                }
+                if ($request->hasFile('trade_license_document')) {
+                    $dealer->trade_license = 'uploads/documents/' . $documentPaths['trade_license_document'];
+                }
+                if ($request->hasFile('emirates_document')) {
+                    $dealer->emirates_document = 'uploads/documents/' . $documentPaths['emirates_document'];
+                }
+                if ($request->hasFile('tax_document')) {
+                    $dealer->tax_document = 'uploads/documents/' . $documentPaths['tax_document'];
+                }
+                if ($request->hasFile('security_deposit_cheque_copy')) {
+                    $dealer->security_cheque_copy = 'uploads/documents/' . $documentPaths['security_deposit_cheque_copy'];
+                }
+                if ($request->hasFile('contract')) {
+                    $dealer->contract = 'uploads/documents/' . $documentPaths['contract'];
+                }
+                
+                // Check if logo file was provided
+                if ($request->hasFile('dealer_logo')) {
                     $dealer->logo = 'uploads/dealer-logos/' . $logo_file_name;
                 }
+                
                 $dealer->save();
+
+                // update dealer balance field in the user database
+                $user = User::find($dealer->user_id);
+                $user->{'balance-amount'} = $request->dealer_balance;
+                $user->save();
+
+                if ($request->status == 'pending'){
+                    // do nothing
+                }else if ($request->status == 'approve'){
+                    // update status for both dealer and users contract status
+                    $user->{'contract-status'} = 'active';
+                    $user->save();
+
+                    $dealer->status = 'Approved';
+                    $dealer->save();
+                }else if ($request->status == 'reject'){
+                    // update status for both dealer and users contract status
+                    $user->{'contract-status'} = 'inactive';
+                    $user->save();
+
+                    $dealer->status = 'Rejected';
+                    $dealer->save();
+                }
 
                 // redirect back with success
                 return redirect()->back()->with('success', 'Dealer updated Successfully!');
@@ -243,7 +289,6 @@ class DealersController extends Controller
             } catch (\Exception $e) {
                 // handle any other exceptions, rollback transaction and display error message
                 DB::rollBack();
-                dd( $e );
                 return redirect()->back()->with('error', 'An error occurred while processing your request. Please try again later.');
             }
         }
@@ -338,6 +383,7 @@ class DealersController extends Controller
                     'emirates_document' => 'file|mimes:pdf,png,jpg|max:3072', // emirates document file
                     'tax_document' => 'file|mimes:pdf,png,jpg|max:3072', // tax document file
                     'security_deposit_cheque_copy' => 'file|mimes:pdf,png,jpg|max:3072', // security deposit cheque copy file
+                    'contract' => 'file|mimes:pdf,png,jpg|max:3072', // contract of agreement
                 ], [
                     'user_name.required' => "User name is required.",
                     'email.unique' => "This Email is already registered.",
@@ -367,11 +413,14 @@ class DealersController extends Controller
                     'security_deposit_cheque_copy.required' => "Security Deposit Cheque Image is required.",
                     'security_deposit_cheque_copy.mimes' => "Only JPG/PDF/PNG files are allowed.",
                     'security_deposit_cheque_copy.max' => "File size should not exceed 3MB.",
+                    'contract.required' => "Contract is required.",
+                    'contract.mimes' => "Only JPG/PDF/PNG files are allowed.",
+                    'contract.max' => "File size should not exceed 3MB.",
                 ]);
 
                 // save provided documents to storage and get the file paths
                 $documentPaths = [];
-                $inputs = ['dealer_document', 'passport_copy', 'trade_license_document', 'emirates_document', 'tax_document', 'security_deposit_cheque_copy'];
+                $inputs = ['dealer_document', 'passport_copy', 'trade_license_document', 'emirates_document', 'tax_document', 'security_deposit_cheque_copy', 'contract'];
                 foreach ($inputs as $input) {
                     if ($request->hasFile($input)) {
                         $file = $request->file($input);
@@ -444,6 +493,7 @@ class DealersController extends Controller
                     'passport_copy' => 'uploads/documents/' . $documentPaths['passport_copy'],
                     'emirates_document' => 'uploads/documents/' . $documentPaths['emirates_document'],
                     'security_cheque_copy' => 'uploads/documents/' . $documentPaths['security_deposit_cheque_copy'],
+                    'contract' => 'uploads/documents/' . $documentPaths['contract'],
                     'created_by' => 2,
                     'status' => 'pending',
                 ]);
