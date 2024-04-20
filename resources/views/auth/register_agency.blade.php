@@ -81,7 +81,7 @@
                     </div>
                     <div class="col-md-4 col-sm-12">
                         <!-- select from available users for relationship manager -->
-                        <div class="form-group mb-3">
+                        {{-- <div class="form-group mb-3">
                             <label class="form-label">{{ __('Relationship Manager') }}</label>
                             <select id="relationship_manager" name="relationship_manager" class="form-control @error('relationship_manager') is-invalid @enderror">
                                 <option value="">Select Relationship Manager</option>
@@ -91,6 +91,17 @@
                             </select>
                             @error('relationship_manager')
                                 <span class="error invalid-relationship_manager text-danger" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                            @enderror
+                        </div> --}}
+                         <!-- tax registration document -->
+                         <div class="form-group mb-3">
+                            <label class="form-label">{{ __('Tax Document') }}</label>
+                            <input id="tax_registration" type="file" class="form-control @error('tax_registration') is-invalid @enderror"
+                                name="tax_registration" placeholder="Select Tax Document" required autocomplete="tax_registration" autofocus>
+                            @error('tax_registration')
+                                <span class="error invalid-name text-danger" role="alert">
                                     <strong>{{ $message }}</strong>
                                 </span>
                             @enderror
@@ -130,17 +141,7 @@
                         </div>
                     </div>
                     <div class="col-md-4 col-sm-12">
-                        <!-- tax registration document -->
-                        <div class="form-group mb-3">
-                            <label class="form-label">{{ __('Tax Document') }}</label>
-                            <input id="tax_registration" type="file" class="form-control @error('tax_registration') is-invalid @enderror"
-                                name="tax_registration" placeholder="Select Tax Document" required autocomplete="tax_registration" autofocus>
-                            @error('tax_registration')
-                                <span class="error invalid-name text-danger" role="alert">
-                                    <strong>{{ $message }}</strong>
-                                </span>
-                            @enderror
-                        </div>
+                       
                         <!-- passport copy document -->
                         <div class="form-group mb-3">
                             <label class="form-label">{{ __('Copy of Passport') }}</label>
