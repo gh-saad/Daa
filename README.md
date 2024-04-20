@@ -12,13 +12,6 @@ php artisan migrate --path=/database/migrations/2024_03_28_072156_alter_users_ta
 php artisan migrate --path=/database/migrations/2024_04_01_111229_alter_purchase_table.php
 
 
-## Dealer Manegment
-
-php artisan migrate --path=/database/migrations/2023_11_21_111634_create_dealers_table.php
-php artisan db:seed --class=SidebarMenu
-php artisan migrate --path=/database/migrations/2024_04_15_100915_alter_users(1).php
-php artisan migrate --path=/database/migrations/2024_04_18_051815_alter_dealers_table.php
-
 add the following in .env file:
 SELECTED_USER_ID=2
 DEALER_MANAGEMENT_ALLOWED_USERS=1,2
@@ -27,3 +20,13 @@ DEALER_MANAGEMENT_ALLOWED_USERS=1,2
 
 php artisan migrate:rollback --path=/database/migrations/2024_04_01_111229_alter_purchase_table.php
 php artisan migrate: --path=/database/migrations/2024_04_01_111229_alter_purchase_table.php
+
+
+php artisan migrate:rollback --path=/database/migrations/2024_03_28_072156_alter_users_table.php
+php artisan migrate --path=/database/migrations/2024_03_28_072156_alter_users_table.php
+
+## Dealer Manegment
+php artisan migrate:rollback --path=/database/migrations/2023_11_21_111634_create_dealers_table.php
+php artisan migrate --path=/database/migrations/2023_11_21_111634_create_dealers_table.php
+php artisan db:seed --class=SidebarMenu
+php artisan migrate --path=/database/migrations/2024_04_18_051815_alter_dealers_table.php

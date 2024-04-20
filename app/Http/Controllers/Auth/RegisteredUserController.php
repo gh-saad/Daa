@@ -208,7 +208,7 @@ class RegisteredUserController extends Controller
                 'company_name' => 'required|string|max:255', // company name
                 'email' => 'required|string|email|max:255|unique:users', // company email
                 'password' => ['required', 'confirmed', Rules\Password::defaults()], // company password
-                'relationship_manager' => 'required',  // relationship manager
+                // 'relationship_manager' => 'required',  // relationship manager
                 'company_whatsapp' => 'required', // company whatsapp
                 // required documents
                 'dealer_registration' => 'required|file|mimes:pdf,jpeg,png|max:2048', // dealer registration document
@@ -335,7 +335,7 @@ class RegisteredUserController extends Controller
                 'user_id' => $user->id,
                 'logo' => 'uploads/dealer-logos/default.png',
                 'company_name' => $request->company_name,
-                'relational_manager' => $request->relationship_manager,
+                'relational_manager' => env('SELECTED_USER_ID'), //$request->relationship_manager,
                 'company_whatsapp' => $request->company_whatsapp,
                 // add document paths to dealer model
                 'dealer_document' => 'uploads/documents/' . $documentPaths['dealer_registration'],
