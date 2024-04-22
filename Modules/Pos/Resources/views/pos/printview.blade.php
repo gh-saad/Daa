@@ -207,7 +207,7 @@
             <tbody>
                 <tr>
                     <td width="50%">
-                        <img src="{{ get_file(sidebar_logo()) }}{{ '?' . time() }}">
+                        <img src="{{ get_file(sidebar_logo()) }}{{ '?' . time() }}" width="50%">
                     </td>
 
                     {{-- <td style="color: white; font-size: 32px;">{{company_setting('company_name')}}</td> --}}
