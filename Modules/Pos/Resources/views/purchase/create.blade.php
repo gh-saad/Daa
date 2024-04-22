@@ -533,7 +533,7 @@
                                 </td> --}}
                                 <td>
                                     <div class="form-group price-input input-group search-form">
-                                        <input type="hidden" name="quantity" value="1">
+                                        <input type="hidden" name="quantity" value="1" class="quantity">
                                         {{ Form::text('price','', array('class' => 'form-control price','required'=>'required','placeholder'=>__('Price'),'required'=>'required')) }}
                                         <span class="input-group-text bg-transparent">{{company_setting('defult_currancy_symbol')}}</span>
                                     </div>
