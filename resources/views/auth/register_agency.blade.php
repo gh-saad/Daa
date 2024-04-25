@@ -35,7 +35,7 @@
                         <div class="form-group mb-3">
                             <label class="form-label">{{ __('Company Name') }}</label>
                             <input id="company_name" type="text" class="form-control @error('company_name') is-invalid @enderror"
-                                name="company_name" value="{{ old('Company Name') }}" placeholder="Company Name" required autocomplete="company_name" autofocus>
+                                name="company_name" value="{{ old('company_name') }}" placeholder="Company Name" required autocomplete="company_name" autofocus>
                             @error('company_name')
                                 <span class="error invalid-name text-danger" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -99,7 +99,7 @@
                          <div class="form-group mb-3">
                             <label class="form-label">{{ __('Tax Document') }}</label>
                             <input id="tax_registration" type="file" class="form-control @error('tax_registration') is-invalid @enderror"
-                                name="tax_registration" placeholder="Select Tax Document" required autocomplete="tax_registration" autofocus>
+                                name="tax_registration" placeholder="Select Tax Document" value="{{ old('tax_registration') }}" required autocomplete="tax_registration" autofocus>
                             @error('tax_registration')
                                 <span class="error invalid-name text-danger" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -110,7 +110,7 @@
                         <div class="form-group mb-3">
                             <label class="form-label">{{ __('Company Whatsapp') }}</label>
                             <input id="company_whatsapp" type="text" class="form-control @error('company_whatsapp') is-invalid @enderror"
-                                name="company_whatsapp" placeholder="Company Whatsapp Number" required autocomplete="company_whatsapp" autofocus>
+                                name="company_whatsapp" placeholder="Company Whatsapp Number" value="{{ old('company_whatsapp') }}" required autocomplete="company_whatsapp" autofocus>
                             @error('company_whatsapp')
                                 <span class="error invalid-name text-danger" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -121,7 +121,7 @@
                         <div class="form-group mb-3">
                             <label class="form-label">{{ __('Dealer Registration Document') }}</label>
                             <input id="dealer_registration" type="file" class="form-control @error('dealer_registration') is-invalid @enderror"
-                                name="dealer_registration" placeholder="Select Dealer Registration Document" required autocomplete="dealer_registration" autofocus>
+                                name="dealer_registration" placeholder="Select Dealer Registration Document" value="{{ old('dealer_registration') }}" required autocomplete="dealer_registration" autofocus>
                             @error('dealer_registration')
                                 <span class="error invalid-name text-danger" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -132,7 +132,7 @@
                         <div class="form-group mb-3">
                             <label class="form-label">{{ __('Trade License Document') }}</label>
                             <input id="trade_license" type="file" class="form-control @error('trade_license') is-invalid @enderror"
-                                name="trade_license" placeholder="Select Trade License Document" required autocomplete="trade_license" autofocus>
+                                name="trade_license" placeholder="Select Trade License Document" value="{{ old('trade_license') }}" required autocomplete="trade_license" autofocus>
                             @error('trade_license')
                                 <span class="error invalid-name text-danger" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -146,7 +146,7 @@
                         <div class="form-group mb-3">
                             <label class="form-label">{{ __('Copy of Passport') }}</label>
                             <input id="passport_copy" type="file" class="form-control @error('passport_copy') is-invalid @enderror"
-                                name="passport_copy" placeholder="Select Copy of Passport" required autocomplete="passport_copy" autofocus>
+                                name="passport_copy" placeholder="Select Copy of Passport" value="{{ old('passport_copy') }}" required autocomplete="passport_copy" autofocus>
                             @error('passport_copy')
                                 <span class="error invalid-name text-danger" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -157,7 +157,7 @@
                         <div class="form-group mb-3">
                             <label class="form-label">{{ __('Emirate Document') }}</label>
                             <input id="emirate_document" type="file" class="form-control @error('emirate_document') is-invalid @enderror"
-                                name="emirate_document" placeholder="Select Emirate Document" required autocomplete="emirate_document" autofocus>
+                                name="emirate_document" placeholder="Select Emirate Document" value="{{ old('emirate_document') }}" required autocomplete="emirate_document" autofocus>
                             @error('emirate_document')
                                 <span class="error invalid-name text-danger" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -168,7 +168,7 @@
                         <div class="form-group mb-3">
                             <label class="form-label">{{ __('Copy of Security Deposit Cheque') }}</label>
                             <input id="security_deposit_cheque_copy" type="file" class="form-control @error('security_deposit_cheque_copy') is-invalid @enderror"
-                                name="security_deposit_cheque_copy" placeholder="Select Copy of Security Deposit Cheque" required autocomplete="security_deposit_cheque_copy" autofocus>
+                                name="security_deposit_cheque_copy" placeholder="Select Copy of Security Deposit Cheque" value="{{ old('security_deposit_cheque_copy') }}" required autocomplete="security_deposit_cheque_copy" autofocus>
                             @error('security_deposit_cheque_copy')
                                 <span class="error invalid-name text-danger" role="alert">
                                     <strong>{{ $message }}</strong>
