@@ -38,7 +38,7 @@ return new class extends Migration
             $table->string('currency', 255)->nullable(); // currency used by this dealer
             $table->string('swift_code', 255)->nullable(); // swift code for international transactions
             $table->string('iban', 255)->nullable(); // iban for international transactions
-            $table->foreignId('created_by')->constrained('users')->default(2); // foreign key referencing the user who created this
+            $table->unsignedBigInteger('created_by')->default(2); // foreign key referencing the user who created this
             $table->enum('status', ['pending', 'Approved', 'Rejected'])->default('pending');  // status of the application
             $table->tinyInteger('is_submitted')->default(0); // whether it has been submitted to admin or not
             $table->string('reason', 255)->nullable(); // reason why it was rejected, null otherwise
