@@ -11,7 +11,6 @@ php artisan migrate --path=/database/migrations/2024_03_28_072156_alter_users_ta
 
 php artisan migrate --path=/database/migrations/2024_04_01_111229_alter_purchase_table.php
 
-
 add the following in .env file:
 SELECTED_USER_ID=2
 DEALER_MANAGEMENT_ALLOWED_USERS=1,2
@@ -21,9 +20,7 @@ DEALER_MANAGEMENT_ALLOWED_USERS=1,2
 php artisan migrate:rollback --path=/database/migrations/2024_04_01_111229_alter_purchase_table.php
 php artisan migrate: --path=/database/migrations/2024_04_01_111229_alter_purchase_table.php
 
-
-php artisan migrate:rollback --path=/database/migrations/2024_03_28_072156_alter_users_table.php
-php artisan migrate --path=/database/migrations/2024_03_28_072156_alter_users_table.php
+php artisan migrate --path=/database/migrations/2024_04_25_092732_alter_user_tabel_add_contract_status.php
 
 ## Dealer Manegment
 php artisan migrate:rollback --path=/database/migrations/2023_11_21_111634_create_dealers_table.php
