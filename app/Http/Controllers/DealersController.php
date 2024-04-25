@@ -128,7 +128,7 @@ class DealersController extends Controller
                 $request->validate([
                     // validating information
                     'dealer_name' => 'required|string|max:255', // dealer name
-                    'dealer_website' => 'nullable|url', // website url
+                    'dealer_website' => 'nullable', // website url
                     'dealer_whatsapp' => 'required', // whatsapp number
                     'po_box' => 'nullable', // po box
                     'gm_whatsapp' => 'nullable', // general manager whatsapp number
@@ -153,7 +153,6 @@ class DealersController extends Controller
                     'contract' => 'file|mimes:pdf,png,jpg|max:3072', // contract of agreement
                 ], [
                     'dealer_name.required' => "Dealer Name is required.",
-                    'dealer_website.url' => "Invalid URL format.",
                     'dealer_whatsapp.required' => "WhatsApp Number is required.",
                     'relationship_manager.required' => "Relationship Manager is required.",
                     'dealer_logo.mimes' => "Invalid image file.",
