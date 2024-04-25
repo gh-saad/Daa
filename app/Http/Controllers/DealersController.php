@@ -461,6 +461,7 @@ class DealersController extends Controller
                 if (!empty($user)) {
                     $user->assignRole($role_r);
                     $user->email_verified_at = now(); // mark this account as verified for now.
+                    $user->{'contract-status'} = 'active'; // set contract status to active
                     $user->active_workspace = 1; // set current active workspace id
                     $user->workspace_id = 1; // set default workspace id
                     $user->active_plan = 1; // set free plan id to activate the user in free plan mode
