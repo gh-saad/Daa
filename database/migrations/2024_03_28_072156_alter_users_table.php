@@ -29,8 +29,6 @@ return new class extends Migration
             $table->string('personal_access_token')->nullable();
             $table->string('token_expires_at')->nullable();
             $table->integer('balance_privilege_point')->nullable();
-            $table->string('contract-status')->nullable()->after('email_verified_at');
-            $table->integer('balance-amount')->default(0);
         });
     }
 
@@ -57,8 +55,6 @@ return new class extends Migration
             $table->dropColumn('personal_access_token');
             $table->dropColumn('token_expires_at');
             $table->dropColumn('balance_privilege_point');
-            $table->dropColumn('contract-status');
-            $table->dropColumn('balance-amount');
         });
     }
 };
