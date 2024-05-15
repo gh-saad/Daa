@@ -56,6 +56,12 @@ class TransactionController extends Controller
                     $end   = strtotime(date('Y-m', strtotime("-5 month")));
                 }
 
+                if($start > $end) {
+                    $tmp = $start;
+                    $start = $end;
+                    $end = $tmp;
+                }
+                
                 $currentdate = $start;
                 while($currentdate <= $end)
                 {

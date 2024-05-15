@@ -2,6 +2,7 @@
 
 namespace Modules\Pos\Http\Controllers;
 
+use Exception;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -904,9 +905,51 @@ class PurchaseController extends Controller
                 {
                     $Vendor = $vender_acc;
                 }
+
+                $bill_payment         = new \Modules\Account\Entities\BillPayment();
+                $bill_payment->name   = !empty($vender['name']) ? $purchasePayment->vendor_name: '';
+                $bill_payment->method = '-';
+                $bill_payment->date   = company_date_formate($request->date);
+                $bill_payment->amount = currency_format_with_sym($request->amount);
+                $bill_payment->bill   = 'purchase' . Purchase::purchaseNumberFormat($purchasePayment->purchase_id);
+
                 \Modules\Account\Entities\AccountUtility::userBalance('Vendor', $purchase->vender_id, $request->amount, 'debit');
 
+                if(!empty(company_setting('Bill Payment Create')) && company_setting('Bill Payment Create')  == true)
+                {
+                    $uArr = [
+                        'payment_name' => $bill_payment->name,
+                        'payment_bill' => $bill_payment->bill,
+                        'payment_amount' => $bill_payment->amount,
+                        'payment_date' => $bill_payment->date,
+                        'payment_method'=> $bill_payment->method
+
+                    ];
+                    try
+                    {
+                        $resp = EmailTemplate::sendEmailTemplate('Bill Payment Create', [$vendor->id => $vendor->email], $uArr);
+                    }
+
+                    catch (\Exception $e) {
+                        $resp['error'] = $e->getMessage();
+                    }
+                }
+
                 \Modules\Account\Entities\Transfer::bankAccountBalance($request->account_id, $request->amount, 'credit');
+
+                $account_payment = new \Modules\Account\Entities\Payment();
+                $account_payment->date = $purchasePayment->date;
+                $account_payment->amount = $purchasePayment->amount;
+                $account_payment->account_id = $purchasePayment->account_id;
+                $account_payment->vendor_id = $purchase->vender_id;
+                $account_payment->category_id = 2; // default for now
+                $account_payment->payment_method = 0; // default for now
+                $account_payment->reference = $purchasePayment->reference;
+                $account_payment->description = $purchasePayment->description;
+                $account_payment->add_receipt = $purchasePayment->add_receipt;
+                $account_payment->workspace = getActiveWorkSpace();
+                $account_payment->created_by = \Auth::user()->id;
+                $account_payment->save();
             }
 
             $payment         = new PurchasePayment();
