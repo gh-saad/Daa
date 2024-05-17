@@ -30,3 +30,8 @@
 
 ## for Account
 - `php artisan module:seed Pos`
+
+## after 16-May-2024
+remove all roles first
+- `php artisan db:seed --class=RolesTableSeeder`
+- `php artisan module:seed ProductService`

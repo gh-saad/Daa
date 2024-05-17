@@ -74,6 +74,34 @@ class SidebarTableSeeder extends Seeder
                 'type'=>'company',
             ]);
         }
+        $warehouse = Sidebar::where('title',__('Warehouse'))->where('parent_id',$check->id)->where('type','company')->first();
+        if($warehouse == null)
+        {
+           Sidebar::create([
+                'title' => 'Warehouse',
+                'icon' => '',
+                'parent_id' => $check->id,
+                'sort_order' => 16,
+                'route' => 'warehouse.index',
+                'permissions' => 'warehouse manage',
+                'module' => 'Account',
+                'type'=>'company',
+            ]);
+        }
+        $purchase = Sidebar::where('title',__('Purchase'))->where('parent_id',$check->id)->where('type','company')->first();
+        if($purchase == null)
+        {
+           Sidebar::create([
+                'title' => 'Purchase',
+                'icon' => '',
+                'parent_id' => $check->id,
+                'sort_order' => 17,
+                'route' => 'purchase.index',
+                'permissions' => 'purchase manage',
+                'module' => 'Account',
+                'type'=>'company',
+            ]);
+        }
         $banking = Sidebar::where('title',__('Banking'))->where('parent_id',$check->id)->where('type','company')->first();
         if($banking == null)
         {

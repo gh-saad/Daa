@@ -201,12 +201,13 @@ class PurchaseController extends Controller
                 {
                     $type='Purchase';
                     $type_id = $purchase->id;
-                    $description=$products[$i]['quantity'].'  '.__(' quantity add in purchase').' '. Purchase::purchaseNumberFormat($purchase->purchase_id);
+                    $description=$products[$i]['quantity'].'  '.__(' quantity add in purchase').' #'.$purchase->lot_number;
                     Purchase::addProductStock( $products[$i]['item'],$products[$i]['quantity'],$type,$description,$type_id);
                 }
 
                 //Warehouse Stock Report
                 if(isset($products[$i]['item']))
+
                 {
                     Purchase::addWarehouseStock( $products[$i]['item'],$products[$i]['quantity'],$request->warehouse_id);
                 }
@@ -418,7 +419,7 @@ class PurchaseController extends Controller
                         $type='Purchase';
                         $type_id = $purchase->id;
                         \Modules\Account\Entities\StockReport::where('type','=','purchase')->where('type_id','=',$purchase->id)->delete();
-                        $description=$products[$i]['quantity'].'  '.__(' quantity add in purchase').' '. Purchase::purchaseNumberFormat($purchase->purchase_id);
+                        $description=$products[$i]['quantity'].'  '.__(' quantity add in purchase').' #'.$purchase->lot_number;
                         if(empty($products[$i]['id'])){
                             Purchase::addProductStock( $products[$i]['item'],$products[$i]['quantity'],$type,$description,$type_id);
                         }
@@ -952,6 +953,19 @@ class PurchaseController extends Controller
                 $account_payment->save();
             }
 
+            // Get the items associated with the purchase
+            $items = $purchase->items;
+
+            // Loop through each item and update purchase status
+            foreach($items as $item) {
+                $send_update_request = new Request();
+                $send_update_request->merge([
+                    'purchased_by' => \Auth::user()->id,
+                ]);
+
+                $response = \Illuminate\Support\Facades\Http::post(route('vehicle.purchase-status', $item->id), $send_update_request->all());
+            }
+
             $payment         = new PurchasePayment();
             $payment->name   = !empty($vender['name']) ? $purchasePayment->vendor_name: '';
             $payment->method = '-';
@@ -990,6 +1004,34 @@ class PurchaseController extends Controller
         }
 
     }
+
+    /**
+     * Private method to update purchase status.
+     *
+     * @param int $id
+     * @param int $purchasedBy
+     * @return \Illuminate\Http\JsonResponse
+     */
+    private function updatePurchaseStatus($id, $purchasedBy)
+    {
+        if (Auth::user()->can('product&service edit')) {
+            $productService = ProductService::find($id);
+
+            if (!$productService) {
+                return response()->json(['error' => 'Vehicle not found.'], 404);
+            }
+
+            $status = ($purchasedBy == Auth::user()->id) ? 'purchased' : 'sold';
+            $productService->purchased_status = $status;
+            $productService->purchased_by = $purchasedBy;
+            $productService->save();
+
+            return response()->json(['success' => 'Vehicle marked as sold.'], 200);
+        } else {
+            return response()->json(['error' => 'Permission denied.'], 403);
+        }
+    }
+
     public function posPrintIndex()
     {
         if(\Auth::user()->can('pos manage'))

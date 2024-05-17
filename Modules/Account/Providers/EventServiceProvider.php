@@ -13,7 +13,8 @@ use Modules\Account\Listeners\GiveRoleToPermission;
 use Modules\Account\Listeners\ProductUpdate;
 use Modules\ProductService\Events\CreateProduct;
 use Modules\ProductService\Events\UpdateProduct;
-
+use Modules\Account\Events\UpdateCarPurchaseStatus;
+use Modules\Account\Listeners\ListenCarPurchaseStatus;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -37,6 +38,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         UpdateProduct::class=>[
             ProductUpdate::class
+        ],
+        UpdateCarPurchaseStatus::class => [
+            ListenCarPurchaseStatus::class,
         ],
     ];
 

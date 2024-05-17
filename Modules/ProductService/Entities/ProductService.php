@@ -10,7 +10,7 @@ class ProductService extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name','sku','sale_price','purchase_price','tax_id','category_id','description','type', 'icon', 'parent_id', 'sort_order', 'route', 'is_visible','quantity', 'permissions', 'module','image','unit_id','sale_chartaccount_id','expense_chartaccount_id','workspace_id','created_by'
+        'name','sku','sale_price','purchase_price','tax_id','category_id','description','type', 'icon', 'parent_id', 'sort_order', 'purchased_by', 'purchased_status', 'route', 'is_visible','quantity', 'permissions', 'module','image','unit_id','sale_chartaccount_id','expense_chartaccount_id','workspace_id','created_by'
     ];
     public static $product_type =
     [
@@ -129,7 +129,7 @@ class ProductService extends Model
       if(module_is_active('Pos'))
       {
         // 'product_id' -> 'purchase_products:purchase_id' -> 'purchases:lot_number'
-
+        
         return $this->hasOne(\Modules\Pos\Entities\PurchaseProduct::class, 'product_id', 'id')->first();
       }
     }

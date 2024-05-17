@@ -29,5 +29,7 @@ class DatabaseSeeder extends Seeder
         $this->call(DealersSeeder::class);
         // added customer seeder
         $this->call(CustomersTableSeeder::class);
+        // added roles seeder
+        $this->call(RolesTableSeeder::class);
     }
 }

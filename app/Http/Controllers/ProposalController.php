@@ -188,6 +188,7 @@ class ProposalController extends Controller
 
                     return redirect()->back()->with('error', $messages->first());
                 }
+                
                 $status = Proposal::$statues;
                 $proposal                 = new Proposal();
                 $proposal->proposal_id    = $this->proposalNumber();
@@ -212,13 +213,35 @@ class ProposalController extends Controller
                     $proposalProduct->product_type  = $products[$i]['product_type'];
                     $proposalProduct->product_id    = $products[$i]['item'];
                     $proposalProduct->quantity      = $products[$i]['quantity'];
-                    $proposalProduct->tax           = $products[$i]['tax'];
                     $proposalProduct->discount      = isset($products[$i]['discount']) ? $products[$i]['discount'] : 0;
                     $proposalProduct->price         = $products[$i]['price'];
                     $proposalProduct->description   = $products[$i]['description'];
+
+                    // create a new tax
+                    if (module_is_active('ProductService')){
+                        if ($products[$i]['tax'] && $products[$i]['itemTaxPrice'] && $products[$i]['itemTaxRate']){
+                            $new_tax = new \Modules\ProductService\Entities\Tax();
+                            $new_tax->name = $products[$i]['tax'];
+                            $new_tax->rate = $products[$i]['itemTaxRate'];
+                            $new_tax->created_by = \Auth::user()->id;
+                            $new_tax->workspace_id = getActiveWorkSpace();
+                            $new_tax->save();
+                            
+                            // get id of this newly added entry
+                            $new_tax_id = $new_tax->id;
+                        }else{
+                            $new_tax_id = 1;
+                        }
+                    }else{
+                        $new_tax_id = 1;
+                    }
+
+                    // assign the id to proposal product tax entry
+                    $proposalProduct->tax = $new_tax_id;
                     $proposalProduct->save();
                 }
-                  // first parameter request second parameter proposal
+
+                // first parameter request second parameter proposal
                 event(new CreateProposal($request, $proposal));
                 return redirect()->route('proposal.index')->with('success', __('Proposal successfully created.'));
             }
@@ -325,7 +348,6 @@ class ProposalController extends Controller
                 }else{
                     $customFields = null;
                 }
-
                 return view('proposal.view', compact('proposal', 'customer', 'iteams', 'status','customFields','proposal_attachment'));
             } else {
                 return redirect()->route('proposal.index')->with('error', __('Proposal Not Found.'));

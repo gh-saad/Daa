@@ -11,6 +11,9 @@
 |
 */
 use Illuminate\Support\Facades\Route;
+use Modules\Account\Http\Controllers\PurchaseController;
+use Modules\Account\Http\Controllers\WarehouseController;
+
 Route::group(['middleware' => 'PlanModuleCheck:Account'], function ()
     {
     Route::prefix('account')->group(function() {
@@ -261,6 +264,17 @@ Route::group(['middleware' => 'PlanModuleCheck:Account'], function ()
     Route::get('bill/{id}/send', 'BillController@venderBillSend')->name('vendor.bill.send');
     Route::post('bill/{id}/send/mail', 'BillController@venderBillSendMail')->name('vendor.bill.send.mail');
 
+    // Purchase
+    Route::resource('purchase', 'PurchaseController');
+    Route::get('purchase-grid', 'PurchaseController@grid')->name('purchase.grid');
+    Route::get('purchase/create/{cid}', 'PurchaseController@create')->name('purchase.create');
+
+    // Warehouse
+    Route::resource('warehouse', 'WarehouseController')->middleware(
+        [
+            'auth',
+        ]
+    );
 
 
 

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class Proposal extends Model
 {
@@ -66,6 +67,8 @@ class Proposal extends Model
             $subTotal += ($product->price * $product->quantity);
         }
 
+        // Debugging output
+        Log::info('Subtotal calculated: ' . $subTotal);
         return $subTotal;
     }
     public function getTotalDiscount()
@@ -85,7 +88,7 @@ class Proposal extends Model
 
             $totalTax += ($taxes / 100) * (($product->price * $product->quantity) - $product->discount);
         }
-
+        Log::info('Total tax calculated: ' . $totalTax);
         return $totalTax;
     }
     public static function taxRate($taxRate, $price, $quantity,$discount = 0)

@@ -4,7 +4,7 @@
     "Taskly": true,
     "Account": true,
     "Hrm": true,
-    "Pos": true,
+    "Pos": false,
     "Stripe": true,
     "Paypal": true,
     "Lead": true
