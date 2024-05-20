@@ -268,6 +268,8 @@ Route::group(['middleware' => 'PlanModuleCheck:Account'], function ()
     Route::resource('purchase', 'PurchaseController');
     Route::get('purchase-grid', 'PurchaseController@grid')->name('purchase.grid');
     Route::get('purchase/create/{cid}', 'PurchaseController@create')->name('purchase.create');
+    Route::post('purchase/product', 'PurchaseController@product')->name('purchase.product');
+    Route::post('purchase/vender', 'PurchaseController@vender')->name('purchase.vender');
 
     // Warehouse
     Route::resource('warehouse', 'WarehouseController')->middleware(

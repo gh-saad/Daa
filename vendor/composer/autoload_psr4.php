@@ -164,6 +164,7 @@ return array(
     'Behat\\Transliterator\\' => array($vendorDir . '/behat/transliterator/src/Behat/Transliterator'),
     'BaconQrCode\\' => array($vendorDir . '/bacon/bacon-qr-code/src'),
     'Aws\\' => array($vendorDir . '/aws/aws-sdk-php/src'),
+    'App\\Libraries\\' => array($baseDir . '/app/Libraries'),
     'App\\' => array($baseDir . '/app', $vendorDir . '/laravel/pint/app'),
     'Anhskohbo\\NoCaptcha\\' => array($vendorDir . '/anhskohbo/no-captcha/src'),
     'Anand\\LaravelPaytmWallet\\' => array($vendorDir . '/anandsiddharth/laravel-paytm-wallet/src'),

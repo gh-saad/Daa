@@ -542,12 +542,11 @@
                                     <div class="form-group">
                                         <div class="input-group">
                                             <div class="taxes"></div>
-                                            {{ Form::hidden('tax','', array('class' => 'form-control tax')) }}
-                                            {{ Form::hidden('itemTaxPrice','', array('class' => 'form-control itemTaxPrice')) }}
-                                            {{ Form::hidden('itemTaxRate','', array('class' => 'form-control itemTaxRate')) }}
+                                            {{ Form::text('tax','', array('class' => 'form-control tax', 'placeholder' => 'Tax Name')) }}
+                                            {{ Form::text('itemTaxPrice','', array('class' => 'form-control itemTaxPrice', 'placeholder' => 'Tax Price', 'readonly' => 'readonly')) }}
+                                            {{ Form::text('itemTaxRate','', array('class' => 'form-control itemTaxRate', 'placeholder' => 'Tax Rate')) }}
                                         </div>
                                     </div>
-
                                 </td>
                                 <td>
                                     <div class="form-group price-input input-group search-form">

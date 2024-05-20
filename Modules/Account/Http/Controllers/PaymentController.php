@@ -18,6 +18,7 @@ use App\Models\EmailTemplate;
 use Modules\Account\Events\CreatePayment;
 use Modules\Account\Events\DestroyPayment;
 use Modules\Account\Events\UpdatePayment;
+use App\Http\Controllers\ReceiptController;
 
 // use Modules\ProductService\Entities\Category;
 
@@ -111,37 +112,40 @@ class PaymentController extends Controller
      */
     public function store(Request $request)
     {
-        if(Auth::user()->can('expense payment create'))
-        {
-
+        if (Auth::user()->can('expense payment create')) {
+    
             $validator = \Validator::make(
                 $request->all(), [
-                                   'date' => 'required',
-                                   'amount' => 'required|min:0',
-                                   'account_id' => 'required',
-                                   'vendor_id' => 'required',
-                                   'category_id' => 'required',
-                                   'reference' => 'required',
-                                   'description' => 'required',
-                               ]
+                    'date' => 'required',
+                    'amount' => 'required|min:0',
+                    'account_id' => 'required',
+                    'vendor_id' => 'required',
+                    'category_id' => 'required',
+                    'reference' => 'required',
+                    'description' => 'required',
+                ]
             );
-            if($validator->fails())
-            {
+            if ($validator->fails()) {
                 $messages = $validator->getMessageBag();
-
                 return redirect()->back()->with('error', $messages->first());
             }
-            $payment                 = new Payment();
-            $payment->date           = $request->date;
-            $payment->amount         = $request->amount;
-            $payment->account_id     = $request->account_id;
-            $payment->vendor_id      = $request->vendor_id;
-            $payment->category_id    = $request->category_id;
-            $payment->payment_method = 0;
-            $payment->reference      = $request->reference;
-            $payment->description    = $request->description;
+    
+            $payment = new Payment();
+            $payment->date = $request->date;
+            $payment->amount = $request->amount;
+            $payment->account_id = $request->account_id;
+            $payment->vendor_id = $request->vendor_id;
+            $payment->category_id = $request->category_id;
+            $payment->payment_method = 0; // Assuming 0 is a valid payment method ID
+            $payment->reference = $request->reference;
+            $payment->description = $request->description;
+
+            $category = \Modules\ProductService\Entities\Category::where('id', $request->category_id)->first();
+
             if(!empty($request->add_receipt))
             {
+
+                // use the user provided receipt
                 $fileName = time() . "_" . $request->add_receipt->getClientOriginalName();
                 $uplaod = upload_file($request,'add_receipt',$fileName,'payment');
                 if($uplaod['flag'] == 1)
@@ -153,66 +157,85 @@ class PaymentController extends Controller
                 }
 
                 $payment->add_receipt = $url;
+
+            }else{
+
+                // Generate receipt
+                $receiptController = new ReceiptController();
+                $accountDetails = \Modules\Account\Entities\BankAccount::where('id', $request->account_id)->first();
+                $vendorDetails = \Modules\Account\Entities\Vender::where('id', $request->vendor_id)->first();
+
+                $paymentDetails = [
+                    'Date' => $request->date,
+                    'Amount' => $request->amount,
+                    'Account Holder Name' => $accountDetails->holder_name,
+                    'Vendor Name' => $vendorDetails->name,
+                    'Bank Name' => $vendorDetails->bank_name,
+                    'Vendor Name' => $vendorDetails->name,
+                    'Vendor Billing Address' => $vendorDetails->billing_address,
+                    'Vendor Billing Phone' => $vendorDetails->billing_phone,
+                    'Vendor Tax Number' => $vendorDetails->tax_number,
+                    'Category Name' => $category->name,
+                    'Reference' => $request->reference,
+                    'Description' => $request->description,
+                ];
+        
+                $filePath = $receiptController->generatePdf($paymentDetails);
+        
+                $payment->add_receipt = 'uploads/receipts/' . basename($filePath);
+        
             }
-            $payment->workspace      = getActiveWorkSpace();
-            $payment->created_by     = \Auth::user()->id;
+
+            $payment->workspace = getActiveWorkSpace();
+            $payment->created_by = \Auth::user()->id;
             $payment->save();
-
-            $category            = \Modules\ProductService\Entities\Category::where('id', $request->category_id)->first();
+    
             $payment->payment_id = $payment->id;
-            $payment->type       = 'Payment';
-            $payment->category   = $category->name;
-            $payment->user_id    = $payment->vendor_id;
-            $payment->user_type  = 'Vendor';
-            $payment->account    = $request->account_id;
-
+            $payment->type = 'Payment';
+            $payment->category = $category->name;
+            $payment->user_id = $payment->vendor_id;
+            $payment->user_type = 'Vendor';
+            $payment->account = $request->account_id;
+    
             Transaction::addTransaction($payment);
-
-            $vendor          = Vender::where('id', $request->vendor_id)->first();
-            $payment         = new BillPayment();
-            $payment->name   = !empty($vendor) ? $vendor['name'] : '';
+    
+            $vendor = Vender::where('id', $request->vendor_id)->first();
+            $payment = new BillPayment();
+            $payment->name = !empty($vendor) ? $vendor['name'] : '';
             $payment->method = '-';
-            $payment->date   = company_date_formate($request->date);
+            $payment->date = company_date_formate($request->date);
             $payment->amount = currency_format_with_sym($request->amount);
-            $payment->bill   = '';
-
+            $payment->bill = '';
+    
             Transfer::bankAccountBalance($request->account_id, $request->amount, 'debit');
-
-            event(new CreatePayment($request,$payment));
-
-            if(!empty($vendor))
-            {
+    
+            event(new CreatePayment($request, $payment));
+    
+            if (!empty($vendor)) {
                 AccountUtility::userBalance('vendor', $vendor->id, $request->amount, 'debit');
-                if(!empty(company_setting('Bill Payment Create')) && company_setting('Bill Payment Create')  == true)
-                {
+                if (!empty(company_setting('Bill Payment Create')) && company_setting('Bill Payment Create') == true) {
                     $uArr = [
                         'payment_name' => $payment->name,
                         'payment_bill' => $payment->bill,
                         'payment_amount' => $payment->amount,
                         'payment_date' => $payment->date,
-                        'payment_method'=> $payment->method
-
+                        'payment_method' => $payment->method
                     ];
-                    try
-                    {
+                    try {
                         $resp = EmailTemplate::sendEmailTemplate('Bill Payment Create', [$vendor->id => $vendor->email], $uArr);
-                    }
-
-                    catch (\Exception $e) {
+                    } catch (\Exception $e) {
                         $resp['error'] = $e->getMessage();
                     }
                     return redirect()->route('payment.index')->with('success', __('Payment successfully created.') . ((isset($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
                 }
             }
-
+    
             return redirect()->route('payment.index')->with('success', __('Payment successfully created.'));
-        }
-        else
-        {
+        } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
-
+    
     /**
      * Show the specified resource.
      * @param int $id
