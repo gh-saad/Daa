@@ -163,91 +163,122 @@ class InvoiceController extends Controller
         {
             if($request->invoice_type == "product")
             {
-                    $validator = \Validator::make(
-                        $request->all(), [
-                                        'customer_id' => 'required',
-                                        'issue_date' => 'required',
-                                        'due_date' => 'required',
-                                        'category_id' => 'required',
-                                        'items' => 'required',
 
-                                    ]
-                    );
-                    if($validator->fails())
-                    {
-                        $messages = $validator->getMessageBag();
-
-                        return redirect()->back()->with('error', $messages->first());
+                // verify the requested quantity of item is available if not return error
+                $products = $request->items;
+                for($i = 0; $i < count($products); $i++)
+                {
+                    $product = \Modules\ProductService\Entities\ProductService::where('id', $products[$i]['item'])->first();
+                    if($product->quantity < $products[$i]['quantity']){
+                        return redirect()->back()->with('error', __('Requested quantity of item is not available.'));
                     }
-                    $status = Invoice::$statues;
-                    $invoice                 = new Invoice();
+                }
+
+                $validator = \Validator::make(
+                    $request->all(), [
+                                    'customer_id' => 'required',
+                                    'issue_date' => 'required',
+                                    'due_date' => 'required',
+                                    'category_id' => 'required',
+                                    'items' => 'required',
+
+                                ]
+                );
+                if($validator->fails())
+                {
+                    $messages = $validator->getMessageBag();
+
+                    return redirect()->back()->with('error', $messages->first());
+                }
+                $status = Invoice::$statues;
+                $invoice                 = new Invoice();
+                if(module_is_active('Account'))
+                {
+                    $customer = \Modules\Account\Entities\Customer::where('user_id', '=', $request->customer_id)->first();
+                    $invoice->customer_id    = !empty($customer) ?  $customer->id : null;
+                }else if(module_is_active('SalesAgent'))
+                {
+                    $customer = \Modules\SalesAgent\Entities\Customer::where('user_id', '=', $request->customer_id)->first();
+                    $invoice->customer_id    = !empty($customer) ?  $customer->id : null;
+                }
+
+                $invoice->invoice_id     = $this->invoiceNumber();
+                $invoice->user_id        = $request->customer_id;
+                $invoice->status         = 0;
+                $invoice->invoice_module = 'account';
+                $invoice->issue_date     = $request->issue_date;
+                $invoice->due_date       = $request->due_date;
+                $invoice->category_id    = $request->category_id;
+                $invoice->workspace      = getActiveWorkSpace();
+                $invoice->created_by     = Auth::user()->id;
+
+                $invoice->save();
+
+                Invoice::starting_number( $invoice->invoice_id + 1, 'invoice');
+                if(module_is_active('CustomField'))
+                {
+                    \Modules\CustomField\Entities\CustomField::saveData($invoice, $request->customField);
+                }
+
+                for($i = 0; $i < count($products); $i++)
+                {
+                    $invoiceProduct                 = new InvoiceProduct();
+                    $invoiceProduct->invoice_id     = $invoice->id;
+                    $invoiceProduct->product_type   = $products[$i]['product_type'];
+                    $invoiceProduct->product_id     = $products[$i]['item'];
+                    $invoiceProduct->quantity       = $products[$i]['quantity'];
+                    $invoiceProduct->discount       = isset($products[$i]['discount']) ? $products[$i]['discount'] : 0;
+                    $invoiceProduct->price          = $products[$i]['price'];
+                    $invoiceProduct->description    = $products[$i]['description'];
+
+                    // create a new tax
+                    if (module_is_active('ProductService')){
+                        if ($products[$i]['tax'] && $products[$i]['itemTaxPrice'] && $products[$i]['itemTaxRate']){
+                            $new_tax = new \Modules\ProductService\Entities\Tax();
+                            $new_tax->name = $products[$i]['tax'];
+                            $new_tax->rate = $products[$i]['itemTaxRate'];
+                            $new_tax->created_by = \Auth::user()->id;
+                            $new_tax->workspace_id = getActiveWorkSpace();
+                            $new_tax->save();
+                            
+                            // get id of this newly added entry
+                            $new_tax_id = $new_tax->id;
+                        }else{
+                            $new_tax_id = 1;
+                        }
+                    }else{
+                        $new_tax_id = 1;
+                    }
+
+                    // assign the id to proposal product tax entry
+                    $invoiceProduct->tax = $new_tax_id;
+                    $invoiceProduct->save();
+
+                    if(module_is_active('ProductService'))
+                    {
+                        Invoice::total_quantity('minus',$invoiceProduct->quantity,$invoiceProduct->product_id);
+                    }
+
                     if(module_is_active('Account'))
                     {
-                        $customer = \Modules\Account\Entities\Customer::where('user_id', '=', $request->customer_id)->first();
-                        $invoice->customer_id    = !empty($customer) ?  $customer->id : null;
-                    }else if(module_is_active('SalesAgent'))
-                    {
-                        $customer = \Modules\SalesAgent\Entities\Customer::where('user_id', '=', $request->customer_id)->first();
-                        $invoice->customer_id    = !empty($customer) ?  $customer->id : null;
+                        //Product Stock Report
+                        $type='invoice';
+                        $type_id = $invoice->id;
+                        \Modules\Account\Entities\StockReport::where('type','=','invoice')->where('type_id' ,'=', $invoice->id)->delete();
+                        $description=$invoiceProduct->quantity.'  '.__(' quantity sold in invoice').' '. Invoice::invoiceNumberFormat($invoice->invoice_id);
+                        \Modules\Account\Entities\AccountUtility::addProductStock( $products[$i]['item'],$invoiceProduct->quantity,$type,$description,$type_id);
                     }
 
-                    $invoice->invoice_id     = $this->invoiceNumber();
-                    $invoice->user_id        = $request->customer_id;
-                    $invoice->status         = 0;
-                    $invoice->invoice_module = 'account';
-                    $invoice->issue_date     = $request->issue_date;
-                    $invoice->due_date       = $request->due_date;
-                    $invoice->category_id    = $request->category_id;
-                    $invoice->workspace      = getActiveWorkSpace();
-                    $invoice->created_by     = Auth::user()->id;
-
-                    $invoice->save();
-                    $products = $request->items;
-
-                    Invoice::starting_number( $invoice->invoice_id + 1, 'invoice');
-                    if(module_is_active('CustomField'))
-                    {
-                        \Modules\CustomField\Entities\CustomField::saveData($invoice, $request->customField);
-                    }
-
-                    for($i = 0; $i < count($products); $i++)
-                    {
-                        $invoiceProduct                 = new InvoiceProduct();
-                        $invoiceProduct->invoice_id     = $invoice->id;
-                        $invoiceProduct->product_type   = $products[$i]['product_type'];
-                        $invoiceProduct->product_id     = $products[$i]['item'];
-                        $invoiceProduct->quantity       = $products[$i]['quantity'];
-                        $invoiceProduct->tax            = $products[$i]['tax'];
-                        $invoiceProduct->discount       = isset($products[$i]['discount']) ? $products[$i]['discount'] : 0;
-                        $invoiceProduct->price          = $products[$i]['price'];
-                        $invoiceProduct->description    = $products[$i]['description'];
-                        $invoiceProduct->save();
-
-                        if(module_is_active('ProductService'))
-                        {
-                            Invoice::total_quantity('minus',$invoiceProduct->quantity,$invoiceProduct->product_id);
-                        }
-
-                        if(module_is_active('Account'))
-                        {
-                           //Product Stock Report
-                            $type='invoice';
-                            $type_id = $invoice->id;
-                            \Modules\Account\Entities\StockReport::where('type','=','invoice')->where('type_id' ,'=', $invoice->id)->delete();
-                            $description=$invoiceProduct->quantity.'  '.__(' quantity sold in invoice').' '. Invoice::invoiceNumberFormat($invoice->invoice_id);
-                            \Modules\Account\Entities\AccountUtility::addProductStock( $products[$i]['item'],$invoiceProduct->quantity,$type,$description,$type_id);
-                        }
-
-                    }
-                    event(new CreateInvoice($request,$invoice));
+                }
+                event(new CreateInvoice($request,$invoice));
 
 
-                    if(isset($request->agentPurchaseOrderId)){
+                if(isset($request->agentPurchaseOrderId)){
 
-                        return redirect()->route('salesagents.purchase.order.show', \Crypt::encrypt($request->agentPurchaseOrderId)) ->with('success', __('Invoice successfully created.'));
-                    }
+                    return redirect()->route('salesagents.purchase.order.show', \Crypt::encrypt($request->agentPurchaseOrderId)) ->with('success', __('Invoice successfully created.'));
+                }
 
-                    return redirect()->route('invoice.index', $invoice->id)->with('success', __('Invoice successfully created.'));
+                return redirect()->route('invoice.index', $invoice->id)->with('success', __('Invoice successfully created.'));
 
             }
             else if($request->invoice_type == "project")
@@ -1585,58 +1616,57 @@ class InvoiceController extends Controller
         $type = $request->type;
         $acction = $request->acction;
         $invoice = [];
-        if($acction == 'edit')
-        {
+        if ($acction == 'edit') {
             $invoice = Invoice::find($request->invoice_id);
         }
-
-        if($request->type == "product" && module_is_active('Account'))
-        {
-            $product_services = \Modules\ProductService\Entities\ProductService::where('workspace_id', getActiveWorkSpace())->get()->pluck('name', 'id');
-            $product_services_count =$product_services->count();
-            if($acction != 'edit')
-            {
-                $product_services->prepend('--', '');
+    
+        if ($request->type == "product" && module_is_active('Account')) {
+            $product_services = \Modules\ProductService\Entities\ProductService::where('workspace_id', getActiveWorkSpace())
+                ->select('sku', 'name', 'id')
+                ->get()
+                ->toArray();
+    
+            $product_services_count = count($product_services);
+            
+            if ($acction != 'edit') {
+                // Add the placeholder at the beginning of the array
+                array_unshift($product_services, ['id' => '', 'sku' => '', 'name' => '--']);
             }
+    
             $product_type = ProductService::$product_type;
-            $returnHTML = view('invoice.section',compact('product_services','type' ,'acction','invoice','product_services_count','product_type'))->render();
-                $response = [
-                    'is_success' => true,
-                    'message' => '',
-                    'html' => $returnHTML,
-                ];
+    
+            $returnHTML = view('invoice.section', compact('product_services', 'type', 'acction', 'invoice', 'product_services_count', 'product_type'))->render();
+            $response = [
+                'is_success' => true,
+                'message' => '',
+                'html' => $returnHTML,
+            ];
             return response()->json($response);
-        }
-        elseif($request->type == "project" && module_is_active('Taskly'))
-        {
+        } elseif ($request->type == "project" && module_is_active('Taskly')) {
             $projects = \Modules\Taskly\Entities\Project::where('workspace', getActiveWorkSpace())->projectonly();
-            if($request->project_id != 0)
-            {
-                $projects = $projects->where('id',$request->project_id);
+            if ($request->project_id != 0) {
+                $projects = $projects->where('id', $request->project_id);
             }
             $projects = $projects->first();
-            $tasks=[];
-            if(!empty($projects))
-            {
+            $tasks = [];
+            if (!empty($projects)) {
                 $tasks = \Modules\Taskly\Entities\Task::where('project_id', $projects->id)->get()->pluck('title', 'id');
-                if($acction != 'edit')
-                {
+                if ($acction != 'edit') {
                     $tasks->prepend('--', '');
                 }
             }
-            $returnHTML = view('invoice.section',compact('tasks','type' ,'acction','invoice'))->render();
-                $response = [
-                    'is_success' => true,
-                    'message' => '',
-                    'html' => $returnHTML,
-                ];
+            $returnHTML = view('invoice.section', compact('tasks', 'type', 'acction', 'invoice'))->render();
+            $response = [
+                'is_success' => true,
+                'message' => '',
+                'html' => $returnHTML,
+            ];
             return response()->json($response);
-        }
-        else
-        {
+        } else {
             return [];
         }
     }
+    
 
     public function pdf($id)
     {

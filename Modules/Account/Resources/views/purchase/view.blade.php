@@ -22,12 +22,12 @@
 @endpush
 @section('page-breadcrumb')
      {{__('Purchase')}},
-     {{\Modules\Pos\Entities\Purchase::purchaseNumberFormat($purchase->purchase_id) }}
+     {{\Modules\Account\Entities\Purchase::purchaseNumberFormat($purchase->purchase_id) }}
 @endsection
 
 @push('css')
     <link rel="stylesheet" href="{{ asset('assets/css/plugins/dropzone.css') }}" type="text/css" />
-    <link rel="stylesheet" href="{{ Module::asset('Pos:Resources/assets/css/dropzone.min.css') }}">
+    <link rel="stylesheet" href="{{ Module::asset('Account:Resources/assets/css/dropzone.min.css') }}">
     <style>
         .border-primary {
             border-color: #EE1D23 !important;
@@ -235,15 +235,15 @@
                                             <small>
                                                 <strong>{{__('Status')}} :</strong><br>
                                                 @if($purchase->status == 0)
-                                                    <span class="badge bg-secondary p-2 px-3 rounded">{{ __(\Modules\Pos\Entities\Purchase::$statues[$purchase->status]) }}</span>
+                                                    <span class="badge bg-secondary p-2 px-3 rounded">{{ __(\Modules\Account\Entities\Purchase::$statues[$purchase->status]) }}</span>
                                                 @elseif($purchase->status == 1)
-                                                    <span class="badge bg-warning p-2 px-3 rounded">{{ __(\Modules\Pos\Entities\Purchase::$statues[$purchase->status]) }}</span>
+                                                    <span class="badge bg-warning p-2 px-3 rounded">{{ __(\Modules\Account\Entities\Purchase::$statues[$purchase->status]) }}</span>
                                                 @elseif($purchase->status == 2)
-                                                    <span class="badge bg-danger p-2 px-3 rounded">{{ __(\Modules\Pos\Entities\Purchase::$statues[$purchase->status]) }}</span>
+                                                    <span class="badge bg-danger p-2 px-3 rounded">{{ __(\Modules\Account\Entities\Purchase::$statues[$purchase->status]) }}</span>
                                                 @elseif($purchase->status == 3)
-                                                    <span class="badge bg-info p-2 px-3 rounded">{{ __(\Modules\Pos\Entities\Purchase::$statues[$purchase->status]) }}</span>
+                                                    <span class="badge bg-info p-2 px-3 rounded">{{ __(\Modules\Account\Entities\Purchase::$statues[$purchase->status]) }}</span>
                                                 @elseif($purchase->status == 4)
-                                                    <span class="badge bg-success p-2 px-3 rounded">{{ __(\Modules\Pos\Entities\Purchase::$statues[$purchase->status]) }}</span>
+                                                    <span class="badge bg-success p-2 px-3 rounded">{{ __(\Modules\Account\Entities\Purchase::$statues[$purchase->status]) }}</span>
                                                 @endif
                                             </small>
                                         </div>
@@ -298,12 +298,12 @@
                                                         @foreach($iteams as $key =>$iteam)
                                                             @if(!empty($iteam->tax))
                                                                 @php
-                                                                    $taxes=Modules\Pos\Entities\Purchase::taxs($iteam->tax);
+                                                                    $taxes=Modules\Account\Entities\Purchase::taxs($iteam->tax);
                                                                     $totalQuantity+=$iteam->quantity;
                                                                     $totalRate+=$iteam->price;
                                                                     $totalDiscount+=$iteam->discount;
                                                                     foreach($taxes as $taxe){
-                                                                        $taxDataPrice=Modules\Pos\Entities\Purchase::taxRate($taxe->rate,$iteam->price,$iteam->quantity,$iteam->discount);
+                                                                        $taxDataPrice=Modules\Account\Entities\Purchase::taxRate($taxe->rate,$iteam->price,$iteam->quantity,$iteam->discount);
                                                                         if (array_key_exists($taxe->name,$taxesData))
                                                                         {
                                                                             $taxesData[$taxe->name] = $taxesData[$taxe->name]+$taxDataPrice;
@@ -331,7 +331,7 @@
                                                                             @endphp
                                                                             @foreach($taxes as $tax)
                                                                                 @php
-                                                                                    $taxPrice=Modules\Pos\Entities\Purchase::taxRate($tax->rate,$iteam->price,$iteam->quantity,$iteam->discount);
+                                                                                    $taxPrice=Modules\Account\Entities\Purchase::taxRate($tax->rate,$iteam->price,$iteam->quantity,$iteam->discount);
                                                                                     $totalTaxPrice+=$taxPrice;
                                                                                     $data+=$taxPrice;
                                                                                 @endphp
@@ -633,7 +633,7 @@
 @endsection
 
 @push('scripts')
-<script src="{{ Module::asset('Pos:Resources/assets/js/dropzone.min.js') }}"></script>
+<script src="{{ Module::asset('Account:Resources/assets/js/dropzone.min.js') }}"></script>
 <script>
     Dropzone.autoDiscover = false;
     myDropzone = new Dropzone("#dropzonewidget", {

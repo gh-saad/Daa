@@ -477,7 +477,9 @@
             $('#purchase_date').trigger('click');
         }, 1500);
      </script>
-
+    <script>
+        console.log(@json($tax_object_for_this_product));
+    </script>
 @endpush
 
 @section('content')
@@ -595,7 +597,7 @@
                                     <th>{{__('Items')}}</th>
                                     {{-- <th>{{__('Quantity')}}</th> --}}
                                     <th>{{__('Price')}} </th>
-                                    <th>{{__('Tax')}} (%)</th>
+                                    <th>{{__('Tax Details')}} (%)</th>
                                     <th>{{__('Discount')}}</th>
                                     <th class="text-end">{{__('Amount')}} <br><small class="text-danger font-weight-bold">{{__('After discount & tax')}}</small></th>
                                     <th></th>
@@ -635,9 +637,9 @@
                                         <div class="form-group">
                                             <div class="input-group">
                                                 <div class="taxes"></div>
-                                                {{ Form::hidden('tax', '', ['class' => 'form-control tax']) }}
-                                                {{ Form::hidden('itemTaxPrice', '', ['class' => 'form-control itemTaxPrice']) }}
-                                                {{ Form::hidden('itemTaxRate', '', ['class' => 'form-control itemTaxRate']) }}
+                                                {{ Form::text('tax', '', ['class' => 'form-control tax', 'placeholder' => 'Tax Name']) }}
+                                                {{ Form::text('itemTaxPrice', '', ['class' => 'form-control itemTaxPrice', 'placeholder' => 'Tax Price', 'readonly' => 'readonly']) }}
+                                                {{ Form::text('itemTaxRate', '', ['class' => 'form-control itemTaxRate', 'placeholder' => 'Tax Rate']) }}
                                             </div>
                                         </div>
                                     </td>

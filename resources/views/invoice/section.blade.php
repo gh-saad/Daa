@@ -297,7 +297,7 @@
                             <th>{{ __('Quantity') }}</th>
                             <th>{{ __('Price') }} </th>
                             <th>{{ __('Discount') }}</th>
-                            <th>{{ __('Tax') }} (%)</th>
+                            <th>{{ __('Tax Details') }} (%)</th>
                             <th class="text-end">{{ __('Amount') }} <br><small
                                     class="text-danger font-weight-bold">{{ __('After discount & tax') }}</small></th>
                             <th></th>
@@ -310,11 +310,11 @@
                             <td  class="form-group pt-0">
                                 {{ Form::select('product_type', $product_type, null, ['class' => 'form-control product_type ', 'required' => 'required', 'placeholder' => '--']) }}
                             </td>
-                            <td width="25%" class="form-group pt-0 product_div">
+                            <td width="15%" class="form-group pt-0 product_div">
                                     <select name="item" class="form-control product_id item  js-searchBox" data-url="{{route('invoice.product')}}" required>
                                         <option value="0">{{'--'}}</option>
-                                        @foreach ($product_services as $key =>$product_service)
-                                            <option value="{{$key}}">{{$product_service}}</option>
+                                        @foreach ($product_services as $product_service)
+                                            <option value="{{$product_service['id']}}">{{$product_service['sku']}} {{$product_service['name']}}</option>
                                         @endforeach
                                     </select>
                                 @if (empty($product_services_count))
@@ -346,9 +346,9 @@
                                 <div class="form-group">
                                     <div class="input-group colorpickerinput">
                                         <div class="taxes"></div>
-                                        {{ Form::hidden('tax', '', ['class' => 'form-control tax text-dark']) }}
-                                        {{ Form::hidden('itemTaxPrice', '', ['class' => 'form-control itemTaxPrice']) }}
-                                        {{ Form::hidden('itemTaxRate', '', ['class' => 'form-control itemTaxRate']) }}
+                                        {{ Form::text('tax', null, ['class' => 'form-control tax', 'placeholder' => __('Tax Name')]) }}
+                                        {{ Form::text('itemTaxPrice', '', ['class' => 'form-control itemTaxPrice', 'readonly' => 'readonly', 'placeholder' => __('Tax Price')]) }}
+                                        {{ Form::text('itemTaxRate', '', ['class' => 'form-control itemTaxRate', 'placeholder' => __('Tax Rate')]) }}
                                     </div>
                                 </div>
                             </td>
@@ -477,9 +477,9 @@
                                 <div class="form-group">
                                     <div class="input-group">
                                         <div class="taxes"></div>
-                                        {{ Form::hidden('tax', null, ['class' => 'form-control tax']) }}
-                                        {{ Form::hidden('itemTaxPrice', '', ['class' => 'form-control itemTaxPrice']) }}
-                                        {{ Form::hidden('itemTaxRate', '', ['class' => 'form-control itemTaxRate']) }}
+                                        {{ Form::text('tax', null, ['class' => 'form-control tax']) }}
+                                        {{ Form::text('itemTaxPrice', '', ['class' => 'form-control itemTaxPrice']) }}
+                                        {{ Form::text('itemTaxRate', '', ['class' => 'form-control itemTaxRate']) }}
                                     </div>
                                 </div>
                             </td>

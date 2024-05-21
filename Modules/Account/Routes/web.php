@@ -12,6 +12,7 @@
 */
 use Illuminate\Support\Facades\Route;
 use Modules\Account\Http\Controllers\PurchaseController;
+use Modules\Account\Http\Controllers\PurchaseDebitNoteController;
 use Modules\Account\Http\Controllers\WarehouseController;
 
 Route::group(['middleware' => 'PlanModuleCheck:Account'], function ()
@@ -268,8 +269,27 @@ Route::group(['middleware' => 'PlanModuleCheck:Account'], function ()
     Route::resource('purchase', 'PurchaseController');
     Route::get('purchase-grid', 'PurchaseController@grid')->name('purchase.grid');
     Route::get('purchase/create/{cid}', 'PurchaseController@create')->name('purchase.create');
+    Route::post('purchase/{id}/payment/{pid}/destroy', 'PurchaseController@paymentDestroy')->name('purchase.payment.destroy');
+    Route::post('purchase/product/destroy', 'PurchaseController@productDestroy')->name('purchase.product.destroy');
     Route::post('purchase/product', 'PurchaseController@product')->name('purchase.product');
     Route::post('purchase/vender', 'PurchaseController@vender')->name('purchase.vender');
+    Route::get('purchase/{id}/sent', 'PurchaseController@sent')->name('purchase.sent');
+    Route::get('purchase/{id}/resent', 'PurchaseController@resent')->name('purchase.resent');
+    Route::get('purchase/pdf/{id}', 'PurchaseController@purchase')->name('purchase.pdf');
+    Route::post('purchase/items', 'PurchaseController@items')->name('purchase.items');
+    Route::get('purchase/{id}/payment', 'PurchaseController@payment')->name('purchase.payment');
+    Route::post('purchase/{id}/payment', 'PurchaseController@createPayment')->name('purchase.payment');
+    
+    Route::get('purchase/{id}/debit-note', 'PurchaseDebitNoteController@create')->name('purchase.debit.note')->middleware(['auth',]);
+    Route::post('purchase/{id}/debit-note', 'PurchaseDebitNoteController@store')->name('purchase.debit.note')->middleware(['auth',]);
+    Route::get('purchase/{id}/debit-note/edit/{cn_id}', 'PurchaseDebitNoteController@edit')->name('purchase.edit.debit.note')->middleware(['auth',]);
+    Route::post('purchase/{id}/debit-note/edit/{cn_id}', 'PurchaseDebitNoteController@update')->name('purchase.edit.debit.note')->middleware(['auth',]);
+    Route::delete('purchase/{id}/debit-note/delete/{cn_id}', 'PurchaseDebitNoteController@destroy')->name('purchase.delete.debit.note')->middleware(['auth',]);
+
+    Route::get('/vendor/purchase/{id}/', 'PurchaseController@purchaseLink')->name('purchase.link.copy');
+    Route::get('/vendor/bill/{id}/', [PurchaseController::class, 'invoiceLink'])->name('bill.link.copy')->middleware(['auth']);
+    Route::post('purchase/{id}/file',['as' => 'purchases.file.upload','uses' =>'PurchaseController@fileUpload'])->middleware(['auth']);
+    Route::delete("purchase/{id}/destroy", 'PurchaseController@fileUploadDestroy')->name("purchase.attachment.destroy")->middleware(['auth']);
 
     // Warehouse
     Route::resource('warehouse', 'WarehouseController')->middleware(
