@@ -565,7 +565,7 @@ class ProductServiceController extends Controller
         if(!empty($request->product_type)){
             $product_services = $product_services->where('type',$request->product_type);
         }
-        $product_services = $product_services->get()->pluck('name', 'id');
+        $product_services =  \Modules\ProductService\Entities\ProductService::where('created_by', creatorId())->where('workspace_id',getActiveWorkSpace())->select('sku', 'name', 'id')->get();
         return response()->json($product_services);
     }
 

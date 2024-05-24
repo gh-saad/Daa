@@ -18,7 +18,7 @@
                                     <th>{{__('Date')}}</th>
                                     <th>{{__('Product Name')}}</th>
                                     <th>{{__('Chasis Number')}}</th>
-                                    <th>{{__('Quantity')}}</th>
+                                    <th>{{__('Engine Number')}}</th>
                                     <th>{{__('Type')}}</th>
                                     <th>{{__('Description')}}</th>
                                 </tr>
@@ -33,7 +33,7 @@
                                         @else
                                             <td class="text-info">{{ __('Product & Service Module is Off') }}</td>
                                         @endif
-                                        <td class="font-style">{{ $stock->quantity }}</td>
+                                        <td class="font-style">{{ !empty($stock->product) ? $stock->product->engine_no : '' }}</td>
                                         <td class="font-style">{{ ucfirst($stock->type) }}</td>
                                         <td class="font-style">{{$stock->description}}</td>
                                     </tr>

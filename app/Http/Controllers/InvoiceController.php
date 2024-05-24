@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Modules\ProductService\Entities\ProductService;
 use Rawilk\Settings\Support\Context;
+use Illuminate\Support\Str;
 
 class InvoiceController extends Controller
 {
@@ -169,7 +170,7 @@ class InvoiceController extends Controller
                 for($i = 0; $i < count($products); $i++)
                 {
                     $product = \Modules\ProductService\Entities\ProductService::where('id', $products[$i]['item'])->first();
-                    if($product->quantity < $products[$i]['quantity']){
+                    if($product->quantity < 1){
                         return redirect()->back()->with('error', __('Requested quantity of item is not available.'));
                     }
                 }
@@ -226,32 +227,80 @@ class InvoiceController extends Controller
                     $invoiceProduct->invoice_id     = $invoice->id;
                     $invoiceProduct->product_type   = $products[$i]['product_type'];
                     $invoiceProduct->product_id     = $products[$i]['item'];
-                    $invoiceProduct->quantity       = $products[$i]['quantity'];
+                    $invoiceProduct->quantity       = 1;
                     $invoiceProduct->discount       = isset($products[$i]['discount']) ? $products[$i]['discount'] : 0;
                     $invoiceProduct->price          = $products[$i]['price'];
                     $invoiceProduct->description    = $products[$i]['description'];
 
                     // create a new tax
-                    if (module_is_active('ProductService')){
-                        if ($products[$i]['tax'] && $products[$i]['itemTaxPrice'] && $products[$i]['itemTaxRate']){
-                            $new_tax = new \Modules\ProductService\Entities\Tax();
-                            $new_tax->name = $products[$i]['tax'];
-                            $new_tax->rate = $products[$i]['itemTaxRate'];
-                            $new_tax->created_by = \Auth::user()->id;
-                            $new_tax->workspace_id = getActiveWorkSpace();
-                            $new_tax->save();
-                            
+                    if (module_is_active('ProductService')) {
+                        // check to see if name was provided
+                        if ($products[$i]['tax'] && $products[$i]['itemTaxRate']){
+                            // locate the tax
+                            $locate_tax_id = \Modules\ProductService\Entities\Tax::where('name', $products[$i]['tax'])->get();
+                            // if tax is located successfully, update it
+                            if ($locate_tax_id->count() > 0) {
+                                // generate a random name for tax entry
+                                $random_tax_name = Str::random(5); // generates a random string of length 5
+                                $generated_tax_name = 'tax-' . $random_tax_name;
+                                // create a new tax entry with the generated name and provided rate
+                                $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                                $tax_object_to_create->name = $generated_tax_name;
+                                $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
+                                $tax_object_to_create->created_by = \Auth::user()->id;
+                                $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                                $tax_object_to_create->save();
+
+                                // get id of this newly added entry
+                                $new_tax_id = $tax_object_to_create->id;
+                                
+                                // assign the id to purchase product tax entry
+                                $invoiceProduct->tax = $new_tax_id;
+                            } else {
+                                // if tax is not located, create a new tax
+                                $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                                $tax_object_to_create->name = $products[$i]['tax'];
+                                $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
+                                $tax_object_to_create->created_by = \Auth::user()->id;
+                                $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                                $tax_object_to_create->save();
+
+                                // get id of this newly added entry
+                                $new_tax_id = $tax_object_to_create->id;
+                                
+                                // assign the id to purchase product tax entry
+                                $invoiceProduct->tax = $new_tax_id;
+                            }
+                        } else if (!$products[$i]['tax'] && $products[$i]['itemTaxRate']) {
+                            // generate a random name for tax entry
+                            $random_tax_name = Str::random(5); // generates a random string of length 5
+                            $generated_tax_name = 'tax-' . $random_tax_name;
+                            // create a new tax entry with the generated name and provided rate
+                            $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                            $tax_object_to_create->name = $generated_tax_name;
+                            $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
+                            $tax_object_to_create->created_by = \Auth::user()->id;
+                            $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                            $tax_object_to_create->save();
+
                             // get id of this newly added entry
-                            $new_tax_id = $new_tax->id;
-                        }else{
+                            $new_tax_id = $tax_object_to_create->id;
+                                
+                            // assign the id to purchase product tax entry
+                            $invoiceProduct->tax = $new_tax_id;
+                        } else {
                             $new_tax_id = 1;
+                                
+                            // assign the id to purchase product tax entry
+                            $invoiceProduct->tax = $new_tax_id;
                         }
-                    }else{
+                    } else {
                         $new_tax_id = 1;
+                                
+                        // assign the id to purchase product tax entry
+                        $invoiceProduct->tax = $new_tax_id;
                     }
 
-                    // assign the id to proposal product tax entry
-                    $invoiceProduct->tax = $new_tax_id;
                     $invoiceProduct->save();
 
                     if(module_is_active('ProductService'))

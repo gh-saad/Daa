@@ -5,6 +5,13 @@ namespace Modules\Account\Http\Controllers;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
+use Modules\Account\Entities\Warehouse;
+use Modules\Account\Entities\WarehouseProduct;
+use Modules\Account\Entities\Purchase;
+use Modules\Account\Events\CreateWarehouse;
+use Modules\Account\Events\DestroyWarehouse;
+use Modules\Account\Events\UpdateWarehouse;
 
 class WarehouseController extends Controller
 {
@@ -32,7 +39,19 @@ class WarehouseController extends Controller
      */
     public function create()
     {
-        return view('account::create');
+        if(\Auth::user()->can('warehouse create'))
+        {
+            if(module_is_active('CustomField')){
+                $customFields =  \Modules\CustomField\Entities\CustomField::where('workspace_id',getActiveWorkSpace())->where('module', '=', 'account')->where('sub_module','warehouse')->get();
+            }else{
+                $customFields = null;
+            }
+            return view('account::warehouse.create', compact('customFields'));
+        }
+        else
+        {
+            return response()->json(['error' => __('Permission denied.')], 401);
+        }
     }
 
     /**
@@ -42,7 +61,47 @@ class WarehouseController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        if(\Auth::user()->can('warehouse create'))
+        {
+            $validator = \Validator::make(
+                $request->all(), [
+                    'name' => 'required',
+                    'city'=>'required',
+                    'address'=>'required',
+                    'city_zip'=>'required',
+
+                ]
+            );
+            if($validator->fails())
+            {
+                $messages = $validator->getMessageBag();
+
+                return redirect()->back()->with('error', $messages->first());
+            }
+
+            $warehouse             = new Warehouse();
+            $warehouse->name       = $request->name;
+            $warehouse->address    = $request->address;
+            $warehouse->city       = $request->city;
+            $warehouse->city_zip   = $request->city_zip;
+            $warehouse->workspace  = getActiveWorkSpace();
+            $warehouse->created_by = creatorId();
+            $warehouse->save();
+
+            if(module_is_active('CustomField'))
+            {
+                \Modules\CustomField\Entities\CustomField::saveData($warehouse, $request->customField);
+            }
+
+            event(new CreateWarehouse($request,$warehouse));
+            
+            return redirect()->route('warehouse.index')->with('success', __('Warehouse successfully created.'));
+        }
+        else
+        {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+
     }
 
     /**
@@ -50,9 +109,34 @@ class WarehouseController extends Controller
      * @param int $id
      * @return Renderable
      */
-    public function show($id)
+    public function show(warehouse $warehouse)
     {
-        return view('account::show');
+        $id = WarehouseProduct::where('warehouse_id' , $warehouse->id)->first();
+
+        if(\Auth::user()->can('warehouse show'))
+        {
+
+            if(WarehouseProduct::where('warehouse_id' , $warehouse->id)->exists())
+            {
+
+                $warehouse = WarehouseProduct::where('warehouse_id' , $warehouse->id)->where('created_by', creatorId())->where('workspace',getActiveWorkSpace())->get();
+
+
+
+                return view('account::warehouse.show', compact('warehouse'));
+            }
+            else
+            {
+
+
+                $warehouse = [];
+                return view('account::warehouse.show', compact('warehouse'));
+            }
+        }
+        else
+        {
+            return response()->json(['error' => __('Permission denied.')], 401);
+        }
     }
 
     /**
@@ -60,9 +144,29 @@ class WarehouseController extends Controller
      * @param int $id
      * @return Renderable
      */
-    public function edit($id)
+    public function edit(Warehouse $warehouse)
     {
-        return view('account::edit');
+        if(\Auth::user()->can('warehouse edit'))
+        {
+            if($warehouse->created_by == creatorId() && $warehouse->workspace == getActiveWorkSpace())
+            {
+                if(module_is_active('CustomField')){
+                    $warehouse->customField = \Modules\CustomField\Entities\CustomField::getData($warehouse, 'account','warehouse');
+                    $customFields             = \Modules\CustomField\Entities\CustomField::where('workspace_id', '=', getActiveWorkSpace())->where('module', '=', 'account')->where('sub_module','warehouse')->get();
+                }else{
+                    $customFields = null;
+                }
+                return view('account::warehouse.edit', compact('warehouse','customFields'));
+            }
+            else
+            {
+                return response()->json(['error' => __('Permission denied.')], 401);
+            }
+        }
+        else
+        {
+            return response()->json(['error' => __('Permission denied.')], 401);
+        }
     }
 
     /**
@@ -71,9 +175,46 @@ class WarehouseController extends Controller
      * @param int $id
      * @return Renderable
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Warehouse $warehouse)
     {
-        //
+        if(\Auth::user()->can('warehouse edit'))
+        {
+            if($warehouse->created_by == creatorId()  && $warehouse->workspace == getActiveWorkSpace())
+            {
+                $validator = \Validator::make(
+                    $request->all(), [
+                        'name' => 'required',
+                    ]
+                );
+                if($validator->fails())
+                {
+                    $messages = $validator->getMessageBag();
+
+                    return redirect()->back()->with('error', $messages->first());
+                }
+
+                $warehouse->name       = $request->name;
+                $warehouse->address    = $request->address;
+                $warehouse->city       = $request->city;
+                $warehouse->city_zip   = $request->city_zip;
+                $warehouse->save();
+
+                if(module_is_active('CustomField'))
+                {
+                    \Modules\CustomField\Entities\CustomField::saveData($warehouse, $request->customField);
+                }
+                event(new UpdateWarehouse($request,$warehouse));
+                return redirect()->route('warehouse.index')->with('success', __('Warehouse successfully updated.'));
+            }
+            else
+            {
+                return redirect()->back()->with('error', __('Permission denied.'));
+            }
+        }
+        else
+        {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
     }
 
     /**
@@ -81,8 +222,228 @@ class WarehouseController extends Controller
      * @param int $id
      * @return Renderable
      */
-    public function destroy($id)
+    public function destroy(Warehouse $warehouse)
     {
-        //
+        if(\Auth::user()->can('warehouse delete'))
+        {
+            if($warehouse->created_by == creatorId()  && $warehouse->workspace == getActiveWorkSpace())
+            {
+                $purchase = Purchase::where('warehouse_id',$warehouse->id)->get();
+                if(module_is_active('CustomField'))
+                {
+                    $customFields = \Modules\CustomField\Entities\CustomField::where('module','account')->where('sub_module','warehouse')->get();
+                    foreach($customFields as $customField)
+                    {
+                        $value = \Modules\CustomField\Entities\CustomFieldValue::where('record_id', '=', $warehouse)->where('field_id',$customField->id)->first();
+                        if(!empty($value))
+                        {
+                            $value->delete();
+                        }
+                    }
+                }
+                if(count($purchase) == 0)
+                {
+                    WarehouseProduct::where('warehouse_id',$warehouse->id)->delete();
+                    event(new DestroyWarehouse($warehouse));
+                    $warehouse->delete();
+                }
+                else
+                {
+                    return redirect()->route('warehouse.index')->with('error', __('This warehouse has purchase. Please remove the purchase from this warehouse.'));
+                }
+
+
+                return redirect()->route('warehouse.index')->with('success', __('Warehouse successfully deleted.'));
+            }
+            else
+            {
+                return redirect()->back()->with('error', __('Permission denied.'));
+            }
+        }
+        else
+        {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+    }
+    public function warehouseDetail($id)
+    {
+        $products = WarehouseProduct::where('product_id', '=', $id)->where('created_by',creatorId())->where('workspace',getActiveWorkSpace())->get();
+        return view('account::warehouse.detail', compact('products'));
+    }
+
+    public function fileImportExport()
+    {
+        if(Auth::user()->can('warehouse import'))
+        {
+            return view('account::warehouse.import');
+        }
+        else
+        {
+            return response()->json(['error' => __('Permission denied.')], 401);
+        }
+    }
+
+    public function fileImport(Request $request)
+    {
+        if(Auth::user()->can('warehouse import'))
+        {
+            session_start();
+
+            $error = '';
+
+            $html = '';
+
+            if ($request->file->getClientOriginalName() != '') {
+                $file_array = explode(".", $request->file->getClientOriginalName());
+
+                $extension = end($file_array);
+                if ($extension == 'csv') {
+                    $file_data = fopen($request->file->getRealPath(), 'r');
+
+                    $file_header = fgetcsv($file_data);
+                    $html .= '<table class="table table-bordered"><tr>';
+
+                    for ($count = 0; $count < count($file_header); $count++) {
+                        $html .= '
+                                <th>
+                                    <select name="set_column_data" class="form-control set_column_data" data-column_number="' . $count . '">
+                                    <option value="">Set Count Data</option>
+                                    <option value="name">Name</option>
+                                    <option value="address">Address</option>
+                                    <option value="city">City</option>
+                                    <option value="zip_code">Zip Code</option>
+                                    </select>
+                                </th>
+                                ';
+
+                    }
+                    $html .= '</tr>';
+                    $limit = 0;
+                    while (($row = fgetcsv($file_data)) !== false) {
+                        $limit++;
+
+                        $html .= '<tr>';
+
+                        for ($count = 0; $count < count($row); $count++) {
+                            $html .= '<td>' . $row[$count] . '</td>';
+                        }
+
+                        $html .= '</tr>';
+
+                        $temp_data[] = $row;
+
+                    }
+                    $_SESSION['file_data'] = $temp_data;
+                } else {
+                    $error = 'Only <b>.csv</b> file allowed';
+                }
+            } else {
+
+                $error = 'Please Select CSV File';
+            }
+            $output = array(
+                'error' => $error,
+                'output' => $html,
+            );
+
+            echo json_encode($output);
+        }
+        else
+        {
+            return redirect()->back()->with('error', 'permission Denied');
+        }
+
+    }
+
+    public function fileImportModal()
+    {
+        if(Auth::user()->can('warehouse import'))
+        {
+            return view('account::warehouse.import_modal');
+        }
+        else
+        {
+            return response()->json(['error' => __('Permission denied.')], 401);
+        }
+    }
+
+    public function warehouseImportdata(Request $request)
+    {
+        if(Auth::user()->can('warehouse import'))
+        {
+            session_start();
+            $html = '<h3 class="text-danger text-center">Below data is not inserted</h3></br>';
+            $flag = 0;
+            $html .= '<table class="table table-bordered"><tr>';
+            $file_data = $_SESSION['file_data'];
+
+            unset($_SESSION['file_data']);
+
+            $user = \Auth::user();
+
+            foreach ($file_data as $row) {
+                    $warehouse = Warehouse::where('created_by',creatorId())->where('workspace',getActiveWorkSpace())->Where('name', 'like',$row[$request->name])->get();
+
+                    if($warehouse->isEmpty()){
+
+                    try {
+                        Warehouse::create([
+                            'name' => $row[$request->name],
+                            'address' => $row[$request->address],
+                            'city' => $row[$request->city],
+                            'zip_code' => $row[$request->zip_code],
+                            'created_by' => creatorId(),
+                            'workspace' => getActiveWorkSpace(),
+                        ]);
+                    }
+                    catch (\Exception $e)
+                    {
+                        $flag = 1;
+                        $html .= '<tr>';
+
+                        $html .= '<td>' . $row[$request->name] . '</td>';
+                        $html .= '<td>' . $row[$request->address] . '</td>';
+                        $html .= '<td>' . $row[$request->city] . '</td>';
+                        $html .= '<td>' . $row[$request->zip_code] . '</td>';
+
+                        $html .= '</tr>';
+                    }
+                }
+                else
+                {
+                    $flag = 1;
+                    $html .= '<tr>';
+
+                    $html .= '<td>' . $row[$request->name] . '</td>';
+                    $html .= '<td>' . $row[$request->address] . '</td>';
+                    $html .= '<td>' . $row[$request->city] . '</td>';
+                    $html .= '<td>' . $row[$request->zip_code] . '</td>';
+
+                    $html .= '</tr>';
+                }
+            }
+
+            $html .= '
+                            </table>
+                            <br />
+                            ';
+            if ($flag == 1)
+            {
+
+                return response()->json([
+                            'html' => true,
+                    'response' => $html,
+                ]);
+            } else {
+                return response()->json([
+                    'html' => false,
+                    'response' => 'Data Imported Successfully',
+                ]);
+            }
+        }
+        else
+        {
+            return redirect()->back()->with('error', 'permission Denied');
+        }
     }
 }

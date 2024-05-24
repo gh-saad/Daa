@@ -22,6 +22,7 @@ use App\Models\InvoiceProduct;
 use App\Models\EmailTemplate;
 use App\Models\ProposalAttechment;
 use Modules\ProductService\Entities\ProductService;
+use Illuminate\Support\Str;
 
 class ProposalController extends Controller
 {
@@ -188,7 +189,7 @@ class ProposalController extends Controller
 
                     return redirect()->back()->with('error', $messages->first());
                 }
-                
+
                 $status = Proposal::$statues;
                 $proposal                 = new Proposal();
                 $proposal->proposal_id    = $this->proposalNumber();
@@ -205,40 +206,91 @@ class ProposalController extends Controller
                     {
                         \Modules\CustomField\Entities\CustomField::saveData($proposal, $request->customField);
                     }
+                    
                 $products = $request->items;
+                
                 for ($i = 0; $i < count($products); $i++)
                 {
                     $proposalProduct                = new ProposalProduct();
                     $proposalProduct->proposal_id   = $proposal->id;
                     $proposalProduct->product_type  = $products[$i]['product_type'];
                     $proposalProduct->product_id    = $products[$i]['item'];
-                    $proposalProduct->quantity      = $products[$i]['quantity'];
+                    $proposalProduct->quantity      = 1;
                     $proposalProduct->discount      = isset($products[$i]['discount']) ? $products[$i]['discount'] : 0;
                     $proposalProduct->price         = $products[$i]['price'];
                     $proposalProduct->description   = $products[$i]['description'];
 
                     // create a new tax
-                    if (module_is_active('ProductService')){
-                        if ($products[$i]['tax'] && $products[$i]['itemTaxPrice'] && $products[$i]['itemTaxRate']){
-                            $new_tax = new \Modules\ProductService\Entities\Tax();
-                            $new_tax->name = $products[$i]['tax'];
-                            $new_tax->rate = $products[$i]['itemTaxRate'];
-                            $new_tax->created_by = \Auth::user()->id;
-                            $new_tax->workspace_id = getActiveWorkSpace();
-                            $new_tax->save();
-                            
+                    if (module_is_active('ProductService')) {
+                        // check to see if name was provided
+                        if ($products[$i]['tax'] && $products[$i]['itemTaxRate']){
+                            // locate the tax
+                            $locate_tax_id = \Modules\ProductService\Entities\Tax::where('name', $products[$i]['tax'])->get();
+                            // if tax is located successfully, update it
+                            if ($locate_tax_id->count() > 0) {
+                                // generate a random name for tax entry
+                                $random_tax_name = Str::random(5); // generates a random string of length 5
+                                $generated_tax_name = 'tax-' . $random_tax_name;
+                                // create a new tax entry with the generated name and provided rate
+                                $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                                $tax_object_to_create->name = $generated_tax_name;
+                                $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
+                                $tax_object_to_create->created_by = \Auth::user()->id;
+                                $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                                $tax_object_to_create->save();
+
+                                // get id of this newly added entry
+                                $new_tax_id = $tax_object_to_create->id;
+                                
+                                // assign the id to purchase product tax entry
+                                $proposalProduct->tax = $new_tax_id;
+                            } else {
+                                // if tax is not located, create a new tax
+                                $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                                $tax_object_to_create->name = $products[$i]['tax'];
+                                $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
+                                $tax_object_to_create->created_by = \Auth::user()->id;
+                                $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                                $tax_object_to_create->save();
+
+                                // get id of this newly added entry
+                                $new_tax_id = $tax_object_to_create->id;
+                                
+                                // assign the id to purchase product tax entry
+                                $proposalProduct->tax = $new_tax_id;
+                            }
+                        } else if (!$products[$i]['tax'] && $products[$i]['itemTaxRate']) {
+                            // generate a random name for tax entry
+                            $random_tax_name = Str::random(5); // generates a random string of length 5
+                            $generated_tax_name = 'tax-' . $random_tax_name;
+                            // create a new tax entry with the generated name and provided rate
+                            $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                            $tax_object_to_create->name = $generated_tax_name;
+                            $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
+                            $tax_object_to_create->created_by = \Auth::user()->id;
+                            $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                            $tax_object_to_create->save();
+
                             // get id of this newly added entry
-                            $new_tax_id = $new_tax->id;
-                        }else{
+                            $new_tax_id = $tax_object_to_create->id;
+                                
+                            // assign the id to purchase product tax entry
+                            $proposalProduct->tax = $new_tax_id;
+                        } else {
                             $new_tax_id = 1;
+                                
+                            // assign the id to purchase product tax entry
+                            $proposalProduct->tax = $new_tax_id;
                         }
-                    }else{
+                    } else {
                         $new_tax_id = 1;
+                                
+                        // assign the id to purchase product tax entry
+                        $proposalProduct->tax = $new_tax_id;
                     }
 
-                    // assign the id to proposal product tax entry
-                    $proposalProduct->tax = $new_tax_id;
                     $proposalProduct->save();
+
                 }
 
                 // first parameter request second parameter proposal
@@ -379,7 +431,7 @@ class ProposalController extends Controller
                 if(module_is_active('ProductService'))
                 {
                     $category = \Modules\ProductService\Entities\Category::where('created_by', '=', creatorId())->where('workspace_id', getActiveWorkSpace())->where('type', 1)->get()->pluck('name', 'id');
-
+                    $product_services = \Modules\ProductService\Entities\ProductService::where('workspace_id', getActiveWorkSpace())->get()->pluck('name', 'id');
                 }
                 else
                 {
@@ -387,6 +439,25 @@ class ProposalController extends Controller
                     $product_services=[];
                 }
 
+                // Get associated products for this proposal
+                $products_tax_id = ProposalProduct::where('proposal_id', $proposal->id)->get()->pluck('tax');
+                $products_id = ProposalProduct::where('proposal_id', $proposal->id)->get()->pluck('id');
+                $tax_objects = [];
+
+                // Loop through all items
+                for ($i = 0; $i < count($products_tax_id); $i++) {
+                    $tax_rate_for_this_product = \Modules\ProductService\Entities\Tax::where('id', $products_tax_id[$i])->pluck('rate')->first();
+                    $tax_name_for_this_product = \Modules\ProductService\Entities\Tax::where('id', $products_tax_id[$i])->pluck('name')->first();
+
+                    $tax_details_for_this_product = [
+                        'proposal_product_id' => $products_id[$i],
+                        'proposal_id' => $proposal->id,
+                        'tax_name' => $tax_name_for_this_product,
+                        'tax_rate' => $tax_rate_for_this_product
+                    ];
+
+                    array_unshift($tax_objects, $tax_details_for_this_product);
+                }
 
                 $items = [];
                 $taxs = [];
@@ -412,7 +483,7 @@ class ProposalController extends Controller
                 }else{
                     $customFields = null;
                 }
-                return view('proposal.edit', compact('customers','proposal', 'proposal_number', 'category', 'items','taxs','projects','customFields'));
+                return view('proposal.edit', compact('customers', 'tax_objects', 'proposal', 'proposal_number', 'category', 'items','taxs','projects','customFields'));
             }
             else
             {
@@ -1299,7 +1370,7 @@ class ProposalController extends Controller
 
         if($request->type == "product" && module_is_active('Account'))
         {
-            $product_services = \Modules\ProductService\Entities\ProductService::where('workspace_id', getActiveWorkSpace())->get()->pluck('name', 'id');
+            $product_services =  \Modules\ProductService\Entities\ProductService::where('created_by', creatorId())->where('workspace_id',getActiveWorkSpace())->select('sku', 'name', 'id')->get();
             $product_services_count =$product_services->count();
             $product_type = ProductService::$product_type;
             $returnHTML = view('proposal.section',compact('product_services','product_type','type' ,'acction','proposal','product_services_count'))->render();

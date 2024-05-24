@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Account\Http\Controllers\PurchaseController;
 use Modules\Account\Http\Controllers\PurchaseDebitNoteController;
 use Modules\Account\Http\Controllers\WarehouseController;
+use Modules\Account\Http\Controllers\WarehouseTransferController;
 
 Route::group(['middleware' => 'PlanModuleCheck:Account'], function ()
     {
@@ -287,7 +288,7 @@ Route::group(['middleware' => 'PlanModuleCheck:Account'], function ()
     Route::delete('purchase/{id}/debit-note/delete/{cn_id}', 'PurchaseDebitNoteController@destroy')->name('purchase.delete.debit.note')->middleware(['auth',]);
 
     Route::get('/vendor/purchase/{id}/', 'PurchaseController@purchaseLink')->name('purchase.link.copy');
-    Route::get('/vendor/bill/{id}/', [PurchaseController::class, 'invoiceLink'])->name('bill.link.copy')->middleware(['auth']);
+    Route::get('/vendor/bill/{id}/', 'PurchaseController@invoiceLink')->name('bill.link.copy')->middleware(['auth']);
     Route::post('purchase/{id}/file',['as' => 'purchases.file.upload','uses' =>'PurchaseController@fileUpload'])->middleware(['auth']);
     Route::delete("purchase/{id}/destroy", 'PurchaseController@fileUploadDestroy')->name("purchase.attachment.destroy")->middleware(['auth']);
 
@@ -297,6 +298,20 @@ Route::group(['middleware' => 'PlanModuleCheck:Account'], function ()
             'auth',
         ]
     );
+    
+    //warehouse import
+    Route::get('warehouse/import/export', 'WarehouseController@fileImportExport')->name('warehouse.file.import')->middleware(['auth']);
+    Route::post('warehouse/import', 'WarehouseController@fileImport')->name('warehouse.import')->middleware(['auth']);
+    Route::get('warehouse/import/modal', 'WarehouseController@fileImportModal')->name('warehouse.import.modal')->middleware(['auth']);
+    Route::post('warehouse/data/import/', 'WarehouseController@warehouseImportdata')->name('warehouse.import.data')->middleware(['auth']);
+
+    Route::get('productservice/{id}/detail', 'WarehouseController@warehouseDetail')->name('productservice.detail');
+
+    //warehouse-transfer
+    Route::resource('warehouse-transfer', 'WarehouseTransferController')->middleware(['auth']);
+    Route::post('warehouse-transfer/getproduct', 'WarehouseTransferController@getproduct')->name('warehouse-transfer.getproduct')->middleware(['auth']);
+    Route::post('warehouse-transfer/getquantity', 'WarehouseTransferController@getquantity')->name('warehouse-transfer.getquantity')->middleware(['auth']);
+
 
 
 

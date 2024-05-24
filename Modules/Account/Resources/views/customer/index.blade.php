@@ -71,10 +71,10 @@
                                         @endcan
                                     </td>
                                 @else
-                                    <td>--</td>
+                                    <td>{{ $loop->iteration }}</td>
                                 @endif
                                 <td class="font-style">{{$customer['name']}}</td>
-                                <td>{{$customer['contact']}}</td>
+                                <td>{{$customer['contact_no']}}</td>
                                 <td>{{$customer['email']}}</td>
                                 <td>{{ currency_format_with_sym($customer['balance'])}}</td>
                                 @if (Gate::check('customer edit') || Gate::check('customer delete') || Gate::check('customer show'))

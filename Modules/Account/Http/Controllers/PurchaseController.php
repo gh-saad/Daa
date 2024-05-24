@@ -17,6 +17,7 @@ use Modules\Account\Events\DestroyPurchase;
 use Modules\Account\Events\PaymentDestroyPurchase;
 use Modules\Account\Events\ResentPurchase;
 use Modules\Account\Events\SentPurchase;
+use Modules\Account\Events\UpdatePurchase;
 use Modules\Account\Entities\Vender;
 use Modules\Account\Entities\Warehouse;
 use Modules\Account\Entities\WarehouseProduct;
@@ -181,36 +182,83 @@ class PurchaseController extends Controller
                 $purchaseProduct->purchase_id   = $purchase->id;
                 $purchaseProduct->product_type  = $products[$i]['product_type'];
                 $purchaseProduct->product_id    = $products[$i]['item'];
-                $purchaseProduct->quantity      = $products[$i]['quantity'];
+                $purchaseProduct->quantity      = 1;
                 $purchaseProduct->discount      = $products[$i]['discount'];
                 $purchaseProduct->price         = $products[$i]['price'];
                 $purchaseProduct->description   = $products[$i]['description'];
                 $purchaseProduct->workspace     = getActiveWorkSpace();
 
                 // create a new tax
-                if (module_is_active('ProductService')){
-                    if ($products[$i]['tax'] && $products[$i]['itemTaxPrice'] && $products[$i]['itemTaxRate']){
-                        $new_tax = new \Modules\ProductService\Entities\Tax();
-                        $new_tax->name = $products[$i]['tax'];
-                        $new_tax->rate = $products[$i]['itemTaxRate'];
-                        $new_tax->created_by = \Auth::user()->id;
-                        $new_tax->workspace_id = getActiveWorkSpace();
-                        $new_tax->save();
-                        
+                if (module_is_active('ProductService')) {
+                    // check to see if name was provided
+                    if ($products[$i]['tax'] && $products[$i]['itemTaxRate']){
+                        // locate the tax
+                        $locate_tax_id = \Modules\ProductService\Entities\Tax::where('name', $products[$i]['tax'])->get();
+                        // if tax is located successfully, update it
+                        if ($locate_tax_id->count() > 0) {
+                            // generate a random name for tax entry
+                            $random_tax_name = Str::random(5); // generates a random string of length 5
+                            $generated_tax_name = 'tax-' . $random_tax_name;
+                            // create a new tax entry with the generated name and provided rate
+                            $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                            $tax_object_to_create->name = $generated_tax_name;
+                            $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
+                            $tax_object_to_create->created_by = \Auth::user()->id;
+                            $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                            $tax_object_to_create->save();
+
+                            // get id of this newly added entry
+                            $new_tax_id = $tax_object_to_create->id;
+                            
+                            // assign the id to purchase product tax entry
+                            $purchaseProduct->tax = $new_tax_id;
+                        } else {
+                            // if tax is not located, create a new tax
+                            $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                            $tax_object_to_create->name = $products[$i]['tax'];
+                            $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
+                            $tax_object_to_create->created_by = \Auth::user()->id;
+                            $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                            $tax_object_to_create->save();
+
+                            // get id of this newly added entry
+                            $new_tax_id = $tax_object_to_create->id;
+                            
+                            // assign the id to purchase product tax entry
+                            $purchaseProduct->tax = $new_tax_id;
+                        }
+                    } else if (!$products[$i]['tax'] && $products[$i]['itemTaxRate']) {
+                        // generate a random name for tax entry
+                        $random_tax_name = Str::random(5); // generates a random string of length 5
+                        $generated_tax_name = 'tax-' . $random_tax_name;
+                        // create a new tax entry with the generated name and provided rate
+                        $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                        $tax_object_to_create->name = $generated_tax_name;
+                        $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
+                        $tax_object_to_create->created_by = \Auth::user()->id;
+                        $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                        $tax_object_to_create->save();
+
                         // get id of this newly added entry
-                        $new_tax_id = $new_tax->id;
-                    }else{
+                        $new_tax_id = $tax_object_to_create->id;
+                            
+                        // assign the id to purchase product tax entry
+                        $purchaseProduct->tax = $new_tax_id;
+                    } else {
                         $new_tax_id = 1;
+                            
+                        // assign the id to purchase product tax entry
+                        $purchaseProduct->tax = $new_tax_id;
                     }
-                }else{
+                } else {
                     $new_tax_id = 1;
+                            
+                    // assign the id to purchase product tax entry
+                    $purchaseProduct->tax = $new_tax_id;
                 }
 
-                // assign the id to proposal product tax entry
-                $purchaseProduct->tax = $new_tax_id;
-
                 $purchaseProduct->save();
-                
+
                 //inventory management (Quantity)
                 Purchase::total_quantity('plus',$purchaseProduct->quantity,$purchaseProduct->product_id);
 
@@ -310,10 +358,26 @@ class PurchaseController extends Controller
                 }
 
                 $product_services = \Modules\ProductService\Entities\ProductService::where('workspace_id', getActiveWorkSpace())->get()->pluck('name', 'id');
-                // get associated tax object
-                $product_tax_id = \Modules\Account\Entities\PurchaseProduct::where('purchase_id', 23)->get('tax');
-                dd($purchase->id);
-                $tax_object_for_this_product = \Modules\ProductService\Entities\Tax::where('id', $product_tax_id)->get()->pluck('name', 'rate');
+
+                // Get associated products for this purchase
+                $products_tax_id = \Modules\Account\Entities\PurchaseProduct::where('purchase_id', $purchase->id)->get()->pluck('tax');
+                $products_id = \Modules\Account\Entities\PurchaseProduct::where('purchase_id', $purchase->id)->get()->pluck('id');
+                $tax_objects = [];
+
+                // Loop through all items
+                for ($i = 0; $i < count($products_tax_id); $i++) {
+                    $tax_rate_for_this_product = \Modules\ProductService\Entities\Tax::where('id', $products_tax_id[$i])->pluck('rate')->first();
+                    $tax_name_for_this_product = \Modules\ProductService\Entities\Tax::where('id', $products_tax_id[$i])->pluck('name')->first();
+
+                    $tax_details_for_this_product = [
+                        'purchased_product_id' => $products_id[$i],
+                        'purchase_id' => $purchase->id,
+                        'tax_name' => $tax_name_for_this_product,
+                        'tax_rate' => $tax_rate_for_this_product
+                    ];
+
+                    array_unshift($tax_objects, $tax_details_for_this_product);
+                }
 
                 if(module_is_active('CustomField')){
                     $purchase->customField = \Modules\CustomField\Entities\CustomField::getData($purchase, 'account','purchase');
@@ -323,7 +387,7 @@ class PurchaseController extends Controller
                 }
                 $product_type =\Modules\ProductService\Entities\ProductService::$product_type;
 
-                return view('account::purchase.edit', compact('venders', 'tax_object_for_this_product', 'product_services', 'purchase', 'warehouse','purchase_number', 'category','customFields','product_type'));
+                return view('account::purchase.edit', compact('venders', 'tax_objects', 'product_services', 'purchase', 'warehouse','purchase_number', 'category','customFields','product_type'));
             }
             else
             {
@@ -343,161 +407,189 @@ class PurchaseController extends Controller
      * @return Renderable
      */
 
-     public function update(Request $request, Purchase $purchase)
-     {
-         if(\Auth::user()->can('purchase edit'))
-         {
-             if($purchase->created_by == creatorId() && $purchase->workspace == getActiveWorkSpace())
-             {
-                 if(!empty($request->vender_name)){
-                     $validator = \Validator::make(
-                         $request->all(), [
-                             'vender_name' => 'required',
-                             'purchase_date' => 'required',
-                             'items' => 'required',
-                             ]
-                     );
-                 }
-                 elseif(!empty($request->vender_id))
-                 {
-                     $validator = \Validator::make(
-                         $request->all(), [
-                             'vender_id' => 'required',
-                             'purchase_date' => 'required',
-                             'items' => 'required',
-                         ]
-                     );
-                 }
-                 if($validator->fails())
-                 {
-                     $messages = $validator->getMessageBag();
- 
-                     return redirect()->route('purchase.index')->with('error', $messages->first());
-                 }
- 
-                 if(!empty($request->vender_id)){
-                     $purchase->vender_id      = $request->vender_id;
-                     $purchase->vender_name      =  NULL;
-                 }else{
-                     $purchase->vender_name      = $request->vender_name;
-                     $purchase->vender_id      = 0;
-                 }
- 
- 
-                 $purchase->purchase_date      = $request->purchase_date;
-                 $purchase->category_id    = $request->category_id;
-                 $purchase->save();
-                 $products = $request->items;
- 
-                 if(module_is_active('CustomField'))
-                 {
-                     \Modules\CustomField\Entities\CustomField::saveData($purchase, $request->customField);
-                 }
- 
-                 for($i = 0; $i < count($products); $i++)
-                 {
-                     $purchaseProduct = PurchaseProduct::find($products[$i]['id']);
-                     if ($purchaseProduct == null)
-                     {
-                         $purchaseProduct             = new PurchaseProduct();
-                         $purchaseProduct->purchase_id    = $purchase->id;
-                         Purchase::total_quantity('plus',$products[$i]['quantity'],$products[$i]['item']);
-                         $old_qty=0;
- 
-                     }
-                     else{
-                         $old_qty = $purchaseProduct->quantity;
-                         Purchase::total_quantity('minus',$purchaseProduct->quantity,$purchaseProduct->product_id);
-                     }
-                     //inventory management (Quantity)
-                     if(isset($products[$i]['item']))
-                     {
-                         $purchaseProduct->product_id = $products[$i]['item'];
-                     }
-                     $purchaseProduct->product_type  = $products[$i]['product_type'];
-                     $purchaseProduct->quantity      = $products[$i]['quantity'];
-                     $purchaseProduct->discount      = $products[$i]['discount'];
-                     $purchaseProduct->price         = $products[$i]['price'];
-                     $purchaseProduct->description   = $products[$i]['description'];
+    public function update(Request $request, Purchase $purchase)
+    {
+        if(\Auth::user()->can('purchase edit'))
+        {
+            if($purchase->created_by == creatorId() && $purchase->workspace == getActiveWorkSpace())
+            {
+                if(!empty($request->vender_name)){
+                    $validator = \Validator::make(
+                        $request->all(), [
+                            'vender_name' => 'required',
+                            'purchase_date' => 'required',
+                            'items' => 'required',
+                            ]
+                    );
+                }
+                elseif(!empty($request->vender_id))
+                {
+                    $validator = \Validator::make(
+                        $request->all(), [
+                            'vender_id' => 'required',
+                            'purchase_date' => 'required',
+                            'items' => 'required',
+                        ]
+                    );
+                }
+                if($validator->fails())
+                {
+                    $messages = $validator->getMessageBag();
 
-                    // create a new tax
+                    return redirect()->route('purchase.index')->with('error', $messages->first());
+                }
+ 
+                if(!empty($request->vender_id)){
+                    $purchase->vender_id      = $request->vender_id;
+                    $purchase->vender_name      =  NULL;
+                }else{
+                    $purchase->vender_name      = $request->vender_name;
+                    $purchase->vender_id      = 0;
+                }
+ 
+                $purchase->purchase_date      = $request->purchase_date;
+                $purchase->category_id    = $request->category_id;
+                $purchase->lot_number = $request->lot_number;
+                $purchase->bl_number = $request->bl_number;
+                $purchase->save();
+                $products = $request->items;
+                
+                if(module_is_active('CustomField'))
+                {
+                    \Modules\CustomField\Entities\CustomField::saveData($purchase, $request->customField);
+                }
+                
+                // update tax for this
+                for ($i = 0; $i < count($products); $i++) {
+                    $purchaseProduct = PurchaseProduct::find($products[$i]['id']);
                     if (module_is_active('ProductService')) {
-                        if ($products[$i]['tax'] && $products[$i]['itemTaxPrice'] && $products[$i]['itemTaxRate']) {
-                            // create a new tax entry with the provided tax name and rate
-                            $new_tax = new \Modules\ProductService\Entities\Tax();
-                            $new_tax->name = $products[$i]['tax'];
-                            $new_tax->rate = $products[$i]['itemTaxRate'];
-                            $new_tax->created_by = \Auth::user()->id;
-                            $new_tax->workspace_id = getActiveWorkSpace();
-                            $new_tax->save();
+                        // check to see if name was provided
+                        if ($products[$i]['tax'] && $products[$i]['itemTaxRate']){
+                            // locate the tax
+                            $locate_tax_id = \Modules\ProductService\Entities\Tax::where('name', $products[$i]['tax'])->get();
+                            // if tax is located successfully, update it
+                            if ($locate_tax_id->count() > 0) {
+                                $tax_object_to_update = \Modules\ProductService\Entities\Tax::find($locate_tax_id[0]->id);
+                                $tax_object_to_update->rate = $products[$i]['itemTaxRate'];
+                                $tax_object_to_update->save();
+                            } else {
+                                // if tax is not located, create a new tax
+                                $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                                $tax_object_to_create->name = $products[$i]['tax'];
+                                $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
+                                $tax_object_to_create->created_by = \Auth::user()->id;
+                                $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                                $tax_object_to_create->save();
 
-                            // get id of this newly added entry
-                            $new_tax_id = $new_tax->id;
+                                // get id of this newly added entry
+                                $new_tax_id = $tax_object_to_create->id;
+                                
+                                // assign the id to purchase product tax entry
+                                $purchaseProduct->tax = $new_tax_id;
+                                $purchaseProduct->save();
+                            }
                         } else if (!$products[$i]['tax'] && $products[$i]['itemTaxRate']) {
                             // generate a random name for tax entry
                             $random_tax_name = Str::random(10); // generates a random string of length 10
 
                             // create a new tax entry with the generated name and provided rate
-                            $new_tax = new \Modules\ProductService\Entities\Tax();
-                            $new_tax->name = $random_tax_name;
-                            $new_tax->rate = $products[$i]['itemTaxRate'];
-                            $new_tax->created_by = \Auth::user()->id;
-                            $new_tax->workspace_id = getActiveWorkSpace();
-                            $new_tax->save();
+                            $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                            $tax_object_to_create->name = $random_tax_name;
+                            $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
+                            $tax_object_to_create->created_by = \Auth::user()->id;
+                            $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                            $tax_object_to_create->save();
 
                             // get id of this newly added entry
-                            $new_tax_id = $new_tax->id;
+                            $new_tax_id = $tax_object_to_create->id;
+                                
+                            // assign the id to purchase product tax entry
+                            $purchaseProduct->tax = $new_tax_id;
+                            $purchaseProduct->save();
                         } else {
                             $new_tax_id = 1;
+                                
+                            // assign the id to purchase product tax entry
+                            $purchaseProduct->tax = $new_tax_id;
+                            $purchaseProduct->save();
                         }
                     } else {
                         $new_tax_id = 1;
+                                
+                        // assign the id to purchase product tax entry
+                        $purchaseProduct->tax = $new_tax_id;
+                        $purchaseProduct->save();
                     }
 
-                    // assign the id to proposal product tax entry
-                    $purchaseProduct->tax = $new_tax_id;
+                }
+                
+                for($i = 0; $i < count($products); $i++)
+                {
+                    $purchaseProduct = PurchaseProduct::find($products[$i]['id']);
 
+                    if ($purchaseProduct == null)
+                    {
+                        $purchaseProduct             = new PurchaseProduct();
+                        $purchaseProduct->purchase_id    = $purchase->id;
+                        Purchase::total_quantity('plus',$products[$i]['quantity'],$products[$i]['item']);
+                        $old_qty=0;
+ 
+                    }
+                    else{
+                        $old_qty = $purchaseProduct->quantity;
+                        Purchase::total_quantity('minus',$purchaseProduct->quantity,$purchaseProduct->product_id);
+                    }
+                    //inventory management (Quantity)
+                    if(isset($products[$i]['item']))
+                    {
+                        $purchaseProduct->product_id = $products[$i]['item'];
+                    }
+                    $purchaseProduct->product_type  = $products[$i]['product_type'];
+                    $purchaseProduct->quantity      = $products[$i]['quantity'];
+                    $purchaseProduct->discount      = $products[$i]['discount'];
+                    $purchaseProduct->price         = $products[$i]['price'];
+                    $purchaseProduct->description   = $products[$i]['description'];
                     $purchaseProduct->save();
 
-                     //inventory management (Quantity)
-                     if ($products[$i]['id']>0) {
-                         Purchase::total_quantity('plus',$products[$i]['quantity'],$purchaseProduct->product_id);
-                     }
- 
-                      //Product Stock Report
-                     if(module_is_active('Account'))
-                     {
-                         $type='Purchase';
-                         $type_id = $purchase->id;
-                         \Modules\Account\Entities\StockReport::where('type','=','purchase')->where('type_id','=',$purchase->id)->delete();
-                         $description=$products[$i]['quantity'].'  '.__(' quantity add in purchase').' #'.$purchase->lot_number;
-                         if(empty($products[$i]['id'])){
-                             Purchase::addProductStock( $products[$i]['item'],$products[$i]['quantity'],$type,$description,$type_id);
-                         }
-                     }
-                      //Warehouse Stock Report
-                     $new_qty = $purchaseProduct->quantity;
-                     $total_qty= $new_qty - $old_qty;
-                     if(isset($products[$i]['item'])){
- 
-                         Purchase::addWarehouseStock( $products[$i]['item'],$total_qty,$request->warehouse_id);
-                     }
-                     event(new UpdatePurchase($request,$purchase));
- 
-                 }
- 
-                 return redirect()->route('purchase.index')->with('success', __('Purchase successfully updated.'));
-             }
-             else
-             {
-                 return redirect()->back()->with('error', __('Permission denied.'));
-             }
-         }
-         else
-         {
-             return redirect()->back()->with('error', __('Permission denied.'));
-         }
-     }
+                    //inventory management (Quantity)
+                    if ($products[$i]['id']>0) {
+                        Purchase::total_quantity('plus',$products[$i]['quantity'],$purchaseProduct->product_id);
+                    }
+
+                    //Product Stock Report
+                    if(module_is_active('Account'))
+                    {
+                        $type='Purchase';
+                        $type_id = $purchase->id;
+                        \Modules\Account\Entities\StockReport::where('type','=','purchase')->where('type_id','=',$purchase->id)->delete();
+                        $description=$products[$i]['quantity'].'  '.__(' quantity add in purchase').' #'.$purchase->lot_number;
+                        if(empty($products[$i]['id'])){
+                            Purchase::addProductStock( $products[$i]['item'],$products[$i]['quantity'],$type,$description,$type_id);
+                        }
+                    }
+                    //Warehouse Stock Report
+                    $new_qty = $purchaseProduct->quantity;
+                    $total_qty= $new_qty - $old_qty;
+                    if(isset($products[$i]['item'])){
+
+                        Purchase::addWarehouseStock( $products[$i]['item'],$total_qty,$request->warehouse_id);
+                    }
+                    event(new UpdatePurchase($request,$purchase));
+
+                }
+
+                return redirect()->route('purchase.index')->with('success', __('Purchase successfully updated.'));
+            }
+            else
+            {
+                return redirect()->back()->with('error', __('Permission denied.'));
+            }
+        }
+        else
+        {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+    }
  
     /**
      * Remove the specified resource from storage.

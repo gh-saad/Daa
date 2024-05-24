@@ -99,9 +99,9 @@ class ProductService extends Model
     }
 
     public function warehouseProduct($product_id,$warehouse_id){
-        if(module_is_active('Pos'))
+        if(module_is_active('Account'))
         {
-            $product=\Modules\Pos\Entities\WarehouseProduct::where('warehouse_id',$warehouse_id)
+            $product=\Modules\Account\Entities\WarehouseProduct::where('warehouse_id',$warehouse_id)
                 ->where('product_id',$product_id)
                 ->where('workspace',getActiveWorkSpace())->first();
 
@@ -126,11 +126,11 @@ class ProductService extends Model
     // added by Saad
     public function purchase_product()
     {
-      if(module_is_active('Pos'))
+      if(module_is_active('Account'))
       {
         // 'product_id' -> 'purchase_products:purchase_id' -> 'purchases:lot_number'
         
-        return $this->hasOne(\Modules\Pos\Entities\PurchaseProduct::class, 'product_id', 'id')->first();
+        return $this->hasOne(\Modules\Account\Entities\PurchaseProduct::class, 'product_id', 'id')->first();
       }
     }
 }

@@ -349,7 +349,7 @@
                                                                     @endif
                                                                 </td>
                                                                 <td style="white-space: break-spaces;">{{!empty($iteam->description)?$iteam->description:'-'}}</td>
-                                                                <td class="text-end">{{ currency_format_with_sym(($iteam->price * $iteam->quantity - $iteam->discount) + $totalTaxPrice)}}</td>{{--text-right--}}
+                                                                <td class="text-end">{{ currency_format_with_sym(($iteam->price * $iteam->quantity - $iteam->discount) + $taxPrice)}}</td>{{--text-right--}}
                                                             </tr>
                                                         @endforeach
                                                         <tfoot>
