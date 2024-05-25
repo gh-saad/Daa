@@ -19,6 +19,7 @@ class ProductServiceDatabaseSeeder extends Seeder
 
         $this->call(SidebarTableSeeder::class);
         $this->call(PermissionTableSeeder::class);
+        $this->call(TaxesTableSeeder::class);
         $check = Module::find('CustomField');
         if($check ){
             $this->call(CustomFieldListTableSeeder::class);

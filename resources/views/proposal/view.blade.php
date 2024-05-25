@@ -400,7 +400,7 @@
                                                             <td>{{$iteam->quantity}}</td>
                                                             <td>{{ currency_format_with_sym($iteam->price)}}</td>
                                                             <td>
-                                                                    {{ currency_format_with_sym($iteam->discount)}}
+                                                                {{ currency_format_with_sym($iteam->discount)}}
                                                             </td>
                                                             <td>
                                                                 @if(!empty($iteam->tax))

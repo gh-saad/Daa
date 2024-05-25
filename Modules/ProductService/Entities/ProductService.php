@@ -10,7 +10,7 @@ class ProductService extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name','sku','sale_price','purchase_price','tax_id','category_id','description','type', 'icon', 'parent_id', 'sort_order', 'route', 'is_visible','quantity', 'permissions', 'module','image','unit_id','sale_chartaccount_id','expense_chartaccount_id','workspace_id','created_by'
+        'name','sku','sale_price','purchase_price','tax_id','category_id','description','type', 'icon', 'parent_id', 'sort_order', 'purchased_by', 'purchased_status', 'route', 'is_visible','quantity', 'permissions', 'module','image','unit_id','sale_chartaccount_id','expense_chartaccount_id','workspace_id','created_by'
     ];
     public static $product_type =
     [
@@ -99,9 +99,9 @@ class ProductService extends Model
     }
 
     public function warehouseProduct($product_id,$warehouse_id){
-        if(module_is_active('Pos'))
+        if(module_is_active('Account'))
         {
-            $product=\Modules\Pos\Entities\WarehouseProduct::where('warehouse_id',$warehouse_id)
+            $product=\Modules\Account\Entities\WarehouseProduct::where('warehouse_id',$warehouse_id)
                 ->where('product_id',$product_id)
                 ->where('workspace',getActiveWorkSpace())->first();
 
@@ -126,11 +126,11 @@ class ProductService extends Model
     // added by Saad
     public function purchase_product()
     {
-      if(module_is_active('Pos'))
+      if(module_is_active('Account'))
       {
         // 'product_id' -> 'purchase_products:purchase_id' -> 'purchases:lot_number'
-
-        return $this->hasOne(\Modules\Pos\Entities\PurchaseProduct::class, 'product_id', 'id')->first();
+        
+        return $this->hasOne(\Modules\Account\Entities\PurchaseProduct::class, 'product_id', 'id')->first();
       }
     }
 }

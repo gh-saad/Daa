@@ -31,6 +31,20 @@ class SidebarTableSeeder extends Seeder
                     'type'=>'company',
                 ]);
             }
+            $acc_main = Sidebar::where('title',__('Accounting'))->where('parent_id',0)->where('type','company')->first();
+            if($acc_main == null)
+            {
+                $acc_main = Sidebar::create( [
+                    'title' => 'Accounting',
+                    'icon' => 'ti ti-layout-grid-add',
+                    'parent_id' => 0,
+                    'sort_order' => 320,
+                    'route' => null,
+                    'permissions' => 'account manage',
+                    'module' => 'Account',
+                    'type'=>'company',
+                ]);
+            }
             $main = Sidebar::where('title',__('POS'))->where('parent_id',0)->where('type','company')->first();
             if($main == null)
             {
@@ -45,35 +59,35 @@ class SidebarTableSeeder extends Seeder
                     'type'=>'company',
                 ]);
             }
-            $Warehouse = Sidebar::where('title',__('Warehouse'))->where('parent_id',$main->id)->where('type','company')->first();
+            $Warehouse = Sidebar::where('title',__('Warehouse'))->where('parent_id',$acc_main->id)->where('type','company')->first();
             if($Warehouse == null)
             {
                Sidebar::create([
                     'title' => 'Warehouse',
                     'icon' => '',
-                    'parent_id' => $main->id,
-                    'sort_order' => 10,
+                    'parent_id' => $acc_main->id,
+                    'sort_order' => 16,
                     'route' => 'warehouse.index',
                     'permissions' => 'warehouse manage',
                     'module' => 'Pos',
                     'type'=>'company',
                 ]);
             }
-            $Purchase = Sidebar::where('title',__('Purchase'))->where('parent_id',$main->id)->where('type','company')->first();
+            $Purchase = Sidebar::where('title',__('Purchase'))->where('parent_id',$acc_main->id)->where('type','company')->first();
             if($Purchase == null)
             {
                Sidebar::create([
                     'title' => 'Purchase',
                     'icon' => '',
-                    'parent_id' => $main->id,
-                    'sort_order' => 15,
+                    'parent_id' => $acc_main->id,
+                    'sort_order' => 17,
                     'route' => 'purchase.index',
                     'permissions' => 'purchase manage',
                     'module' => 'Pos',
                     'type'=>'company',
                 ]);
             }
-
+            
             $AddPos = Sidebar::where('title',__('Add POS'))->where('parent_id',$main->id)->where('type','company')->first();
             if($AddPos == null)
             {

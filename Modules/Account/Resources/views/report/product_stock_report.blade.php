@@ -17,7 +17,8 @@
                                 <tr>
                                     <th>{{__('Date')}}</th>
                                     <th>{{__('Product Name')}}</th>
-                                    <th>{{__('Quantity')}}</th>
+                                    <th>{{__('Chasis Number')}}</th>
+                                    <th>{{__('Engine Number')}}</th>
                                     <th>{{__('Type')}}</th>
                                     <th>{{__('Description')}}</th>
                                 </tr>
@@ -28,10 +29,11 @@
                                         <td class="font-style">{{ company_date_formate($stock->created_at)}}</td>
                                         @if(module_is_active('ProductService'))
                                             <td>{{ !empty($stock->product) ? $stock->product->name : '' }}</td>
+                                            <td>{{ !empty($stock->product) ? $stock->product->sku : '' }}</td>
                                         @else
                                             <td class="text-info">{{ __('Product & Service Module is Off') }}</td>
                                         @endif
-                                        <td class="font-style">{{ $stock->quantity }}</td>
+                                        <td class="font-style">{{ !empty($stock->product) ? $stock->product->engine_no : '' }}</td>
                                         <td class="font-style">{{ ucfirst($stock->type) }}</td>
                                         <td class="font-style">{{$stock->description}}</td>
                                     </tr>

@@ -65,7 +65,6 @@ class Proposal extends Model
         foreach ($this->items as $product) {
             $subTotal += ($product->price * $product->quantity);
         }
-
         return $subTotal;
     }
     public function getTotalDiscount()
@@ -85,7 +84,6 @@ class Proposal extends Model
 
             $totalTax += ($taxes / 100) * (($product->price * $product->quantity) - $product->discount);
         }
-
         return $totalTax;
     }
     public static function taxRate($taxRate, $price, $quantity,$discount = 0)

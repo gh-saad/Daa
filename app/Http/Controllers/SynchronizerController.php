@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
@@ -171,12 +172,14 @@ class SynchronizerController extends Controller
                         "city" => $member[11], # city of the member
                         "gender" => $member[12], # gender of the member
                         "balance_privilege_point" => $member[13], # balance privilege point
-                        "type" =>  $member[14], # type of member
                         "plan_expire_date" => $member[15], # account renewal date
                         "created_at" => now(),
                         "updated_at" => now() 
                     ];
-                   
+
+                    // $roleName = Role::where('id', $member[3])->value('name');
+                    $member_data["type"] = 'client';
+
                     $db_member = DB::table($db_table)->where("email", $member[4])->first();
                     if ($db_member){
                         // update

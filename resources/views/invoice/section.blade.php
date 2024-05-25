@@ -67,14 +67,14 @@
             success: function(data) {
                 selector.parent().parent().find('.product_id').empty();
                 var product_select = `<select class="form-control product_id item js-searchBox" name="${itemSelect}"
-                                        placeholder="Select Item" data-url="{{route('invoice.product')}}" required = 'required'>
+                                        placeholder="Select Item" data-url="{{route('proposal.product')}}" required = 'required'>
                                         </select>`;
                 selector.parent().parent().find('.product_div').html(product_select);
 
                 selector.parent().parent().find('.product_id').append('<option value="0"> {{ __('Select Item') }} </option>');
                 $.each(data, function(key, value) {
-                    var selected = (key == id) ? 'selected' : '';
-                    selector.parent().parent().find('.product_id').append('<option value="' + key + '" ' + selected + '>' + value + '</option>');
+                    var selected = (key == value.id) ? 'selected' : '';
+                    selector.parent().parent().find('.product_id').append('<option value="' + value.id + '" ' + selected + '>' + value.sku + ' - ' + value.name + '</option>');
                 });
                 if(type == 'edit')
                 {
@@ -154,13 +154,9 @@
                                 if (invoiceItems != null) {
                                     var amount = (invoiceItems.price * invoiceItems.quantity);
 
-                                    $(el.parent().parent().find('.quantity')).val(invoiceItems
-                                    .quantity);
                                     $(el.parent().parent().find('.price')).val(invoiceItems.price);
-                                    $(el.parent().parent().find('.discount')).val(invoiceItems
-                                    .discount);
+                                    $(el.parent().parent().find('.discount')).val(invoiceItems.discount);
                                 } else {
-                                    $(el.parent().parent().find('.quantity')).val(1);
                                     $(el.parent().parent().find('.price')).val(item.product.sale_price);
                                     $(el.parent().parent().find('.discount')).val(0);
                                 }
@@ -170,32 +166,46 @@
                                 var tax = [];
 
                                 var totalItemTaxRate = 0;
-                                for (var i = 0; i < item.taxes.length; i++) {
-                                    taxes +=
-                                        '<span class="badge bg-primary p-2 px-3 rounded mt-1 mr-1">' +
-                                        item.taxes[i].name + ' ' + '(' + item.taxes[i].rate + '%)' +
-                                        '</span>';
-                                    tax.push(item.taxes[i].id);
-                                    totalItemTaxRate += parseFloat(item.taxes[i].rate);
-                                }
-
-                                if (invoiceItems != null) {
-                                    var itemTaxPrice = parseFloat((totalItemTaxRate / 100) * (
-                                        invoiceItems.price * invoiceItems.quantity));
+                                if (item.taxes == 0) {
+                                    taxes += '-';
                                 } else {
-                                    var itemTaxPrice = parseFloat((totalItemTaxRate / 100) * (item
-                                        .product.sale_price * 1));
+                                    for (var i = 0; i < item.taxes.length; i++) {
+                                        taxes += '<span class="badge bg-primary p-2 px-3 rounded mt-1 mr-1 product_tax">' +
+                                            item.taxes[i].name + ' ' + '(' + item.taxes[i].rate + '%)' +
+                                            '</span>';
+                                        tax.push(item.taxes[i].id);
+                                        totalItemTaxRate += parseFloat(item.taxes[i].rate);
+                                    }
                                 }
 
-                                $(el.parent().parent().find('.itemTaxPrice')).val(itemTaxPrice.toFixed(
-                                    2));
-                                $(el.parent().parent().find('.itemTaxRate')).val(totalItemTaxRate
-                                    .toFixed(2));
+                                $(el.parent().parent().find('.itemTaxRate')).val(totalItemTaxRate.toFixed(2));
                                 $(el.parent().parent().find('.taxes')).html(taxes);
                                 $(el.parent().parent().find('.tax')).val(tax);
                                 $(el.parent().parent().find('.unit')).html(item.unit);
+                                $(el.parent().parent().find('.discount')).val(0);
+                                $(el.parent().parent().find('.amount')).html(item.totalAmount);
 
-                                $(".discount").trigger('change');
+                                var inputs = $(".amount");
+                                var subTotal = 0;
+                                for (var i = 0; i < inputs.length; i++) {
+                                    subTotal = parseFloat(subTotal) + parseFloat($(inputs[i]).html());
+                                }
+                                $('.subTotal').html(subTotal.toFixed(2));
+
+                                var totalItemPrice = 0;
+                                var priceInput = $('.price');
+                                for (var j = 0; j < priceInput.length; j++) {
+                                    totalItemPrice += parseFloat(priceInput[j].value);
+                                }
+
+                                var totalItemTaxPrice = 0;
+                                var itemTaxPriceInput = $('.itemTaxPrice');
+                                for (var j = 0; j < itemTaxPriceInput.length; j++) {
+                                    totalItemTaxPrice += parseFloat(itemTaxPriceInput[j].value);
+                                }
+
+                                $('.totalTax').html(totalItemTaxPrice.toFixed(2));
+                                $('.totalAmount').html((parseFloat(subTotal) + parseFloat(totalItemTaxPrice)).toFixed(2));
                             }
                         });
                     },
@@ -294,10 +304,10 @@
                         <tr>
                             <th>{{ __('Item Type') }}</th>
                             <th>{{ __('Items') }}</th>
-                            <th>{{ __('Quantity') }}</th>
+                            {{-- <th>{{ __('Quantity') }}</th> --}}
                             <th>{{ __('Price') }} </th>
                             <th>{{ __('Discount') }}</th>
-                            <th>{{ __('Tax') }} (%)</th>
+                            <th>{{ __('Tax Details') }} (%)</th>
                             <th class="text-end">{{ __('Amount') }} <br><small
                                     class="text-danger font-weight-bold">{{ __('After discount & tax') }}</small></th>
                             <th></th>
@@ -310,11 +320,11 @@
                             <td  class="form-group pt-0">
                                 {{ Form::select('product_type', $product_type, null, ['class' => 'form-control product_type ', 'required' => 'required', 'placeholder' => '--']) }}
                             </td>
-                            <td width="25%" class="form-group pt-0 product_div">
+                            <td width="15%" class="form-group pt-0 product_div">
                                     <select name="item" class="form-control product_id item  js-searchBox" data-url="{{route('invoice.product')}}" required>
                                         <option value="0">{{'--'}}</option>
-                                        @foreach ($product_services as $key =>$product_service)
-                                            <option value="{{$key}}">{{$product_service}}</option>
+                                        @foreach ($product_services as $product_service)
+                                            <option value="{{$product_service['id']}}">{{$product_service['sku']}} {{$product_service['name']}}</option>
                                         @endforeach
                                     </select>
                                 @if (empty($product_services_count))
@@ -323,12 +333,12 @@
                                     </div>
                                 @endif
                             </td>
-                            <td>
+                            {{-- <td>
                                 <div class="form-group price-input input-group search-form">
                                     {{ Form::text('quantity', '', ['class' => 'form-control quantity', 'required' => 'required', 'placeholder' => __('Qty'), 'required' => 'required']) }}
                                     <span class="unit input-group-text bg-transparent"></span>
                                 </div>
-                            </td>
+                            </td> --}}
                             <td>
                                 <div class="form-group price-input input-group search-form">
                                     {{ Form::text('price', '', ['class' => 'form-control price', 'required' => 'required', 'placeholder' => __('Price'), 'required' => 'required']) }}
@@ -346,9 +356,9 @@
                                 <div class="form-group">
                                     <div class="input-group colorpickerinput">
                                         <div class="taxes"></div>
-                                        {{ Form::hidden('tax', '', ['class' => 'form-control tax text-dark']) }}
-                                        {{ Form::hidden('itemTaxPrice', '', ['class' => 'form-control itemTaxPrice']) }}
-                                        {{ Form::hidden('itemTaxRate', '', ['class' => 'form-control itemTaxRate']) }}
+                                        {{ Form::text('tax', null, ['class' => 'form-control tax', 'placeholder' => __('Tax Name')]) }}
+                                        {{ Form::text('itemTaxPrice', '', ['class' => 'form-control itemTaxPrice', 'readonly' => 'readonly', 'placeholder' => __('Tax Price')]) }}
+                                        {{ Form::text('itemTaxRate', '', ['class' => 'form-control itemTaxRate', 'placeholder' => __('Tax Rate')]) }}
                                     </div>
                                 </div>
                             </td>
@@ -477,9 +487,9 @@
                                 <div class="form-group">
                                     <div class="input-group">
                                         <div class="taxes"></div>
-                                        {{ Form::hidden('tax', null, ['class' => 'form-control tax']) }}
-                                        {{ Form::hidden('itemTaxPrice', '', ['class' => 'form-control itemTaxPrice']) }}
-                                        {{ Form::hidden('itemTaxRate', '', ['class' => 'form-control itemTaxRate']) }}
+                                        {{ Form::text('tax', null, ['class' => 'form-control tax']) }}
+                                        {{ Form::text('itemTaxPrice', '', ['class' => 'form-control itemTaxPrice']) }}
+                                        {{ Form::text('itemTaxRate', '', ['class' => 'form-control itemTaxRate']) }}
                                     </div>
                                 </div>
                             </td>

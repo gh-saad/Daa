@@ -31,7 +31,7 @@ Route::group(['middleware' => 'PlanModuleCheck:ProductService'], function ()
     Route::post('product-service/data/import/', 'ProductServiceController@productserviceImportdata')->name('product-service.import.data')->middleware(['auth']);
     Route::post('get-taxes', 'ProductServiceController@getTaxes')->name('get.taxes');
     Route::any('product-service/get-item', 'ProductServiceController@GetItem')->name('get.item')->middleware(['auth']);
-
+    Route::post('/vehicle/purchase-status/{id}', 'ProductServiceController@vehicle_update_purchase_status')->name('vehicle.purchase-status');
 });
 
 

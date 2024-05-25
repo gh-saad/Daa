@@ -16,6 +16,7 @@ use App\Models\InvoiceProduct;
 use Modules\ProductService\Events\CreateProduct;
 use Modules\ProductService\Events\DestroyProduct;
 use Modules\ProductService\Events\UpdateProduct;
+use Illuminate\Support\Facades\Log;
 
 class ProductServiceController extends Controller
 {
@@ -190,6 +191,40 @@ class ProductServiceController extends Controller
         else
         {
             return response()->json(['error' => __('Permission denied.')], 401);
+        }
+    }
+
+    /**
+     * Mark a vehicle as sold.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function vehicle_update_purchase_status(Request $request, $id)
+    {
+        if (Auth::user()->can('product&service edit')) {
+            $productService = ProductService::find($id);
+
+            if (!$productService) {
+                return response()->json(['error' => 'Vehicle not found.'], 404);
+            }
+
+            if ($request->purchased_by == Auth::user()->id){
+                $productService->purchased_status = 'purchased';
+                $productService->purchased_by = $request->purchased_by;
+                $productService->save();
+            }else{
+                $productService->purchased_status = 'sold';
+                $productService->purchased_by = $request->purchased_by;
+                $productService->save();
+            }
+
+            // Here you can also create an entry in the accounts if needed
+
+            return response()->json(['success' => 'Vehicle marked as sold.'], 200);
+        } else {
+            return response()->json(['error' => 'Permission denied.'], 403);
         }
     }
 
@@ -530,7 +565,7 @@ class ProductServiceController extends Controller
         if(!empty($request->product_type)){
             $product_services = $product_services->where('type',$request->product_type);
         }
-        $product_services = $product_services->get()->pluck('name', 'id');
+        $product_services =  \Modules\ProductService\Entities\ProductService::where('created_by', creatorId())->where('workspace_id',getActiveWorkSpace())->select('sku', 'name', 'id')->get();
         return response()->json($product_services);
     }
 
@@ -539,6 +574,7 @@ class ProductServiceController extends Controller
         if(module_is_active('ProductService'))
         {
             $taxs_data = \Modules\ProductService\Entities\Tax::whereIn('id',$request->tax_id)->where('workspace_id', getActiveWorkSpace())->get();
+            Log::info($taxs_data);
             return json_encode($taxs_data);
         }else{
             $taxs_data = [];

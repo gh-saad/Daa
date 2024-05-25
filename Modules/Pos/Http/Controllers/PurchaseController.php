@@ -2,6 +2,7 @@
 
 namespace Modules\Pos\Http\Controllers;
 
+use Exception;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -200,12 +201,13 @@ class PurchaseController extends Controller
                 {
                     $type='Purchase';
                     $type_id = $purchase->id;
-                    $description=$products[$i]['quantity'].'  '.__(' quantity add in purchase').' '. Purchase::purchaseNumberFormat($purchase->purchase_id);
+                    $description=$products[$i]['quantity'].'  '.__(' quantity add in purchase').' #'.$purchase->lot_number;
                     Purchase::addProductStock( $products[$i]['item'],$products[$i]['quantity'],$type,$description,$type_id);
                 }
 
                 //Warehouse Stock Report
                 if(isset($products[$i]['item']))
+
                 {
                     Purchase::addWarehouseStock( $products[$i]['item'],$products[$i]['quantity'],$request->warehouse_id);
                 }
@@ -417,7 +419,7 @@ class PurchaseController extends Controller
                         $type='Purchase';
                         $type_id = $purchase->id;
                         \Modules\Account\Entities\StockReport::where('type','=','purchase')->where('type_id','=',$purchase->id)->delete();
-                        $description=$products[$i]['quantity'].'  '.__(' quantity add in purchase').' '. Purchase::purchaseNumberFormat($purchase->purchase_id);
+                        $description=$products[$i]['quantity'].'  '.__(' quantity add in purchase').' #'.$purchase->lot_number;
                         if(empty($products[$i]['id'])){
                             Purchase::addProductStock( $products[$i]['item'],$products[$i]['quantity'],$type,$description,$type_id);
                         }
@@ -904,9 +906,64 @@ class PurchaseController extends Controller
                 {
                     $Vendor = $vender_acc;
                 }
+
+                $bill_payment         = new \Modules\Account\Entities\BillPayment();
+                $bill_payment->name   = !empty($vender['name']) ? $purchasePayment->vendor_name: '';
+                $bill_payment->method = '-';
+                $bill_payment->date   = company_date_formate($request->date);
+                $bill_payment->amount = currency_format_with_sym($request->amount);
+                $bill_payment->bill   = 'purchase' . Purchase::purchaseNumberFormat($purchasePayment->purchase_id);
+
                 \Modules\Account\Entities\AccountUtility::userBalance('Vendor', $purchase->vender_id, $request->amount, 'debit');
 
+                if(!empty(company_setting('Bill Payment Create')) && company_setting('Bill Payment Create')  == true)
+                {
+                    $uArr = [
+                        'payment_name' => $bill_payment->name,
+                        'payment_bill' => $bill_payment->bill,
+                        'payment_amount' => $bill_payment->amount,
+                        'payment_date' => $bill_payment->date,
+                        'payment_method'=> $bill_payment->method
+
+                    ];
+                    try
+                    {
+                        $resp = EmailTemplate::sendEmailTemplate('Bill Payment Create', [$vendor->id => $vendor->email], $uArr);
+                    }
+
+                    catch (\Exception $e) {
+                        $resp['error'] = $e->getMessage();
+                    }
+                }
+
                 \Modules\Account\Entities\Transfer::bankAccountBalance($request->account_id, $request->amount, 'credit');
+
+                $account_payment = new \Modules\Account\Entities\Payment();
+                $account_payment->date = $purchasePayment->date;
+                $account_payment->amount = $purchasePayment->amount;
+                $account_payment->account_id = $purchasePayment->account_id;
+                $account_payment->vendor_id = $purchase->vender_id;
+                $account_payment->category_id = 2; // default for now
+                $account_payment->payment_method = 0; // default for now
+                $account_payment->reference = $purchasePayment->reference;
+                $account_payment->description = $purchasePayment->description;
+                $account_payment->add_receipt = $purchasePayment->add_receipt;
+                $account_payment->workspace = getActiveWorkSpace();
+                $account_payment->created_by = \Auth::user()->id;
+                $account_payment->save();
+            }
+
+            // Get the items associated with the purchase
+            $items = $purchase->items;
+
+            // Loop through each item and update purchase status
+            foreach($items as $item) {
+                $send_update_request = new Request();
+                $send_update_request->merge([
+                    'purchased_by' => \Auth::user()->id,
+                ]);
+
+                $response = \Illuminate\Support\Facades\Http::post(route('vehicle.purchase-status', $item->id), $send_update_request->all());
             }
 
             $payment         = new PurchasePayment();
@@ -947,6 +1004,34 @@ class PurchaseController extends Controller
         }
 
     }
+
+    /**
+     * Private method to update purchase status.
+     *
+     * @param int $id
+     * @param int $purchasedBy
+     * @return \Illuminate\Http\JsonResponse
+     */
+    private function updatePurchaseStatus($id, $purchasedBy)
+    {
+        if (Auth::user()->can('product&service edit')) {
+            $productService = ProductService::find($id);
+
+            if (!$productService) {
+                return response()->json(['error' => 'Vehicle not found.'], 404);
+            }
+
+            $status = ($purchasedBy == Auth::user()->id) ? 'purchased' : 'sold';
+            $productService->purchased_status = $status;
+            $productService->purchased_by = $purchasedBy;
+            $productService->save();
+
+            return response()->json(['success' => 'Vehicle marked as sold.'], 200);
+        } else {
+            return response()->json(['error' => 'Permission denied.'], 403);
+        }
+    }
+
     public function posPrintIndex()
     {
         if(\Auth::user()->can('pos manage'))

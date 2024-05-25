@@ -1,11 +1,8 @@
 {
-    "ProductService": true,
-    "LandingPage": true,
-    "Taskly": true,
     "Account": true,
+    "DoubleEntry": true,
     "Hrm": true,
+    "Lead": true,
     "Pos": true,
-    "Stripe": true,
-    "Paypal": true,
-    "Lead": true
+    "ProductService": true
 }
