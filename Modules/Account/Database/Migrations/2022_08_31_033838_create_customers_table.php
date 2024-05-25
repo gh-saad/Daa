@@ -20,7 +20,7 @@ return new class extends Migration
                 $table->integer('customer_id');
                 $table->integer('user_id')->nullable();
                 $table->string('name');
-                $table->string('email')->unique();
+                $table->string('email'); #->unique();
                 $table->string('password')->nullable();
                 $table->string('contact')->nullable();
                 $table->string('tax_number')->nullable();
