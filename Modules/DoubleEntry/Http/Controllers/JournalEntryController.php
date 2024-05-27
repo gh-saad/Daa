@@ -328,6 +328,7 @@ class JournalEntryController extends Controller
                         $transaction_amount = $journalItem->credit;
                     }
                     $data = [
+                        'user_id' => creatorId(), 
                         'account_id' => $journalItem->account,
                         'transaction_type' => $transaction_type,
                         'transaction_amount' => $transaction_amount,
