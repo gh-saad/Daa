@@ -237,14 +237,14 @@ class JournalEntryController extends Controller
         if (Auth::user()->can('journalentry edit')) {
 
 
-            $chartAccounts = ChartOfAccount::select('chart_of_accounts.id', 'chart_of_accounts.code', 'chart_of_accounts.name', 'chart_of_accounts.parent')
-                ->where('parent', '=', 0)
+            $chartAccounts = ChartOfAccount::select('chart_of_accounts.id', 'chart_of_accounts.code', 'chart_of_accounts.name')
+                // ->where('parent', '=', 0)
                 ->where('created_by', creatorId())->where('workspace', getActiveWorkSpace())->get()
                 ->toarray();
 
-            $subAccounts = ChartOfAccount::select('chart_of_accounts.id', 'chart_of_accounts.code', 'chart_of_accounts.name' , 'chart_of_account_parents.account');
-            $subAccounts->leftjoin('chart_of_account_parents', 'chart_of_accounts.parent', 'chart_of_account_parents.id');
-            $subAccounts->where('chart_of_accounts.parent', '!=', 0);
+            $subAccounts = ChartOfAccount::select('chart_of_accounts.id', 'chart_of_accounts.code', 'chart_of_accounts.name');
+            // $subAccounts->leftjoin('chart_of_account_parents', 'chart_of_account_parents.id');
+            // $subAccounts->where('chart_of_accounts.parent', '!=', 0);
             $subAccounts->where('chart_of_accounts.created_by', creatorId());
             $subAccounts->where('chart_of_accounts.workspace', getActiveWorkSpace());
             $subAccounts = $subAccounts->get()->toArray();

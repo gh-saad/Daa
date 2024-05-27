@@ -242,11 +242,11 @@
                                     <select name="account" class="form-control" required="required">
                                         @foreach ($chartAccounts as $chartAccount)
                                             <option value="{{ $chartAccount['id'] }}" class="subAccount">{{ $chartAccount['code'] }} - {{ $chartAccount['name'] }}</option>
-                                            @foreach ($subAccounts as $subAccount)
+                                            {{-- @foreach ($subAccounts as $subAccount)
                                                 @if ($chartAccount['id'] == $subAccount['account'])
                                                     <option value="{{ $subAccount['id'] }}" class="ms-5"> &nbsp; &nbsp;&nbsp; {{ $subAccount['code'] }} -  {{ $subAccount['name'] }}</option>
                                                 @endif
-                                            @endforeach
+                                            @endforeach --}}
                                         @endforeach
                                     </select>
 
