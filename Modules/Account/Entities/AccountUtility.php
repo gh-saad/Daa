@@ -12,6 +12,7 @@ use Spatie\Permission\Models\Permission;
 use App\Models\User;
 use App\Models\WorkSpace;
 use Rawilk\Settings\Support\Context;
+use Modules\Account\Entities\TransactionLines;
 
 class AccountUtility extends Model
 {
@@ -1613,7 +1614,7 @@ class AccountUtility extends Model
         $journalItems  = [];
         if(module_is_active('DoubleEntry'))
         {
-            $journalItems = \Modules\DoubleEntry\Entities\JournalItem::select('journal_entries.journal_id', 'journal_entries.date as transaction_date', 'journal_items.*')
+            $journalItems = \Modules\DoubleEntry\Entities\JournalItem::select('journal_entries.id as journal_id', 'journal_entries.date as transaction_date', 'journal_items.*')
                 ->leftjoin('journal_entries', 'journal_entries.id', 'journal_items.journal')
                 ->where('journal_entries.created_by', '=', creatorId())->where('journal_entries.workspace', '=', getActiveWorkSpace())
                 ->where('account', $account_id);
@@ -1739,13 +1740,14 @@ class AccountUtility extends Model
     public static function addTransactionLines($data)
     {
         $transactionLine = new Transaction();
+        $transactionLine->user_id = $data['user_id'];
         $transactionLine->account = $data['account_id'];
         $transactionLine->type = $data['transaction_type'];
         $transactionLine->amount = $data['transaction_amount'];
         // $transactionLine->reference = $data['reference'];
         // $transactionLine->reference_id = $data['reference_id'];
         // $transactionLine->reference_sub_id = $data['reference_sub_id'];
-        // $transactionLine->date = $data['date'];
+        $transactionLine->date = $data['date'];
         $transactionLine->save();
     }
     // end for chart-of-account
