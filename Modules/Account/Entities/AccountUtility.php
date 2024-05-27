@@ -1736,5 +1736,17 @@ class AccountUtility extends Model
         return $total;
     }
 
+    public static function addTransactionLines($data)
+    {
+        $transactionLine = new Transaction();
+        $transactionLine->account = $data['account_id'];
+        $transactionLine->type = $data['transaction_type'];
+        $transactionLine->amount = $data['transaction_amount'];
+        // $transactionLine->reference = $data['reference'];
+        // $transactionLine->reference_id = $data['reference_id'];
+        // $transactionLine->reference_sub_id = $data['reference_sub_id'];
+        // $transactionLine->date = $data['date'];
+        $transactionLine->save();
+    }
     // end for chart-of-account
 }
