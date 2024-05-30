@@ -20,7 +20,7 @@ class DeductionOptionController extends Controller
      */
     public function index()
     {
-        if(Auth::user()->can('employee manage'))
+        if(Auth::user()->can('deductionoption manage'))
         {
             $deductionoptions = DeductionOption::where('created_by', '=', creatorId())->where('workspace',getActiveWorkSpace())->get();
 
@@ -38,7 +38,7 @@ class DeductionOptionController extends Controller
      */
     public function create()
     {
-        if(Auth::user()->can('employee create'))
+        if(Auth::user()->can('deductionoption create'))
         {
             return view('hrm::deductionoption.create');
         }
@@ -55,7 +55,7 @@ class DeductionOptionController extends Controller
      */
     public function store(Request $request)
     {
-        if(Auth::user()->can('employee create'))
+        if(Auth::user()->can('deductionoption create'))
         {
 
             $validator = \Validator::make(
@@ -104,7 +104,7 @@ class DeductionOptionController extends Controller
      */
     public function edit(DeductionOption $deductionoption)
     {
-        if(Auth::user()->can('employee edit'))
+        if(Auth::user()->can('deductionoption edit'))
         {
             if($deductionoption->created_by == creatorId() && $deductionoption->workspace == getActiveWorkSpace())
             {
@@ -129,7 +129,7 @@ class DeductionOptionController extends Controller
      */
     public function update(Request $request, DeductionOption $deductionoption)
     {
-        if(Auth::user()->can('employee edit'))
+        if(Auth::user()->can('deductionoption edit'))
         {
             if($deductionoption->created_by == creatorId() && $deductionoption->workspace == getActiveWorkSpace())
             {
@@ -170,7 +170,7 @@ class DeductionOptionController extends Controller
      */
     public function destroy(DeductionOption $deductionoption)
     {
-        if(Auth::user()->can('employee delete'))
+        if(Auth::user()->can('deductionoption delete'))
         {
             if($deductionoption->created_by == creatorId() && $deductionoption->workspace == getActiveWorkSpace())
             {
