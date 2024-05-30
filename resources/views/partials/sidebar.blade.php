@@ -11,9 +11,8 @@
         </div>
         <div class="navbar-content">
             <ul class="dash-navbar">
-                
+
                 @foreach (getSideMenu() as $key => $menu)
-                    
                     @can($menu->permissions)
                         @php
                             $route = '#!';
