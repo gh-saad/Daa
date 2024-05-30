@@ -177,8 +177,8 @@ class SynchronizerController extends Controller
                         "updated_at" => now() 
                     ];
 
-                    // $roleName = Role::where('id', $member[3])->value('name');
-                    $member_data["type"] = 'client';
+                    $roleName = Role::where('id', $member[3])->value('name');
+                    $member_data["type"] = $roleName;
 
                     $db_member = DB::table($db_table)->where("email", $member[4])->first();
                     if ($db_member){
