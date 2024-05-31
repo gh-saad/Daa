@@ -32,14 +32,30 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <div class="project-info d-flex text-sm">
-                            <div class="project-info-inner mr-3 col-6">
+                        <div class="project-info row text-sm">
+                            <div class="project-info-inner mr-3 col-6 mb-3">
                                 <b class="m-0"> {{ __('Payslip Type') }} </b>
                                 <div class="project-amnt pt-1">{{ !empty($employee->salary_type()) ?  ($employee->salary_type()) ?? '' : '' }}</div>
                             </div>
-                            <div class="project-info-inner mr-3 col-6">
+                            <div class="project-info-inner mr-3 col-6 mb-3">
                                 <b class="m-0"> {{ __('Salary') }} </b>
                                 <div class="project-amnt pt-1">{{ currency_format_with_sym($employee->salary) }}</div>
+                            </div>
+                            <div class="project-info-inner mr-3 col-6 mb-3">
+                                <b class="m-0"> {{ __('Gross Income') }} </b>
+                                <div class="project-amnt pt-1">{{ currency_format_with_sym($employee->get_gross_income()) }}</div>
+                            </div>
+                            <div class="project-info-inner mr-3 col-6 mb-3">
+                                <b class="m-0"> {{ __('Taxable Income') }} </b>
+                                <div class="project-amnt pt-1">{{ currency_format_with_sym($employee->get_net_pay_before_taxes()) }}</div>
+                            </div>
+                            <div class="project-info-inner mr-3 col-6 mb-3">
+                                <b class="m-0"> {{ __('Net Tax Liablity') }} </b>
+                                <div class="project-amnt pt-1">{{ currency_format_with_sym($employee->get_net_tax_liability()) }}</div>
+                            </div>
+                            <div class="project-info-inner mr-3 col-6 mb-3">
+                                <b class="m-0"> {{ __('Net Income') }} </b>
+                                <div class="project-amnt pt-1">{{ currency_format_with_sym($employee->get_net_salary()) }}</div>
                             </div>
                         </div>
                     </div>
@@ -408,6 +424,182 @@
                 </div>
             @endcan
 
+            <!-- Tax Deduction -->
+            @can('saturation deduction manage')
+                <div class="col-md-6">
+                    <div class="card set-card">
+                        <div class="card-header">
+                            <div class="row">
+                                <div class="col-6">
+                                    <h5>{{ __('Tax Deduction') }}</h5>
+                                </div>
+                                @can('saturation deduction create')
+                                <div class="col text-end">
+                                    <a data-url="{{ route('taxdeductions.create', $employee->id) }}"
+                                        data-ajax-popup="true" data-size="md" data-title="{{ __('Create Tax Deduction') }}"
+                                        data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
+                                        data-bs-original-title="{{ __('Create') }}">
+                                        <i class="ti ti-plus"></i>
+                                    </a>
+                                </div>
+                                @endcan
+                            </div>
+                        </div>
+                        <div class=" card-body table-border-style">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>{{ __('Employee Name') }}</th>
+                                            <th>{{ __('Title') }}</th>
+                                            <th>{{ __('Salary Amount') }}</th>
+                                            <th>{{ __('Difference') }}</th>
+                                            <th>{{ __('Type') }}</th>
+                                            <th>{{ __('Value') }}</th>
+                                            <th>{{ __('Amount') }}</th>
+                                            @if (Gate::check('saturation deduction edit') || Gate::check('saturation deduction delete'))
+                                                <th>{{ __('Action') }}</th>
+                                            @endif
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($taxdeductions as $taxdeduction)
+                                            <tr>
+                                                <td>{{ !empty( Modules\Hrm\Entities\Employee::GetEmployeeByEmp($taxdeduction->employee_id)) ? Modules\Hrm\Entities\Employee::GetEmployeeByEmp($taxdeduction->employee_id)->name : '' }}</td>
+                                                <td>{{ $taxdeduction->title }}</td>
+                                                <td>{{ $taxdeduction->salary_amount }}</td>
+                                                <td>{{ $taxdeduction->difference }}</td>
+                                                <td>{{ ucfirst($taxdeduction->tax_deduction_value_type) }}</td>
+                                                @if ($taxdeduction->tax_deduction_value_type == 'fixed')
+                                                    <td>{{ currency_format_with_sym($taxdeduction->tax_deduction_value) }}</td>
+                                                @else
+                                                    <td>{{ $taxdeduction->tax_deduction_value }}%</td>
+                                                @endif
+                                                <td>{{ currency_format_with_sym($taxdeduction->tax_deduction_calculated) }}</td>
+                                            @if (Gate::check('saturation deduction edit') || Gate::check('saturation deduction delete'))
+                                                <td class="Action">
+                                                    <span>
+                                                        @can('saturation deduction edit')
+                                                            <div class="action-btn bg-info ms-2">
+                                                                <a  class="mx-3 btn btn-sm  align-items-center"
+                                                                    data-url="{{  URL::to('taxdeduction/' . $taxdeduction->id . '/edit')  }}"
+                                                                    data-ajax-popup="true" data-size="md"
+                                                                    data-bs-toggle="tooltip" title=""
+                                                                    data-title="{{ __('Edit Tax Deduction') }}"
+                                                                    data-bs-original-title="{{ __('Edit') }}">
+                                                                    <i class="ti ti-pencil text-white"></i>
+                                                                </a>
+                                                            </div>
+                                                        @endcan
+                                                        @can('saturation deduction delete')
+                                                            <div class="action-btn bg-danger ms-2">
+                                                                {{Form::open(array('route'=>array('taxdeduction.destroy', $taxdeduction->id),'class' => 'm-0'))}}
+                                                                @method('DELETE')
+                                                                    <a class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
+                                                                        data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
+                                                                        aria-label="Delete" data-confirm="{{__('Are You Sure?')}}" data-text="{{__('This action can not be undone. Do you want to continue?')}}"  data-confirm-yes="delete-form-{{$taxdeduction->id}}"><i
+                                                                        class="ti ti-trash text-white text-white"></i></a>
+                                                                {{Form::close()}}
+                                                            </div>
+                                                        @endcan
+                                                    </span>
+                                                </td>
+                                            @endif
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endcan
+
+            <!-- Tax Relief -->
+            @can('saturation deduction manage')
+                <div class="col-md-6">
+                    <div class="card set-card">
+                        <div class="card-header">
+                            <div class="row">
+                                <div class="col-6">
+                                    <h5>{{ __('Tax Relief') }}</h5>
+                                </div>
+                                @can('saturation deduction create')
+                                    <div class="col text-end">
+                                        <a  data-url="{{ route('taxreliefs.create', $employee->id) }}"
+                                            data-ajax-popup="true" data-size="md" data-title="{{ __('Create Tax Relief') }}"
+                                            data-bs-toggle="tooltip" title="" class="btn btn-sm btn-primary"
+                                            data-bs-original-title="{{ __('Create') }}">
+                                            <i class="ti ti-plus"></i>
+                                        </a>
+                                    </div>
+                                @endcan
+                            </div>
+                        </div>
+                        <div class=" card-body table-border-style">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>{{ __('Employee Name') }}</th>
+                                            <th>{{ __('Title') }}</th>
+                                            <th>{{ __('Type') }}</th>
+                                            <th>{{ __('Amount') }}</th>
+                                            @if (Gate::check('saturation deduction edit') || Gate::check('saturation deduction delete'))
+                                                <th>{{ __('Action') }}</th>
+                                            @endif
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($taxreliefs as $taxrelief)
+                                            <tr>
+                                                <td>{{ !empty( Modules\Hrm\Entities\Employee::GetEmployeeByEmp($taxrelief->employee_id)) ? Modules\Hrm\Entities\Employee::GetEmployeeByEmp($taxrelief->employee_id)->name : '' }}</td>
+                                                <td>{{ $taxrelief->title }}</td>
+                                                <td>{{ ucfirst($taxrelief->tax_relief_value_type) }}</td>
+                                                @if ($taxrelief->tax_relief_value_type == 'fixed')
+                                                    <td>{{ currency_format_with_sym($taxrelief->tax_relief_value) }}</td>
+                                                @else
+                                                    <td>{{ $taxrelief->tax_relief_value }}%</td>
+                                                @endif
+                                            @if (Gate::check('saturation deduction edit') || Gate::check('saturation deduction delete'))
+                                                <td class="Action">
+                                                    <span>
+                                                        @can('saturation deduction edit')
+                                                            <div class="action-btn bg-info ms-2">
+                                                                <a  class="mx-3 btn btn-sm  align-items-center"
+                                                                    data-url="{{  URL::to('taxrelief/' . $taxrelief->id . '/edit')  }}"
+                                                                    data-ajax-popup="true" data-size="md"
+                                                                    data-bs-toggle="tooltip" title=""
+                                                                    data-title="{{ __('Edit Tax Relief') }}"
+                                                                    data-bs-original-title="{{ __('Edit') }}">
+                                                                    <i class="ti ti-pencil text-white"></i>
+                                                                </a>
+                                                            </div>
+                                                        @endcan
+                                                        @can('saturation deduction delete')
+                                                            <div class="action-btn bg-danger ms-2">
+                                                                {{Form::open(array('route'=>array('taxrelief.destroy', $taxrelief->id),'class' => 'm-0'))}}
+                                                                @method('DELETE')
+                                                                    <a class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
+                                                                        data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
+                                                                        aria-label="Delete" data-confirm="{{__('Are You Sure?')}}" data-text="{{__('This action can not be undone. Do you want to continue?')}}"  data-confirm-yes="delete-form-{{$taxrelief->id}}"><i
+                                                                        class="ti ti-trash text-white text-white"></i></a>
+                                                                {{Form::close()}}
+                                                            </div>
+                                                        @endcan
+                                                    </span>
+                                                </td>
+                                            @endif
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endcan
+
             <!-- other payment-->
             @can('other payment manage')
                 <div class="col-md-6">
@@ -584,6 +776,10 @@
 </div>
 @endsection
 @push('scripts')
+    <script>
+        var taxDeductions = @json($taxdeductions);
+    </script>
+
     <script type="text/javascript">
         $(document).on('change', '.amount_type', function() {
             var val = $(this).val();
@@ -592,6 +788,76 @@
                 var label_text = 'Percentage';
             }
             $('.amount_label').html(label_text);
+        });
+    </script>
+    
+    <!-- tax deduction calculation script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Attach event listener to dynamically loaded content
+            $(document).on('shown.bs.modal', '#commonModal', function () {
+
+                console.log("modal is being called and javascript is loaded!");
+
+                const modal = $(this);
+                const employeeId = modal.find('input[name="employee_id"]').val();
+                const salaryAmountField = modal.find('input[name="salary_amount"]');
+                const salaryDifference = modal.find('input[name="salary_difference"]');
+                const taxDeductionValueField = modal.find('input[name="tax_deduction_value"]');
+                const taxDeductionValueTypeField = modal.find('select[name="tax_deduction_value_type"]');
+                const taxDeductionCalculatedField = modal.find('input[name="tax_deduction_calculated"]');
+
+                let combinedSalaryAmount = 0;
+
+                function calculateTaxDeduction() {
+                    console.log("calculate function was called");
+                    console.log(salaryAmountField.val());
+                    console.log(taxDeductionValueField.val());
+                    console.log(taxDeductionValueTypeField.val());
+
+                    const salaryAmount = parseFloat(salaryAmountField.val()) || 0;
+                    const taxDeductionValue = parseFloat(taxDeductionValueField.val()) || 0;
+                    const taxDeductionValueType = taxDeductionValueTypeField.val();
+
+                    let calculatedValue = 0;
+                    let differenceValue = 0;
+
+                    if (taxDeductionValueType === 'percentage') {
+                        differenceValue = salaryAmount - combinedSalaryAmount;
+                        calculatedValue = (differenceValue * taxDeductionValue) / 100;
+                    } else if (taxDeductionValueType === 'fixed') {
+                        calculatedValue = taxDeductionValue;
+                    }
+
+                    taxDeductionCalculatedField.val(calculatedValue);
+                    salaryDifference.val(differenceValue);
+                }
+
+                calculateTaxDeduction();
+
+                function checkExistingTaxDeductions(employeeId) {
+                    const existingDeductions = taxDeductions.filter(deduction => deduction.employee_id == employeeId);
+                    if (existingDeductions.length > 0) {
+                        combinedSalaryAmount = existingDeductions.reduce((total, deduction) => total + parseFloat(deduction.difference), 0);
+                        console.log("Combined Salary Amount: ", combinedSalaryAmount);
+                        salaryAmountField.attr('min', combinedSalaryAmount);
+                    }
+                }
+
+                if (salaryAmountField.length && taxDeductionValueField.length && taxDeductionValueTypeField.length && taxDeductionCalculatedField.length) {
+                    salaryAmountField.on('input', calculateTaxDeduction);
+                    taxDeductionValueField.on('input', calculateTaxDeduction);
+                    taxDeductionValueTypeField.on('change', calculateTaxDeduction);
+                }
+
+                document.getElementById('net_pay_before_taxes').addEventListener('click', function() {
+                    var netPayBeforeTaxes = <?php echo json_encode($employee->get_net_pay_before_taxes()); ?>;
+                    document.getElementById('salary_amount').value = netPayBeforeTaxes;
+                    calculateTaxDeduction();
+                });
+
+                checkExistingTaxDeductions(employeeId);
+            });
         });
     </script>
 @endpush

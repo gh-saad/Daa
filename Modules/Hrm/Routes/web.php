@@ -374,6 +374,28 @@ Route::group(['middleware' => 'PlanModuleCheck:Hrm'], function ()
             'auth',
         ]
     );
+    // tax deduction
+    Route::get('taxdeductions/create/{eid}', 'TaxDeductionController@tax_deduction_create')->name('taxdeductions.create')->middleware(
+        [
+            'auth',
+        ]
+    );
+    Route::resource('taxdeduction', 'TaxDeductionController')->middleware(
+        [
+            'auth',
+        ]
+    );
+    // tax relief
+    Route::get('taxreliefs/create/{eid}', 'TaxReliefController@tax_relief_create')->name('taxreliefs.create')->middleware(
+        [
+            'auth',
+        ]
+    );
+    Route::resource('taxrelief', 'TaxReliefController')->middleware(
+        [
+            'auth',
+        ]
+    );
     // saturationdeduction
     Route::get('saturationdeductions/create/{eid}', 'SaturationDeductionController@saturationdeductionCreate')->name('saturationdeductions.create')->middleware(
         [

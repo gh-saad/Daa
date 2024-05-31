@@ -3,6 +3,7 @@
 namespace Modules\Hrm\Entities;
 
 use App\Models\User;
+use Modules\Hrm\Entities\TaxDeduction;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Permission\Models\Role;
@@ -105,11 +106,10 @@ class Employee extends Model
     {
         return $this->hasOne(PayslipType::class, 'id', 'salary_type')->pluck('name')->first();
     }
-    public function get_net_salary()
+
+    public function get_gross_income()
     {
-
         //allowance
-
         $allowances      = Allowance::where('employee_id', '=', $this->id)->get();
         $total_allowance = 0;
         foreach ($allowances as $allowance) {
@@ -131,32 +131,6 @@ class Employee extends Model
                 $total_commission  = $commission->amount * $employee->salary / 100 + $total_commission;
             } else {
                 $total_commission = $commission->amount + $total_commission;
-            }
-        }
-
-
-
-        //Loan
-        $loans      = Loan::where('employee_id', '=', $this->id)->get();
-        $total_loan = 0;
-        foreach ($loans as $loan) {
-            if ($loan->type == 'percentage') {
-                $employee = Employee::find($loan->employee_id);
-                $total_loan  = $loan->amount * $employee->salary / 100   + $total_loan;
-            } else {
-                $total_loan = $loan->amount + $total_loan;
-            }
-        }
-
-        //Saturation Deduction
-        $saturation_deductions      = SaturationDeduction::where('employee_id', '=', $this->id)->get();
-        $total_saturation_deduction = 0;
-        foreach ($saturation_deductions as $saturation_deduction) {
-            if ($saturation_deduction->type == 'percentage') {
-                $employee          = Employee::find($saturation_deduction->employee_id);
-                $total_saturation_deduction  = $saturation_deduction->amount * $employee->salary / 100 + $total_saturation_deduction;
-            } else {
-                $total_saturation_deduction = $saturation_deduction->amount + $total_saturation_deduction;
             }
         }
 
@@ -183,14 +157,97 @@ class Employee extends Model
 
 
         //Net Salary Calculate
-        $advance_salary = $total_allowance + $total_commission - $total_loan - $total_saturation_deduction + $total_other_payment + $total_over_time;
+        $advance_salary = $total_allowance + $total_commission + $total_other_payment + $total_over_time;
 
         $employee       = Employee::where('id', '=', $this->id)->first();
 
-        $net_salary     = (!empty($employee->salary) ? $employee->salary : 0) + $advance_salary;
+        $gross_income     = (!empty($employee->salary) ? $employee->salary : 0) + $advance_salary;
+
+        return $gross_income;
+    }
+
+    public function get_net_pay_before_taxes()
+    {
+        
+        //Loan
+        $loans      = Loan::where('employee_id', '=', $this->id)->get();
+        $total_loan = 0;
+        foreach ($loans as $loan) {
+            if ($loan->type == 'percentage') {
+                $employee = Employee::find($loan->employee_id);
+                $total_loan  = $loan->amount * $employee->salary / 100   + $total_loan;
+            } else {
+                $total_loan = $loan->amount + $total_loan;
+            }
+        }
+
+        //Saturation Deduction
+        $saturation_deductions      = SaturationDeduction::where('employee_id', '=', $this->id)->get();
+        $total_saturation_deduction = 0;
+        foreach ($saturation_deductions as $saturation_deduction) {
+            if ($saturation_deduction->type == 'percentage') {
+                $employee          = Employee::find($saturation_deduction->employee_id);
+                $total_saturation_deduction  = $saturation_deduction->amount * $employee->salary / 100 + $total_saturation_deduction;
+            } else {
+                $total_saturation_deduction = $saturation_deduction->amount + $total_saturation_deduction;
+            }
+        }
+
+        $employee       = Employee::where('id', '=', $this->id)->first();
+
+        $calc_salary_one = $employee->get_gross_income() - $total_loan;
+        $calc_salary_two = $calc_salary_one - $total_saturation_deduction;
+
+        $net_pay_before_taxes     = $calc_salary_two;
+
+        return $net_pay_before_taxes;
+    }
+
+    public function get_net_tax_liability()
+    {
+        
+        //Tax Deductions
+        $tax_deductions      = TaxDeduction::where('employee_id', '=', $this->id)->get();
+        $total_tax_deduction = 0;
+        foreach ($tax_deductions as $tax_deduction) {
+            $total_tax_deduction  = $tax_deduction->tax_deduction_calculated + $total_tax_deduction;
+        }
+
+        //Tax Relief
+        $tax_reliefs      = TaxRelief::where('employee_id', '=', $this->id)->get();
+        $total_tax_relief = 0;
+        foreach ($tax_reliefs as $tax_relief) {
+            if ($tax_relief->tax_relief_value_type == 'percentage') {
+                $employee          = Employee::find($tax_relief->employee_id);
+                $total_tax_relief  = $tax_relief->tax_relief_value * $total_tax_deduction / 100 + $total_tax_relief;
+            } else {
+                $total_tax_relief = $tax_relief->tax_relief_value + $total_tax_relief;
+            }
+        }
+
+        $employee       = Employee::where('id', '=', $this->id)->first();
+
+        $calc_net_tax_liability = $total_tax_deduction - $total_tax_relief;
+
+        if($calc_net_tax_liability < 0){
+            $calc_net_tax_liability = 0;
+        }
+
+        $net_tax_liability = $calc_net_tax_liability;
+
+        return $net_tax_liability;
+    }
+
+    public function get_net_salary()
+    {
+
+        $employee       = Employee::where('id', '=', $this->id)->first();
+
+        $net_salary     = $employee->get_net_pay_before_taxes() - $employee->get_net_tax_liability();
 
         return $net_salary;
     }
+
     public static function allowance($id)
     {
         //allowance
