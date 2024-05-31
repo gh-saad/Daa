@@ -10,7 +10,7 @@
         <div class="col-md-12">
             <div class="form-group">
                 {{ Form::label('salary', __('Salary'), ['class' => 'form-label']) }}
-                {{ Form::number('salary', null, ['class' => 'form-control ', 'required' => 'required', 'min' => '0']) }}
+                {{ Form::number('salary', null, ['class' => 'form-control ', 'required' => 'required', 'min' => '0', 'step' => 'any']) }}
             </div>
         </div>
     </div>
