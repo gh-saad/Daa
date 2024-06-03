@@ -19,6 +19,7 @@ class PaySlip extends Model
         'commission',
         'loan',
         'saturation_deduction',
+        'net_tax_liability',
         'other_payment',
         'overtime',
         'workspace',

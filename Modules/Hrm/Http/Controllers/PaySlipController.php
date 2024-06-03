@@ -17,6 +17,8 @@ use Modules\Hrm\Entities\OtherPayment;
 use Modules\Hrm\Entities\Overtime;
 use Modules\Hrm\Entities\PaySlip;
 use Modules\Hrm\Entities\SaturationDeduction;
+use Modules\Hrm\Entities\TaxDeduction;
+use Modules\Hrm\Entities\TaxRelief;
 use Modules\Hrm\Events\CreateMonthlyPayslip;
 use Modules\Hrm\Events\CreatePaymentMonthlyPayslip;
 use Modules\Hrm\Events\DestroyMonthlyPayslip;
@@ -130,6 +132,7 @@ class PaySlipController extends Controller
                 $payslipEmployee->commission           = Employee::commission($employee->id);
                 $payslipEmployee->loan                 = Employee::loan($employee->id);
                 $payslipEmployee->saturation_deduction = Employee::saturation_deduction($employee->id);
+                $payslipEmployee->net_tax_liability    = $employee->get_net_tax_liability();
                 $payslipEmployee->other_payment        = Employee::other_payment($employee->id);
                 $payslipEmployee->overtime             = Employee::overtime($employee->id);
                 $payslipEmployee->workspace            = getActiveWorkSpace();

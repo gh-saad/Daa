@@ -197,11 +197,17 @@
                                         <div class="invoice-detail-value">
                                             {{ currency_format($payslipDetail['totalEarning']) }}</div>
                                     </div>
-                                    <div class="invoice-detail-item">
+                                    <div class="invoice-detail-item pb-2">
                                         <div class="invoice-detail-name font-weight-bold">{{ __('Total Deduction') }}
                                         </div>
                                         <div class="invoice-detail-value">
                                             {{ currency_format($payslipDetail['totalDeduction']) }}</div>
+                                    </div>
+                                    <div class="invoice-detail-item pb-2">
+                                        <div class="invoice-detail-name font-weight-bold">{{ __('Net Tax Deduction') }}
+                                        </div>
+                                        <div class="invoice-detail-value">
+                                            {{ currency_format($payslipDetail['NetTaxDeduction']) }}</div>
                                     </div>
                                     <hr class="mt-2 mb-2">
                                     <div class="invoice-detail-item">

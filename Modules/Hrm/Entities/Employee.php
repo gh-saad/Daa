@@ -416,11 +416,15 @@ class Employee extends Model
             $totaldeduction += $empdeduction;
         }
 
+        // net tax deduction
+        $net_tax_deduction = $payslip_data->net_tax_liability;
+
        }
 
         $payslip['payslip']        = $payslip_data;
         $payslip['totalEarning']   = $totalAllowance + $totalCommission + $totalotherpayment + $ot;
         $payslip['totalDeduction'] = $totalloan + $totaldeduction;
+        $payslip['NetTaxDeduction']= $net_tax_deduction;
 
         $payslip['allowance'] = $totalAllowance;
         $payslip['commission'] = $totalCommission;
