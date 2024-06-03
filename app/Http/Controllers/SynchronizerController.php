@@ -140,6 +140,7 @@ class SynchronizerController extends Controller
 
     function get_members(){
         $db_table = "users";
+        $customer_table = "customers";
         $auth_response = $this->auth();
         $auth_response = json_decode($auth_response);
         if($auth_response->status == "ok"){
@@ -181,16 +182,89 @@ class SynchronizerController extends Controller
                     $member_data["type"] = 'client';
 
                     $db_member = DB::table($db_table)->where("email", $member[4])->first();
+                    $customer = DB::table($customer_table)->where("user_id", $db_member->id);
                     if ($db_member){
-                        // update
+                        // member already exist update it
                         unset($member_data["created_at"]);
                         unset($member_data["password"]);
                         DB::table($db_table)
                         ->where("id", $db_member->id)
                         ->update($member_data);
+                        // check if customer entry exist of this member
+                        if ($customer->count() != 0){
+                            // update the customer entry
+                            $customer_data = $customer->first();
+                            $customer_data["name"] = $db_member->name;
+                            $customer_data["email"] = $db_member->email;
+                            $customer_data["contact"] = $db_member->contact_no;
+                            $customer->update($customer_data);
+                        }else{
+                            // create customer entry
+                            $customer_data = [
+                                "customer_id" => $db_member->id,
+                                "user_id" => $db_member->id,
+                                "name" => $db_member->name ?? 0,
+                                "email" => $db_member->email ?? 0,
+                                "password" => $db_member->password ?? 0,
+                                "contact" => $db_member->contact_no ?? 0,
+                                "billing_name" => $db_member->name ?? 0,
+                                "billing_country" => $db_member->country ?? 0,
+                                "billing_state" => $db_member->state ?? 0,
+                                "billing_city" => $db_member->city ?? 0,
+                                "billing_address" => $db_member->address ?? 0,
+                                "billing_phone" => $db_member->contact_no ?? 0,
+                                "billing_zip" => $db_member->zip_code ?? 0,
+                                "shipping_name" => $db_member->name ?? 0,
+                                "shipping_country" => $db_member->country ?? 0,
+                                "shipping_state" => $db_member->state ?? 0,
+                                "shipping_city" => $db_member->city ?? 0,
+                                "shipping_address" => $db_member->address1 ?? 0,
+                                "shipping_phone" => $db_member->contact_no ?? 0,
+                                "shipping_zip" => $db_member->zip_code ?? 0,
+                                "lang" => "en",
+                                "balance" => 0.00,
+                                "workspace" => $db_member->workspace_id ?? 0,
+                                "created_at" => now(),
+                                "updated_at" => now(),
+                            ];
+                            // insert customer
+                            DB::table($customer_table)->insert($customer_data);
+                        }
                     }else{
-                        // create
-                        DB::table($db_table)->insert($member_data);
+                        // insert member
+                        $new_member = DB::table($db_table)->insert($member_data);
+
+                        // create customer entry
+                        $customer_data = [
+                            "customer_id" => $new_member->id,
+                            "user_id" => $new_member->id,
+                            "name" => $new_member->name ?? 0,
+                            "email" => $new_member->email ?? 0,
+                            "password" => $new_member->password ?? 0,
+                            "contact" => $new_member->contact_no ?? 0,
+                            "billing_name" => $new_member->name ?? 0,
+                            "billing_country" => $new_member->country ?? 0,
+                            "billing_state" => $new_member->state ?? 0,
+                            "billing_city" => $new_member->city ?? 0,
+                            "billing_address" => $new_member->address ?? 0,
+                            "billing_phone" => $new_member->contact_no ?? 0,
+                            "billing_zip" => $new_member->zip_code ?? 0,
+                            "shipping_name" => $new_member->name ?? 0,
+                            "shipping_country" => $new_member->country ?? 0,
+                            "shipping_state" => $new_member->state ?? 0,
+                            "shipping_city" => $new_member->city ?? 0,
+                            "shipping_address" => $new_member->address1 ?? 0,
+                            "shipping_phone" => $new_member->contact_no ?? 0,
+                            "shipping_zip" => $new_member->zip_code ?? 0,
+                            "lang" => "en",
+                            "balance" => 0.00,
+                            "workspace" => $new_member->workspace_id ?? 0,
+                            "created_at" => now(),
+                            "updated_at" => now(),
+                        ];
+
+                        // insert customer
+                        DB::table($customer_table)->insert($customer_data);
                     }
                 }
                 

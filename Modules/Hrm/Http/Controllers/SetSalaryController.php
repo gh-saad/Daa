@@ -17,6 +17,8 @@ use Modules\Hrm\Entities\OtherPayment;
 use Modules\Hrm\Entities\Overtime;
 use Modules\Hrm\Entities\PayslipType;
 use Modules\Hrm\Entities\SaturationDeduction;
+use Modules\Hrm\Entities\TaxDeduction;
+use Modules\Hrm\Entities\TaxRelief;
 use Modules\Hrm\Events\UpdateEmployeeSalary;
 
 class SetSalaryController extends Controller
@@ -83,6 +85,8 @@ class SetSalaryController extends Controller
             $commissions          = Commission::where('employee_id', $currentEmployee->id)->where('workspace',getActiveWorkSpace())->get();
             $loans                = Loan::where('employee_id', $currentEmployee->id)->where('workspace',getActiveWorkSpace())->get();
             $saturationdeductions = SaturationDeduction::where('employee_id', $currentEmployee->id)->where('workspace',getActiveWorkSpace())->get();
+            $taxdeductions        = TaxDeduction::where('employee_id', $currentEmployee->id)->where('workspace',getActiveWorkSpace())->get();
+            $taxreliefs           = TaxRelief::where('employee_id', $currentEmployee->id)->where('workspace',getActiveWorkSpace())->get();
             $otherpayments        = OtherPayment::where('employee_id', $currentEmployee->id)->where('workspace',getActiveWorkSpace())->get();
             $overtimes            = Overtime::where('employee_id', $currentEmployee->id)->where('workspace',getActiveWorkSpace())->get();
             $employee             = Employee::where('user_id', '=', \Auth::user()->id)->where('workspace',getActiveWorkSpace())->first();
@@ -136,7 +140,7 @@ class SetSalaryController extends Controller
                     $value->tota_allow = $empsal;
                 }
             }
-            return view('hrm::setsalary.employee_salary', compact('employee', 'payslip_type', 'allowance_options', 'commissions', 'loan_options', 'overtimes', 'otherpayments', 'saturationdeductions', 'loans', 'deduction_options', 'allowances'));
+            return view('hrm::setsalary.employee_salary', compact('employee', 'payslip_type', 'allowance_options', 'commissions', 'loan_options', 'overtimes', 'otherpayments', 'saturationdeductions', 'taxdeductions', 'taxreliefs', 'loans', 'deduction_options', 'allowances'));
 
         }
         else
@@ -145,6 +149,8 @@ class SetSalaryController extends Controller
             $commissions          = Commission::where('employee_id', $id)->where('workspace',getActiveWorkSpace())->get();
             $loans                = Loan::where('employee_id', $id)->where('workspace',getActiveWorkSpace())->get();
             $saturationdeductions = SaturationDeduction::where('employee_id', $id)->where('workspace',getActiveWorkSpace())->get();
+            $taxdeductions        = TaxDeduction::where('employee_id', $id)->where('workspace',getActiveWorkSpace())->get();
+            $taxreliefs           = TaxRelief::where('employee_id', $id)->where('workspace',getActiveWorkSpace())->get();
             $otherpayments        = OtherPayment::where('employee_id', $id)->where('workspace',getActiveWorkSpace())->get();
             $overtimes            = Overtime::where('employee_id', $id)->where('workspace',getActiveWorkSpace())->get();
             $employee             = Employee::find($id);
@@ -199,7 +205,7 @@ class SetSalaryController extends Controller
                 }
             }
 
-            return view('hrm::setsalary.employee_salary', compact('employee', 'payslip_type', 'allowance_options', 'commissions', 'loan_options', 'overtimes', 'otherpayments', 'saturationdeductions', 'loans', 'deduction_options', 'allowances'));
+            return view('hrm::setsalary.employee_salary', compact('employee', 'payslip_type', 'allowance_options', 'commissions', 'loan_options', 'overtimes', 'otherpayments', 'saturationdeductions', 'taxdeductions', 'taxreliefs', 'loans', 'deduction_options', 'allowances'));
         }
     }
 
@@ -233,12 +239,14 @@ class SetSalaryController extends Controller
     {
         //
     }
+
     public function employeeBasicSalary($id)
     {
         $payslip_type = PayslipType::where('workspace',getActiveWorkSpace())->get()->pluck('name', 'id');
         $employee     = Employee::find($id);
         return view('hrm::setsalary.basic_salary', compact('employee', 'payslip_type'));
     }
+    
     public function employeeUpdateSalary(Request $request, $id)
     {
         $validator = \Validator::make(

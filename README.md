@@ -35,3 +35,6 @@
 remove all roles first
 - `php artisan db:seed --class=RolesTableSeeder`
 - `php artisan module:seed ProductService`
+
+# after changes in the Hrm module for tax deduction and tax relief
+- `php artisan module:migrate Hrm`
