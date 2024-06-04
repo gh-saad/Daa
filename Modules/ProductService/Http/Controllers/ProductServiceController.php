@@ -407,13 +407,18 @@ class ProductServiceController extends Controller
                                 <th>
                                     <select name="set_column_data" class="form-control set_column_data" data-column_number="' . $count . '">
                                     <option value="">Set Count Data</option>
+                                    <option value="sku">Chasis No</option>
                                     <option value="name">Name</option>
-                                    <option value="sku">SKU</option>
-                                    <option value="sale_price">Sale Price</option>
-                                    <option value="purchase_price">Purchase Price</option>
-                                    <option value="quantity">Quantity</option>
-                                    <option value="type">Type</option>
-                                    <option value="description">Description</option>
+                                    <option value="category">Type</option>
+                                    <option value="colour">Colour</option>
+                                    <option value="fuel">Fuel</option>
+                                    <option value="mfg_year">Year</option>
+                                    <option value="engine_cc">Engine CC</option>
+                                    <option value="engine_no">Engine No</option>
+                                    <option value="sale_price">Push Price</option>
+                                    <option value="bid_no">Bid No</option>
+                                    <option value="bid_date">Bid Date</option>
+                                    <option value="vehicle_status">Status</option>
                                     </select>
                                 </th>
                                 ';
@@ -483,21 +488,55 @@ class ProductServiceController extends Controller
 
             $user = \Auth::user();
 
-
             foreach ($file_data as $row) {
-                    $product = ProductService::where('created_by',creatorId())->where('workspace_id',getActiveWorkSpace())->Where('name', 'like',$row[$request->name])->get();
+                $product = ProductService::where('created_by',creatorId())->where('workspace_id',getActiveWorkSpace())->Where('sku', 'like',$row[$request->sku])->get();
 
-                    if($product->isEmpty()){
+                if($product->isEmpty()){
 
                     try {
+                        // check to see if category exist
+                        $product_cat = Category::where('created_by', creatorId())
+                        ->where('workspace_id', getActiveWorkSpace())
+                        ->where('name', 'like', $row[$request->category])
+                        ->first();
+                    
+                        if ($product_cat === null) {
+                            // create a new category
+                            $new_cat = Category::create([
+                                'name' => $row[$request->category],
+                                'type' => 0,
+                                'color' => '#000000',
+                                'created_by' => creatorId(),
+                                'workspace_id' => getActiveWorkSpace(),
+                            ]);
+                        
+                            // get id of the newly created category
+                            $category_id = $new_cat->id;
+                        } else {
+                            // get id of the category
+                            $category_id = $product_cat->id;
+                        }
+                    
+                        // create product
                         ProductService::create([
                             'name' => $row[$request->name],
                             'sku' => $row[$request->sku],
                             'sale_price' => $row[$request->sale_price],
-                            'purchase_price' => $row[$request->purchase_price],
-                            'quantity' => $row[$request->quantity],
-                            'type' => $row[$request->type],
-                            'description' => $row[$request->description],
+                            'purchase_price' => 0.00,
+                            'quantity' => 1,
+                            'category_id' => $category_id,
+                            'unit_id' => 1,
+                            'sale_chartaccount_id' => 50,
+                            'expense_chartaccount_id' => 59,
+                            'type' => 'product',
+                            'colour' => $row[$request->colour],
+                            'fuel' => $row[$request->fuel],
+                            'mfg_year' => $row[$request->mfg_year],
+                            'vehicle_status' => $row[$request->vehicle_status],
+                            'bid_no' => $row[$request->bid_no],
+                            'bid_date' => $row[$request->bid_date],
+                            'engine_no' => $row[$request->engine_no],
+                            'engine_cc' => $row[$request->engine_cc],
                             'created_by' => creatorId(),
                             'workspace_id' => getActiveWorkSpace(),
                         ]);
@@ -509,11 +548,6 @@ class ProductServiceController extends Controller
 
                         $html .= '<td>' . $row[$request->name] . '</td>';
                         $html .= '<td>' . $row[$request->sku] . '</td>';
-                        $html .= '<td>' . $row[$request->sale_price] . '</td>';
-                        $html .= '<td>' . $row[$request->purchase_price] . '</td>';
-                        $html .= '<td>' . $row[$request->quantity] . '</td>';
-                        $html .= '<td>' . $row[$request->type] . '</td>';
-                        $html .= '<td>' . $row[$request->description] . '</td>';
 
                         $html .= '</tr>';
                     }
@@ -525,11 +559,6 @@ class ProductServiceController extends Controller
 
                     $html .= '<td>' . $row[$request->name] . '</td>';
                     $html .= '<td>' . $row[$request->sku] . '</td>';
-                    $html .= '<td>' . $row[$request->sale_price] . '</td>';
-                    $html .= '<td>' . $row[$request->purchase_price] . '</td>';
-                    $html .= '<td>' . $row[$request->quantity] . '</td>';
-                    $html .= '<td>' . $row[$request->type] . '</td>';
-                    $html .= '<td>' . $row[$request->description] . '</td>';
 
                     $html .= '</tr>';
                 }

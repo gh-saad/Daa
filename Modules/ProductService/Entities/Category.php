@@ -9,7 +9,13 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = [];
+    protected $fillable = [
+        'name',
+        'type',
+        'color',
+        'workspace_id',
+        'created_by',
+    ];
     public static $categoryType = [
         'Product & Service',
         'Income',

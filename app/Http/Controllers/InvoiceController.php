@@ -569,9 +569,9 @@ class InvoiceController extends Controller
                             $invoiceProduct             = new InvoiceProduct();
                             $invoiceProduct->invoice_id = $invoice->id;
 
-                            Invoice::total_quantity('minus',$products[$i]['quantity'],$products[$i]['item']);
+                            Invoice::total_quantity('minus',1,$products[$i]['item']);
 
-                            $updatePrice= ($products[$i]['price']*$products[$i]['quantity'])+($products[$i]['itemTaxPrice'])-($products[$i]['discount']);
+                            $updatePrice= ($products[$i]['price']*1)+($products[$i]['itemTaxPrice'])-($products[$i]['discount']);
                             \Modules\Account\Entities\AccountUtility::updateUserBalance('customer', $invoice->customer_id, $updatePrice, 'credit');
                         }
                         else
@@ -584,7 +584,7 @@ class InvoiceController extends Controller
                             $invoiceProduct->product_id = $products[$i]['item'];
                         }
                         $invoiceProduct->product_type   = $products[$i]['product_type'];
-                        $invoiceProduct->quantity       = $products[$i]['quantity'];
+                        $invoiceProduct->quantity       = 1;
                         $invoiceProduct->tax            = $products[$i]['tax'];
                         $invoiceProduct->discount       = isset($products[$i]['discount']) ? $products[$i]['discount'] : 0;
                         $invoiceProduct->price          = $products[$i]['price'];
@@ -594,7 +594,7 @@ class InvoiceController extends Controller
                         //inventory management (Quantity)
                         if($products[$i]['id'] > 0)
                         {
-                            Invoice::total_quantity('minus',$products[$i]['quantity'],$invoiceProduct->product_id);
+                            Invoice::total_quantity('minus',1,$invoiceProduct->product_id);
                         }
                         //Product Stock Report
                         if(module_is_active('Account'))
@@ -602,9 +602,9 @@ class InvoiceController extends Controller
                             $type='invoice';
                             $type_id = $invoice->id;
                             \Modules\Account\Entities\StockReport::where('type','=','invoice')->where('type_id' ,'=', $invoice->id)->delete();
-                            $description=$products[$i]['quantity'].'  '.__(' quantity sold in invoice').' '. Invoice::invoiceNumberFormat($invoice->invoice_id);
+                            $description='1  '.__(' quantity sold in invoice').' '. Invoice::invoiceNumberFormat($invoice->invoice_id);
                             if(empty($products[$i]['id'])){
-                                Invoice::addProductStock( $products[$i]['item'],$products[$i]['quantity'],$type,$description,$type_id);
+                                Invoice::addProductStock( $products[$i]['item'],1,$type,$description,$type_id);
                             }
                         }
 

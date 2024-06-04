@@ -1,4 +1,3 @@
-Name,SKU,Sale_Price,Purchase_Price,Quantity,Type,Description
-PC,00BG102,50000,45000,100,product,test demo
-TV,T0F201,45000,45000,150,service,test demo
-LAPTOP,L0912P,70000,65000,100,product,test demo
+"Chasis No","Name","Type","Colour","Fuel","Year","Engine CC","Engine No","Push Price","Bid No","Bid Date","Status"
+"ZRR700942580","TOYOTA COROLLA","Sedan","White","PETROL","2013","1798","82WVC10368","650000","3","2024-05-25","yard"
+"J2N10P0007659","DAIHATSU DELTA","PickUp","Red","DIESEL","2008","2184","42WVC10328","500000","2","2024-05-25","yard"

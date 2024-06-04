@@ -10,7 +10,38 @@ class ProductService extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name','sku','sale_price','purchase_price','tax_id','category_id','description','type', 'icon', 'parent_id', 'sort_order', 'purchased_by', 'purchased_status', 'route', 'is_visible','quantity', 'permissions', 'module','image','unit_id','sale_chartaccount_id','expense_chartaccount_id','workspace_id','created_by'
+        'name',
+        'sku',
+        'sale_price',
+        'purchase_price',
+        'tax_id',
+        'category_id',
+        'description',
+        'type', 
+        'icon', 
+        'parent_id', 
+        'sort_order', 
+        'purchased_by', 
+        'purchased_status', 
+        'route', 
+        'is_visible',
+        'quantity', 
+        'permissions', 
+        'module',
+        'image',
+        'unit_id',
+        'sale_chartaccount_id',
+        'expense_chartaccount_id',
+        'workspace_id',
+        'created_by',
+        'colour',
+        'fuel',
+        'mfg_year',
+        'vehicle_status',
+        'bid_no',
+        'bid_date',
+        'engine_no',
+        'engine_cc'
     ];
     public static $product_type =
     [

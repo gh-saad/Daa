@@ -48,15 +48,20 @@
             }
 
             total_selection = Object.keys(column_data).length;
-            if (total_selection == 7) {
+            if (total_selection == 12) {
                 $("#import").removeAttr("disabled");
-                name = column_data.name;
                 sku = column_data.sku;
+                name = column_data.name;
+                category = column_data.category;
+                colour = column_data.colour;
+                fuel = column_data.fuel;
+                mfg_year = column_data.mfg_year;
+                engine_cc = column_data.engine_cc;
+                engine_no = column_data.engine_no;
                 sale_price = column_data.sale_price;
-                purchase_price = column_data.purchase_price;
-                quantity = column_data.quantity;
-                type = column_data.type;
-                description = column_data.description;
+                bid_no = column_data.bid_no;
+                bid_date = column_data.bid_date;
+                vehicle_status = column_data.vehicle_status;
             } else {
                 $('#import').attr('disabled', 'disabled');
             }
@@ -71,13 +76,18 @@
                 url: "{{ route('product-service.import.data') }}",
                 method: "POST",
                 data: {
-                    name: name,
                     sku: sku,
+                    name: name,
+                    category: category,
+                    colour: colour,
+                    fuel: fuel,
+                    mfg_year: mfg_year,
+                    engine_cc: engine_cc,
+                    engine_no: engine_no,
                     sale_price: sale_price,
-                    purchase_price: purchase_price,
-                    quantity: quantity,
-                    type: type,
-                    description: description,
+                    bid_no: bid_no,
+                    bid_date: bid_date,
+                    vehicle_status: vehicle_status,
                     _token: "{{ csrf_token() }}"
                 },
                 beforeSend: function() {

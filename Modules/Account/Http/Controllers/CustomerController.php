@@ -546,8 +546,26 @@ class CustomerController extends Controller
 
                 if($customer->isEmpty()){
                     try {
+                        
+                        $user = User::create(
+                        [
+                            'name' =>$row[$request->name],
+                            'email' => $row[$request->email],
+                            'password' => Hash::make($row[$request->password]),
+                            'email_verified_at' => date('Y-m-d h:i:s'),
+                            'type' => !empty($roles->name)?$roles->name:'client',
+                            'lang' => 'en',
+                            'workspace_id' => getActiveWorkSpace(),
+                            'active_workspace' =>getActiveWorkSpace(),
+                            'created_by' => creatorId(),
+                            ]
+                        );
+                        $user->assignRole($roles->id);
+                        $user_id = $user->id;
+
                         Customer::create([
                             'customer_id' => $this->customerNumber(),
+                            'user_id' => $user_id,
                             'name' => $row[$request->name],
                             'email' => $row[$request->email],
                             'password' => $row[$request->password],
@@ -570,21 +588,6 @@ class CustomerController extends Controller
                             'created_by' => creatorId(),
                             'workspace' => getActiveWorkSpace(),
                         ]);
-
-                        $user = User::create(
-                            [
-                                'name' =>$row[$request->name],
-                                'email' => $row[$request->email],
-                                'password' => Hash::make($row[$request->password]),
-                                'email_verified_at' => date('Y-m-d h:i:s'),
-                                'type' => !empty($roles->name)?$roles->name:'client',
-                                'lang' => 'en',
-                                'workspace_id' => getActiveWorkSpace(),
-                                'active_workspace' =>getActiveWorkSpace(),
-                                'created_by' => creatorId(),
-                                ]
-                            );
-                            $user->assignRole($roles->id);
 
                     }
                     catch (\Exception $e)
