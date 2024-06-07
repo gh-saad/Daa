@@ -11,6 +11,7 @@ use Spatie\Permission\Models\Permission;
 use App\Models\WorkSpace;
 use Rawilk\Settings\Support\Context;
 use Symfony\Component\Mailer\Transport\Dsn;
+use Illuminate\Support\Facades\Log;
 
 class Employee extends Model
 {
@@ -115,9 +116,9 @@ class Employee extends Model
         foreach ($allowances as $allowance) {
             if ($allowance->type == 'percentage') {
                 $employee          = Employee::find($allowance->employee_id);
-                $total_allowance  = $allowance->amount * $employee->salary / 100  + $total_allowance;
+                $total_allowance  = round($allowance->amount, 2) * round($employee->salary, 2) / 100  + round($total_allowance, 2);
             } else {
-                $total_allowance = $allowance->amount + $total_allowance;
+                $total_allowance = round($allowance->amount, 2) + round($total_allowance, 2);
             }
         }
 
@@ -128,9 +129,9 @@ class Employee extends Model
         foreach ($commissions as $commission) {
             if ($commission->type == 'percentage') {
                 $employee          = Employee::find($commission->employee_id);
-                $total_commission  = $commission->amount * $employee->salary / 100 + $total_commission;
+                $total_commission  = round($commission->amount, 2) * round($employee->salary, 2) / 100 + round($total_commission, 2);
             } else {
-                $total_commission = $commission->amount + $total_commission;
+                $total_commission = round($commission->amount, 2) + round($total_commission, 2);
             }
         }
 
@@ -140,9 +141,9 @@ class Employee extends Model
         foreach ($other_payments as $other_payment) {
             if ($other_payment->type == 'percentage') {
                 $employee          = Employee::find($other_payment->employee_id);
-                $total_other_payment  = $other_payment->amount * $employee->salary / 100  + $total_other_payment;
+                $total_other_payment  = round($other_payment->amount, 2) * round($employee->salary, 2) / 100  + round($total_other_payment, 2);
             } else {
-                $total_other_payment = $other_payment->amount + $total_other_payment;
+                $total_other_payment = round($other_payment->amount, 2) + round($total_other_payment, 2);
             }
         }
 
@@ -152,16 +153,16 @@ class Employee extends Model
         foreach ($over_times as $over_time) {
             $total_work      = $over_time->number_of_days * $over_time->hours;
             $amount          = $total_work * $over_time->rate;
-            $total_over_time = $amount + $total_over_time;
+            $total_over_time = round($amount, 2) + round($total_over_time, 2);
         }
 
 
         //Net Salary Calculate
-        $advance_salary = $total_allowance + $total_commission + $total_other_payment + $total_over_time;
+        $advance_salary = round($total_allowance, 2) + round($total_commission, 2) + round($total_other_payment, 2) + round($total_over_time, 2);
 
         $employee       = Employee::where('id', '=', $this->id)->first();
 
-        $gross_income     = (!empty($employee->salary) ? $employee->salary : 0) + $advance_salary;
+        $gross_income     = (!empty($employee->salary) ? $employee->salary : 0) + round($advance_salary, 2);
 
         return $gross_income;
     }
@@ -175,9 +176,9 @@ class Employee extends Model
         foreach ($loans as $loan) {
             if ($loan->type == 'percentage') {
                 $employee = Employee::find($loan->employee_id);
-                $total_loan  = $loan->amount * $employee->salary / 100   + $total_loan;
+                $total_loan  = round($loan->amount, 2) * round($employee->salary, 2) / 100   + round($total_loan, 2);
             } else {
-                $total_loan = $loan->amount + $total_loan;
+                $total_loan = round($loan->amount, 2) + round($total_loan, 2);
             }
         }
 
@@ -187,18 +188,18 @@ class Employee extends Model
         foreach ($saturation_deductions as $saturation_deduction) {
             if ($saturation_deduction->type == 'percentage') {
                 $employee          = Employee::find($saturation_deduction->employee_id);
-                $total_saturation_deduction  = $saturation_deduction->amount * $employee->salary / 100 + $total_saturation_deduction;
+                $total_saturation_deduction  = round($saturation_deduction->amount, 2) * round($employee->salary, 2) / 100 + round($total_saturation_deduction, 2);
             } else {
-                $total_saturation_deduction = $saturation_deduction->amount + $total_saturation_deduction;
+                $total_saturation_deduction = round($saturation_deduction->amount, 2) + round($total_saturation_deduction, 2);
             }
         }
 
         $employee       = Employee::where('id', '=', $this->id)->first();
 
-        $calc_salary_one = $employee->get_gross_income() - $total_loan;
-        $calc_salary_two = $calc_salary_one - $total_saturation_deduction;
+        $calc_salary_one = round($employee->get_gross_income(), 2) - round($total_loan, 2);
+        $calc_salary_two = round($calc_salary_one, 2) - round($total_saturation_deduction, 2);
 
-        $net_pay_before_taxes     = $calc_salary_two;
+        $net_pay_before_taxes = round($calc_salary_two, 2);
 
         return $net_pay_before_taxes;
     }
@@ -210,7 +211,7 @@ class Employee extends Model
         $tax_deductions      = TaxDeduction::where('employee_id', '=', $this->id)->get();
         $total_tax_deduction = 0;
         foreach ($tax_deductions as $tax_deduction) {
-            $total_tax_deduction  = $tax_deduction->tax_deduction_calculated + $total_tax_deduction;
+            $total_tax_deduction  = round($tax_deduction->tax_deduction_calculated, 2) + round($total_tax_deduction, 2);
         }
 
         //Tax Relief
@@ -219,22 +220,22 @@ class Employee extends Model
         foreach ($tax_reliefs as $tax_relief) {
             if ($tax_relief->tax_relief_value_type == 'percentage') {
                 $employee          = Employee::find($tax_relief->employee_id);
-                $total_tax_relief  = $tax_relief->tax_relief_value * $total_tax_deduction / 100 + $total_tax_relief;
+                $total_tax_relief  = round($tax_relief->tax_relief_value, 2) * round($total_tax_deduction, 2) / 100 + round($total_tax_relief, 2);
             } else {
-                $total_tax_relief = $tax_relief->tax_relief_value + $total_tax_relief;
+                $total_tax_relief = round($tax_relief->tax_relief_value, 2) + round($total_tax_relief, 2);
             }
         }
 
         $employee       = Employee::where('id', '=', $this->id)->first();
 
-        $calc_net_tax_liability = $total_tax_deduction - $total_tax_relief;
+        $calc_net_tax_liability = round($total_tax_deduction, 2) - round($total_tax_relief, 2);
 
         if($calc_net_tax_liability < 0){
             $calc_net_tax_liability = 0;
         }
 
-        $net_tax_liability = $calc_net_tax_liability;
-
+        $net_tax_liability = round($calc_net_tax_liability, 2);
+        
         return $net_tax_liability;
     }
 
@@ -243,8 +244,8 @@ class Employee extends Model
 
         $employee       = Employee::where('id', '=', $this->id)->first();
 
-        $net_salary     = $employee->get_net_pay_before_taxes() - $employee->get_net_tax_liability();
-
+        $net_salary     = round($employee->get_net_pay_before_taxes(), 2) - round($employee->get_net_tax_liability(), 2);
+        
         return $net_salary;
     }
 

@@ -9,6 +9,25 @@
     <link rel="stylesheet" href="{{ asset('Modules/Hrm/Resources/assets/css/custom.css')}}">
 @endpush
 @section('content')
+<!-- <div class="container-fluid" style="position: relative;">
+    <div class="d-flex flex-row justify-content-end">
+        <div class="p-2 align-self-end" style="position: absolute;">
+            <div class="row">
+                <div class="col-md-6 col-sm-3" style="max-width: 40%;">
+                    <a class="btn btn-sm btn-primary">
+                        <i class="ti ti-upload"></i>
+                    </a>
+                </div>
+                <div class="col-md-6 col-sm-3" style="max-width: 40%;">
+                    <a class="btn btn-sm btn-primary">
+                        <i class="ti ti-download"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="margin: 20px 0px;"></div> -->
 <div class="row">
     <div class="col-12">
         <div class="row">
@@ -35,7 +54,7 @@
                         <div class="project-info row text-sm">
                             <div class="project-info-inner mr-3 col-6 mb-3">
                                 <b class="m-0"> {{ __('Payslip Type') }} </b>
-                                <div class="project-amnt pt-1">{{ !empty($employee->salary_type()) ?  ($employee->salary_type()) ?? '' : '' }}</div>
+                                <div class="project-amnt pt-1">{{ !empty($employee->salary_type()) ? ($employee->salary_type()) ?? '' : '' }}</div>
                             </div>
                             <div class="project-info-inner mr-3 col-6 mb-3">
                                 <b class="m-0"> {{ __('Salary') }} </b>
