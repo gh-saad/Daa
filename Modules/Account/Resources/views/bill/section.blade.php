@@ -74,9 +74,10 @@
 
                 selector.parent().parent().find('.product_id').append('<option value="0"> {{ __('Select Item') }} </option>');
                 $.each(data, function(key, value) {
-                    var selected = (key == id) ? 'selected' : '';
-                    selector.parent().parent().find('.product_id').append('<option value="' + key + '" ' + selected + '>' + value + '</option>');
+                    selector.parent().parent().find('.product_id').append('<option value="' + key + '">' + value.sku + ' ' + value.name +
+                        '</option>');
                 });
+
                 if(type == 'edit')
                 {
                     changeItem(selector.parent().parent().find('.product_id'));

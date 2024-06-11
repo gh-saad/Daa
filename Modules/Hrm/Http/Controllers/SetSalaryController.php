@@ -286,33 +286,59 @@ class SetSalaryController extends Controller
             TaxDeduction::where('employee_id', '=', $employee->id)->delete();
             TaxRelief::where('employee_id', '=', $employee->id)->delete();
         
-            // Store id of deduction option
-            $ddo_id = 1;
+            // Deduction Options
+
+            // Store id of deduction options
+            $nssf_ddo_id = 1;
+            $nhif_ddo_id = 1;
         
-            // Check if deduction option is available
-            $deduction_option_exist = DeductionOption::where('name', '=', 'nssf')->get();
-            if ($deduction_option_exist->isEmpty()) {
-                // Create a new deduction option
+            // NSSF Deduction Option
+            // Check if deduction option is available for nssf
+            $nssf_deduction_option_exist = DeductionOption::where('name', '=', 'nssf')->get();
+            if ($nssf_deduction_option_exist->isEmpty()) {
+                // Create a new deduction option named nssf
                 $deductionoption = new DeductionOption();
                 $deductionoption->name = 'nssf';
                 $deductionoption->workspace = getActiveWorkSpace();
                 $deductionoption->created_by = creatorId();
                 $deductionoption->save();
-                // Store id in $ddo_id variable
-                $ddo_id = $deductionoption->id;
+                // Store id in $nssf_ddo_id variable
+                $nssf_ddo_id = $deductionoption->id;
             } else {
-                // Deduction option entry found, save its id to $ddo_id variable
-                $ddo_id = $deduction_option_exist->first()->id;
+                // Deduction option entry found, save its id to $nssf_ddo_id variable
+                $nssf_ddo_id = $nssf_deduction_option_exist->first()->id;
             }
+            // END NSSF Deduction Option
         
+            // NHIF Deduction Option
+            // Check if deduction option is available for nhif
+            $nhif_deduction_option_exist = DeductionOption::where('name', '=', 'nhif')->get();
+            if ($nhif_deduction_option_exist->isEmpty()) {
+                // Create a new deduction option named nhif
+                $deductionoption = new DeductionOption();
+                $deductionoption->name = 'nhif';
+                $deductionoption->workspace = getActiveWorkSpace();
+                $deductionoption->created_by = creatorId();
+                $deductionoption->save();
+                // Store id in $nhif_ddo_id variable
+                $nhif_ddo_id = $deductionoption->id;
+            } else {
+                // Deduction option entry found, save its id to $nhif_ddo_id variable
+                $nhif_ddo_id = $nhif_deduction_option_exist->first()->id;
+            }
+            // END NHIF Deduction Option
+        
+            // END Deduction Options
+
             // Saturation Deduction Section
             
+            // NSSF
             // check to see if it can be applied
-            if ($employee->salary > 2160){
+            if ($employee->get_gross_income() > 2160){
                 // Create New Saturation Deduction
                 $saturationdeduction                   = new SaturationDeduction;
                 $saturationdeduction->employee_id      = $employee->id;
-                $saturationdeduction->deduction_option = $ddo_id;
+                $saturationdeduction->deduction_option = $nssf_ddo_id;
                 $saturationdeduction->title            = 'NSSF Deduction';
                 $saturationdeduction->type             = 'fixed';
                 $saturationdeduction->amount           = 2160;
@@ -320,6 +346,63 @@ class SetSalaryController extends Controller
                 $saturationdeduction->created_by       = creatorId();
                 $saturationdeduction->save();    
             }
+            // END NSSF
+
+            // NHIF
+            $gross_income = $employee->get_gross_income();
+            $nhif_amount = 0;
+
+            if ($gross_income <= 5999) {
+                $nhif_amount = 150;
+            } elseif ($gross_income <= 7999) {
+                $nhif_amount = 300;
+            } elseif ($gross_income <= 11999) {
+                $nhif_amount = 400;
+            } elseif ($gross_income <= 14999) {
+                $nhif_amount = 500;
+            } elseif ($gross_income <= 19999) {
+                $nhif_amount = 600;
+            } elseif ($gross_income <= 24999) {
+                $nhif_amount = 750;
+            } elseif ($gross_income <= 29999) {
+                $nhif_amount = 850;
+            } elseif ($gross_income <= 34999) {
+                $nhif_amount = 900;
+            } elseif ($gross_income <= 39999) {
+                $nhif_amount = 950;
+            } elseif ($gross_income <= 44999) {
+                $nhif_amount = 1000;
+            } elseif ($gross_income <= 49999) {
+                $nhif_amount = 1100;
+            } elseif ($gross_income <= 59999) {
+                $nhif_amount = 1200;
+            } elseif ($gross_income <= 69999) {
+                $nhif_amount = 1300;
+            } elseif ($gross_income <= 79999) {
+                $nhif_amount = 1400;
+            } elseif ($gross_income <= 89999) {
+                $nhif_amount = 1500;
+            } elseif ($gross_income <= 99999) {
+                $nhif_amount = 1600;
+            } else {
+                $nhif_amount = 1700;
+            }
+
+            // Check if NHIF amount is determined
+            if ($nhif_amount > 0) {
+                // Create New Saturation Deduction for NHIF
+                $saturationdeduction                   = new SaturationDeduction;
+                $saturationdeduction->employee_id      = $employee->id;
+                $saturationdeduction->deduction_option = $nhif_ddo_id;
+                $saturationdeduction->title            = 'NHIF Deduction';
+                $saturationdeduction->type             = 'fixed';
+                $saturationdeduction->amount           = $nhif_amount;
+                $saturationdeduction->workspace        = getActiveWorkSpace();
+                $saturationdeduction->created_by       = creatorId();
+                $saturationdeduction->save();
+            }
+            // END NHIF
+
             // END Saturation Deduction Section
         
             // Tax Deduction Section
