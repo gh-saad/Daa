@@ -670,27 +670,27 @@ if(! function_exists('currency_format'))
     }
 }
 
-if(! function_exists('currency_format_with_sym')){
-
-    function currency_format_with_sym($price,$company_id = null,$workspace = null)
+if (!function_exists('currency_format_with_sym')) {
+    function currency_format_with_sym($price, $company_id = null, $workspace = null)
     {
-        if(!empty($company_id) && empty($workspace))
-        {
-            return ( (empty(company_setting('site_currency_symbol_position',$company_id)) || company_setting('site_currency_symbol_position',$company_id) == "pre" )? company_setting('defult_currancy_symbol',$company_id) : '').number_format($price, company_setting('currency_format',$company_id)) . ((company_setting('site_currency_symbol_position',$company_id) == "post") ? company_setting('defult_currancy_symbol',$company_id) : '');
-        }
-        elseif(!empty($company_id) && !empty($workspace))
-        {
-            return ( (empty(company_setting('site_currency_symbol_position',$company_id,$workspace)) || company_setting('site_currency_symbol_position',$company_id,$workspace) == "pre" )? company_setting('defult_currancy_symbol',$company_id,$workspace) : '').number_format($price, company_setting('currency_format',$company_id,$workspace)) . ((company_setting('site_currency_symbol_position',$company_id,$workspace) == "post") ? company_setting('defult_currancy_symbol',$company_id,$workspace) : '');
-        }
-        else{
-            return ( (empty(company_setting('site_currency_symbol_position')) || company_setting('site_currency_symbol_position') == "pre" )? company_setting('defult_currancy_symbol') : '').number_format($price, company_setting('currency_format')) . ((company_setting('site_currency_symbol_position') == "post") ? company_setting('defult_currancy_symbol') : '');
+        $formatted_price = number_format(round($price, 2), 2, '.', ''); // Round to 2 decimal places before formatting
+
+        if (!empty($company_id) && empty($workspace)) {
+            return ((empty(company_setting('site_currency_symbol_position', $company_id)) || company_setting('site_currency_symbol_position', $company_id) == "pre") ? company_setting('defult_currancy_symbol', $company_id) : '') . $formatted_price . ((company_setting('site_currency_symbol_position', $company_id) == "post") ? company_setting('defult_currancy_symbol', $company_id) : '');
+        } elseif (!empty($company_id) && !empty($workspace)) {
+            return ((empty(company_setting('site_currency_symbol_position', $company_id, $workspace)) || company_setting('site_currency_symbol_position', $company_id, $workspace) == "pre") ? company_setting('defult_currancy_symbol', $company_id, $workspace) : '') . $formatted_price . ((company_setting('site_currency_symbol_position', $company_id, $workspace) == "post") ? company_setting('defult_currancy_symbol', $company_id, $workspace) : '');
+        } else {
+            return ((empty(company_setting('site_currency_symbol_position')) || company_setting('site_currency_symbol_position') == "pre") ? company_setting('defult_currancy_symbol') : '') . $formatted_price . ((company_setting('site_currency_symbol_position') == "post") ? company_setting('defult_currancy_symbol') : '');
         }
     }
 }
-if(! function_exists('super_currency_format_with_sym')){
-    function super_currency_format_with_sym($price,$setting = null)
+
+if (!function_exists('super_currency_format_with_sym')) {
+    function super_currency_format_with_sym($price, $setting = null)
     {
-        return ( (empty( admin_setting('site_currency_symbol_position')) ||  admin_setting('site_currency_symbol_position') == "pre" )?  admin_setting('defult_currancy_symbol') : '').number_format($price,  admin_setting('currency_format')) . (( admin_setting('site_currency_symbol_position') == "post") ?  admin_setting('defult_currancy_symbol') : '');
+        $formatted_price = number_format(round($price, 2), 2, '.', ''); // Round to 2 decimal places before formatting
+
+        return ((empty(admin_setting('site_currency_symbol_position')) || admin_setting('site_currency_symbol_position') == "pre") ? admin_setting('defult_currancy_symbol') : '') . $formatted_price . ((admin_setting('site_currency_symbol_position') == "post") ? admin_setting('defult_currancy_symbol') : '');
     }
 }
 
