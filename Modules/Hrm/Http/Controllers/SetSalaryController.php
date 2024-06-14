@@ -20,6 +20,7 @@ use Modules\Hrm\Entities\SaturationDeduction;
 use Modules\Hrm\Entities\TaxDeduction;
 use Modules\Hrm\Entities\TaxRelief;
 use Modules\Hrm\Events\UpdateEmployeeSalary;
+use Modules\Hrm\Entities\SalaryModificationTemplate;
 
 class SetSalaryController extends Controller
 {
@@ -286,288 +287,438 @@ class SetSalaryController extends Controller
             TaxDeduction::where('employee_id', '=', $employee->id)->delete();
             TaxRelief::where('employee_id', '=', $employee->id)->delete();
         
-            // Deduction Options
+            // Get the template
+            $salaryModTemplate = SalaryModificationTemplate::where('workspace',getActiveWorkSpace())->first();
 
-            // Store id of deduction options
-            $nssf_ddo_id = 1;
-            $nhif_ddo_id = 1;
-        
-            // NSSF Deduction Option
-            // Check if deduction option is available for nssf
-            $nssf_deduction_option_exist = DeductionOption::where('name', '=', 'nssf')->get();
-            if ($nssf_deduction_option_exist->isEmpty()) {
-                // Create a new deduction option named nssf
-                $deductionoption = new DeductionOption();
-                $deductionoption->name = 'nssf';
-                $deductionoption->workspace = getActiveWorkSpace();
-                $deductionoption->created_by = creatorId();
-                $deductionoption->save();
-                // Store id in $nssf_ddo_id variable
-                $nssf_ddo_id = $deductionoption->id;
-            } else {
-                // Deduction option entry found, save its id to $nssf_ddo_id variable
-                $nssf_ddo_id = $nssf_deduction_option_exist->first()->id;
-            }
-            // END NSSF Deduction Option
-        
-            // NHIF Deduction Option
-            // Check if deduction option is available for nhif
-            $nhif_deduction_option_exist = DeductionOption::where('name', '=', 'nhif')->get();
-            if ($nhif_deduction_option_exist->isEmpty()) {
-                // Create a new deduction option named nhif
-                $deductionoption = new DeductionOption();
-                $deductionoption->name = 'nhif';
-                $deductionoption->workspace = getActiveWorkSpace();
-                $deductionoption->created_by = creatorId();
-                $deductionoption->save();
-                // Store id in $nhif_ddo_id variable
-                $nhif_ddo_id = $deductionoption->id;
-            } else {
-                // Deduction option entry found, save its id to $nhif_ddo_id variable
-                $nhif_ddo_id = $nhif_deduction_option_exist->first()->id;
-            }
-            // END NHIF Deduction Option
-        
-            // END Deduction Options
-
-            // Saturation Deduction Section
+            // Decode JSON fields
+            $allowances = json_decode($salaryModTemplate->allowance, true);
+            $commissions = json_decode($salaryModTemplate->commission, true);
+            $loans = json_decode($salaryModTemplate->loan, true);
+            $saturationDeductions = json_decode($salaryModTemplate->saturation_deduction, true);
+            $taxDeductions = json_decode($salaryModTemplate->tax_deduction, true);
+            $taxReliefs = json_decode($salaryModTemplate->tax_relief, true);
+            $otherPayments = json_decode($salaryModTemplate->other_payment, true);
+            $overtimes = json_decode($salaryModTemplate->overtime, true);
             
-            // NSSF
-            // check to see if it can be applied
-            if ($employee->get_gross_income() > 2160){
-                // Create New Saturation Deduction
-                $saturationdeduction                   = new SaturationDeduction;
-                $saturationdeduction->employee_id      = $employee->id;
-                $saturationdeduction->deduction_option = $nssf_ddo_id;
-                $saturationdeduction->title            = 'NSSF Deduction';
-                $saturationdeduction->type             = 'fixed';
-                $saturationdeduction->amount           = 2160;
-                $saturationdeduction->workspace        = getActiveWorkSpace();
-                $saturationdeduction->created_by       = creatorId();
-                $saturationdeduction->save();    
+            // Allowance Section
+            if(isset($allowances)){
+                foreach ($allowances as $name => $allowance) {
+                    // if threshold is not defined
+                    if(!(isset($allowance['min_salary']) || isset($allowance['max_salary']))){
+                        // create a new entry
+                        $allowanceNew = new Allowance;
+                        $allowanceNew->employee_id = $employee->id;
+                        $allowanceNew->allowance_option = $allowance['option_id'];
+                        $allowanceNew->title = $allowance['name'];
+                        $allowanceNew->type = $allowance['amount_type'];
+                        $allowanceNew->amount = $allowance['amount'];
+                        $allowanceNew->workspace = getActiveWorkSpace();
+                        $allowanceNew->created_by = creatorId();
+                        $allowanceNew->save();
+                    }else{
+                        // threshold was defined
+                        // assign variables
+                        $min = 0;
+                        $max = 99999999999999;
+                        if (isset($allowance['min_salary'])){
+                            $min = $allowance['min_salary'];
+                        }
+                        if (isset($allowance['max_salary'])){
+                            $max = $allowance['max_salary'];
+                        }
+                        // check if employee salary falls in the threshold
+                        if ($employee->salary >= $min && $employee->salary <= $max){
+                            // create a new entry
+                            $allowanceNew = new Allowance;
+                            $allowanceNew->employee_id = $employee->id;
+                            $allowanceNew->allowance_option = $allowance['option_id'];
+                            $allowanceNew->title = $allowance['name'];
+                            $allowanceNew->type = $allowance['amount_type'];
+                            $allowanceNew->amount = $allowance['amount'];
+                            $allowanceNew->workspace = getActiveWorkSpace();
+                            $allowanceNew->created_by = creatorId();
+                            $allowanceNew->save();
+                        }
+                    }
+                }
             }
-            // END NSSF
-
-            // NHIF
-            $gross_income = $employee->get_gross_income();
-            $nhif_amount = 0;
-
-            if ($gross_income <= 5999) {
-                $nhif_amount = 150;
-            } elseif ($gross_income <= 7999) {
-                $nhif_amount = 300;
-            } elseif ($gross_income <= 11999) {
-                $nhif_amount = 400;
-            } elseif ($gross_income <= 14999) {
-                $nhif_amount = 500;
-            } elseif ($gross_income <= 19999) {
-                $nhif_amount = 600;
-            } elseif ($gross_income <= 24999) {
-                $nhif_amount = 750;
-            } elseif ($gross_income <= 29999) {
-                $nhif_amount = 850;
-            } elseif ($gross_income <= 34999) {
-                $nhif_amount = 900;
-            } elseif ($gross_income <= 39999) {
-                $nhif_amount = 950;
-            } elseif ($gross_income <= 44999) {
-                $nhif_amount = 1000;
-            } elseif ($gross_income <= 49999) {
-                $nhif_amount = 1100;
-            } elseif ($gross_income <= 59999) {
-                $nhif_amount = 1200;
-            } elseif ($gross_income <= 69999) {
-                $nhif_amount = 1300;
-            } elseif ($gross_income <= 79999) {
-                $nhif_amount = 1400;
-            } elseif ($gross_income <= 89999) {
-                $nhif_amount = 1500;
-            } elseif ($gross_income <= 99999) {
-                $nhif_amount = 1600;
-            } else {
-                $nhif_amount = 1700;
+            // END Allowance Section
+            
+            // Commission Section
+            if(isset($commissions)){
+                foreach ($commissions as $name => $commission) {
+                    // if threshold is not defined
+                    if(!(isset($commission['min_salary']) || isset($commission['max_salary']))){
+                        // create a new entry
+                        $commissionNew = new Commission;
+                        $commissionNew->employee_id = $employee->id;
+                        $commissionNew->title = $commission['name'];
+                        $commissionNew->type = $commission['amount_type'];
+                        $commissionNew->amount = $commission['amount'];
+                        $commissionNew->workspace = getActiveWorkSpace();
+                        $commissionNew->created_by = creatorId();
+                        $commissionNew->save();
+                    }else{
+                        // threshold was defined
+                        // assign variables
+                        $min = 0;
+                        $max = 99999999999999;
+                        if (isset($commission['min_salary'])){
+                            $min = $commission['min_salary'];
+                        }
+                        if (isset($commission['max_salary'])){
+                            $max = $commission['max_salary'];
+                        }
+                        // check if employee salary falls in the threshold
+                        if ($employee->salary >= $min && $employee->salary <= $max){
+                            // create a new entry
+                            $commissionNew = new Commission;
+                            $commissionNew->employee_id = $employee->id;
+                            $commissionNew->title = $commission['name'];
+                            $commissionNew->type = $commission['amount_type'];
+                            $commissionNew->amount = $commission['amount'];
+                            $commissionNew->workspace = getActiveWorkSpace();
+                            $commissionNew->created_by = creatorId();
+                            $commissionNew->save();
+                        }
+                    }
+                }
             }
-
-            // Check if NHIF amount is determined
-            if ($nhif_amount > 0) {
-                // Create New Saturation Deduction for NHIF
-                $saturationdeduction                   = new SaturationDeduction;
-                $saturationdeduction->employee_id      = $employee->id;
-                $saturationdeduction->deduction_option = $nhif_ddo_id;
-                $saturationdeduction->title            = 'NHIF Deduction';
-                $saturationdeduction->type             = 'fixed';
-                $saturationdeduction->amount           = $nhif_amount;
-                $saturationdeduction->workspace        = getActiveWorkSpace();
-                $saturationdeduction->created_by       = creatorId();
-                $saturationdeduction->save();
+            // END Commission Section
+            
+            // Other Payment Section
+            if(isset($loans)){
+                foreach ($otherPayments as $name => $otherPayment) {
+                    // if threshold is not defined
+                    if(!(isset($otherPayment['min_salary']) || isset($otherPayment['max_salary']))){
+                        // create a new entry
+                        $otherPaymentNew = new OtherPayment;
+                        $otherPaymentNew->employee_id = $employee->id;
+                        $otherPaymentNew->title = $otherPayment['name'];
+                        $otherPaymentNew->type = $otherPayment['amount_type'];
+                        $otherPaymentNew->amount = $otherPayment['amount'];
+                        $otherPaymentNew->workspace = getActiveWorkSpace();
+                        $otherPaymentNew->created_by = creatorId();
+                        $otherPaymentNew->save();
+                    }else{
+                        // threshold was defined
+                        // assign variables
+                        $min = 0;
+                        $max = 99999999999999;
+                        if (isset($otherPayment['min_salary'])){
+                            $min = $otherPayment['min_salary'];
+                        }
+                        if (isset($otherPayment['max_salary'])){
+                            $max = $otherPayment['max_salary'];
+                        }
+                        // check if employee salary falls in the threshold
+                        if ($employee->salary >= $min && $employee->salary <= $max){
+                            // create a new entry
+                            $otherPaymentNew = new OtherPayment;
+                            $otherPaymentNew->employee_id = $employee->id;
+                            $otherPaymentNew->title = $otherPayment['name'];
+                            $otherPaymentNew->type = $otherPayment['amount_type'];
+                            $otherPaymentNew->amount = $otherPayment['amount'];
+                            $otherPaymentNew->workspace = getActiveWorkSpace();
+                            $otherPaymentNew->created_by = creatorId();
+                            $otherPaymentNew->save();
+                        }
+                    }
+                }
             }
-            // END NHIF
-
+            // END Other Payment Section
+            
+            // Overtime Section
+            if(isset($overtimes)){
+                foreach ($overtimes as $name => $overtime) {
+                    // if threshold is not defined
+                    if(!(isset($overtime['min_salary']) || isset($overtime['max_salary']))){
+                        // create a new entry
+                        $overtimeNew = new Overtime;
+                        $overtimeNew->employee_id = $employee->id;
+                        $overtimeNew->title = $overtime['name'];
+                        $overtimeNew->number_of_days = $overtime['no_of_days'];
+                        $overtimeNew->hours = $overtime['hours'];
+                        $overtimeNew->rate = $overtime['rate'];
+                        $overtimeNew->workspace = getActiveWorkSpace();
+                        $overtimeNew->created_by = creatorId();
+                        $overtimeNew->save();
+                    }else{
+                        // threshold was defined
+                        // assign variables
+                        $min = 0;
+                        $max = 99999999999999;
+                        if (isset($overtime['min_salary'])){
+                            $min = $overtime['min_salary'];
+                        }
+                        if (isset($overtime['max_salary'])){
+                            $max = $overtime['max_salary'];
+                        }
+                        // check if employee salary falls in the threshold
+                        if ($employee->salary >= $min && $employee->salary <= $max){
+                            // create a new entry
+                            $overtimeNew = new Overtime;
+                            $overtimeNew->employee_id = $employee->id;
+                            $overtimeNew->title = $overtime['name'];
+                            $overtimeNew->number_of_days = $overtime['no_of_days'];
+                            $overtimeNew->hours = $overtime['hours'];
+                            $overtimeNew->rate = $overtime['rate'];
+                            $overtimeNew->workspace = getActiveWorkSpace();
+                            $overtimeNew->created_by = creatorId();
+                            $overtimeNew->save();
+                        }
+                    }
+                }
+            }
+            // END Overtime Section
+            
+            // Saturation Deduction Section
+            if(isset($saturationDeductions)){
+                foreach ($saturationDeductions as $name => $deduction) {
+                    // if threshold is not defined
+                    if(!(isset($deduction['min_salary']) || isset($deduction['max_salary']))){
+                        // create a new entry
+                        $saturationDeduction = new SaturationDeduction;
+                        $saturationDeduction->employee_id = $employee->id;
+                        $saturationDeduction->deduction_option = $deduction['option_id'];
+                        $saturationDeduction->title = $deduction['name'];
+                        $saturationDeduction->type = $deduction['amount_type'];
+                        $saturationDeduction->amount = $deduction['amount'];
+                        $saturationDeduction->workspace = getActiveWorkSpace();
+                        $saturationDeduction->created_by = creatorId();
+                        $saturationDeduction->save();
+                    }else{
+                        // threshold was defined
+                        // assign variables
+                        $min = 0;
+                        $max = 99999999999999;
+                        if (isset($deduction['min_salary'])){
+                            $min = $deduction['min_salary'];
+                        }
+                        if (isset($deduction['max_salary'])){
+                            $max = $deduction['max_salary'];
+                        }
+                        // check if employee salary falls in the threshold
+                        if ($employee->get_gross_income() >= $min && $employee->get_gross_income() <= $max){
+                            // create a new entry
+                            $saturationDeduction = new SaturationDeduction;
+                            $saturationDeduction->employee_id = $employee->id;
+                            $saturationDeduction->deduction_option = $deduction['option_id'];
+                            $saturationDeduction->title = $deduction['name'];
+                            $saturationDeduction->type = $deduction['amount_type'];
+                            $saturationDeduction->amount = $deduction['amount'];
+                            $saturationDeduction->workspace = getActiveWorkSpace();
+                            $saturationDeduction->created_by = creatorId();
+                            $saturationDeduction->save();
+                        }
+                    }
+                }
+            }
             // END Saturation Deduction Section
-        
+
+            // Loan Section
+            if(isset($loans)){
+                foreach ($loans as $name => $loan) {
+                    // if threshold is not defined
+                    if(!(isset($loan['min_salary']) || isset($loan['max_salary']))){
+                        // create a new entry
+                        $loanNew = new Loan;
+                        $loanNew->employee_id = $employee->id;
+                        $loanNew->loan_option = $loan['option_id'];
+                        $loanNew->title = $loan['name'];
+                        $loanNew->type = $loan['amount_type'];
+                        $loanNew->amount = $loan['amount'];
+                        $loanNew->start_date = $loan['start_date'];
+                        $loanNew->end_date = $loan['end_date'];
+                        $loanNew->reason = $loan['reason'];
+                        $loanNew->workspace = getActiveWorkSpace();
+                        $loanNew->created_by = creatorId();
+                        $loanNew->save();
+                    }else{
+                        // threshold was defined
+                        // assign variables
+                        $min = 0;
+                        $max = 99999999999999;
+                        if (isset($loan['min_salary'])){
+                            $min = $loan['min_salary'];
+                        }
+                        if (isset($loan['max_salary'])){
+                            $max = $loan['max_salary'];
+                        }
+                        // check if employee salary falls in the threshold
+                        if ($employee->get_gross_income() >= $min && $employee->get_gross_income() <= $max){
+                            // create a new entry
+                            $loanNew = new Loan;
+                            $loanNew->employee_id = $employee->id;
+                            $loanNew->loan_option = $loan['option_id'];
+                            $loanNew->title = $loan['name'];
+                            $loanNew->type = $loan['amount_type'];
+                            $loanNew->amount = $loan['amount'];
+                            $loanNew->start_date = $loan['start_date'];
+                            $loanNew->end_date = $loan['end_date'];
+                            $loanNew->reason = $loan['reason'];
+                            $loanNew->workspace = getActiveWorkSpace();
+                            $loanNew->created_by = creatorId();
+                            $loanNew->save();
+                        }
+                    }
+                }
+            }
+            // END Loan Section
+
             // Tax Deduction Section
-        
-            // Taxable Salary
-            $taxable_salary = $employee->salary - 2160;
-            $remaining_salary = $taxable_salary;
-            $combined = 0;
-        
-            // Check if taxable salary is within the first tax bracket (0 - 24000) 10%
-            if ($taxable_salary > 0) {
-                if ($taxable_salary <= 24000) {
-                    // If taxable salary is within the bracket
-                    $tax_deduction_rate = 0.10; // 10%
-                    $tax_deduction_calculated = round($taxable_salary * $tax_deduction_rate, 2);
-                    $difference = $taxable_salary;
-                    
-                    // Create tax deduction
-                    $taxdeduction = new TaxDeduction;
-                    $taxdeduction->employee_id = $employee->id;
-                    $taxdeduction->title = 'First Tax Bracket';
-                    $taxdeduction->salary_amount = round($taxable_salary, 2);
-                    $taxdeduction->difference = round($difference, 2);
-                    $taxdeduction->tax_deduction_value_type = 'percentage';
-                    $taxdeduction->tax_deduction_value = '10';
-                    $taxdeduction->tax_deduction_calculated = $tax_deduction_calculated;
-                    $taxdeduction->workspace = getActiveWorkSpace();
-                    $taxdeduction->created_by = creatorId();
-                    $taxdeduction->save();
-                    
-                    // Set remaining salary to 0 as it has been fully taxed
-                    $remaining_salary = 0;
-                } else {
-                    // If taxable salary exceeds the first bracket
-                    $tax_deduction_rate = 0.10; // 10%
-                    $tax_deduction_calculated = round(24000 * $tax_deduction_rate, 2);
-                    $difference = 24000;
-                    
-                    // Create tax deduction for the first bracket
-                    $taxdeduction = new TaxDeduction;
-                    $taxdeduction->employee_id = $employee->id;
-                    $taxdeduction->title = 'First Tax Bracket';
-                    $taxdeduction->salary_amount = round($combined + $difference, 2);
-                    $taxdeduction->difference = round($difference, 2);
-                    $taxdeduction->tax_deduction_value_type = 'percentage';
-                    $taxdeduction->tax_deduction_value = '10';
-                    $taxdeduction->tax_deduction_calculated = $tax_deduction_calculated;
-                    $taxdeduction->workspace = getActiveWorkSpace();
-                    $taxdeduction->created_by = creatorId();
-                    $taxdeduction->save();
-                    
-                    // Calculate remaining salary
-                    $remaining_salary = round($taxable_salary - 24000, 2);
-                    $combined += $taxdeduction->difference;
-                }
-            }
-            // END First Tax Bracket
-        
-            // Second Tax Bracket (24001 - 32333) 25%
-            // Check if remaining salary is within the second tax bracket (24001 - 32333) 25%
-            if ($remaining_salary > 0) {
-                if ($remaining_salary <= (32333 - 24000)) {
-                    // If remaining salary is within the second bracket
-                    $tax_deduction_rate = 0.25; // 25%
-                    $tax_deduction_calculated = round($remaining_salary * $tax_deduction_rate, 2);
-                    $difference = $remaining_salary;
-                    
-                    // Create tax deduction for the second bracket
-                    $taxdeduction = new TaxDeduction;
-                    $taxdeduction->employee_id = $employee->id;
-                    $taxdeduction->title = 'Second Tax Bracket';
-                    $taxdeduction->salary_amount = round($remaining_salary, 2);
-                    $taxdeduction->difference = round($difference, 2);
-                    $taxdeduction->tax_deduction_value_type = 'percentage';
-                    $taxdeduction->tax_deduction_value = '25';
-                    $taxdeduction->tax_deduction_calculated = $tax_deduction_calculated;
-                    $taxdeduction->workspace = getActiveWorkSpace();
-                    $taxdeduction->created_by = creatorId();
-                    $taxdeduction->save();
-                    
-                    // Set remaining salary to 0 as it has been fully taxed
-                    $remaining_salary = 0;
-                } else {
-                    // If remaining salary exceeds the second bracket
-                    $tax_deduction_rate = 0.25; // 25%
-                    $tax_deduction_calculated = round((32333 - 24000) * $tax_deduction_rate, 2);
-                    $difference = 32333 - 24000;
-                    
-                    // Create tax deduction for the second bracket
-                    $taxdeduction = new TaxDeduction;
-                    $taxdeduction->employee_id = $employee->id;
-                    $taxdeduction->title = 'Second Tax Bracket';
-                    $taxdeduction->salary_amount = round($combined + $difference, 2);
-                    $taxdeduction->difference = round($difference, 2);
-                    $taxdeduction->tax_deduction_value_type = 'percentage';
-                    $taxdeduction->tax_deduction_value = '25';
-                    $taxdeduction->tax_deduction_calculated = $tax_deduction_calculated;
-                    $taxdeduction->workspace = getActiveWorkSpace();
-                    $taxdeduction->created_by = creatorId();
-                    $taxdeduction->save();
-                    
-                    // Calculate remaining salary for next brackets
-                    $remaining_salary = round($remaining_salary - (32333 - 24000), 2);
-                    $combined += $taxdeduction->difference;
-                }
-            }
-            // END Second Tax Bracket
-        
-            // Third Tax Bracket (Above 32333) 30%
-            // Check if remaining salary is within the third tax bracket (Above 32333) 30%
-            if ($remaining_salary > 0) {
-                // Apply tax for the third bracket
-                $tax_deduction_rate = 0.30; // 30%
-                $tax_deduction_calculated = round($remaining_salary * $tax_deduction_rate, 2);
-                $difference = $remaining_salary;
+            if(isset($taxDeductions)){
+                // sort the tax brackets
+                usort($taxDeductions, function($a, $b) {
+                    return $a['min_salary'] - $b['min_salary'];
+                });            
+
+                // taxable salary
+                $taxable_salary = $employee->get_net_pay_before_taxes();
+                $remaining_salary = $taxable_salary;
+                $combined = 0;
                 
-                // Create tax deduction for the third bracket
-                $taxdeduction = new TaxDeduction;
-                $taxdeduction->employee_id = $employee->id;
-                $taxdeduction->title = 'Third Tax Bracket';
-                $taxdeduction->salary_amount = round($remaining_salary, 2);
-                $taxdeduction->difference = round($difference, 2);
-                $taxdeduction->tax_deduction_value_type = 'percentage';
-                $taxdeduction->tax_deduction_value = '30';
-                $taxdeduction->tax_deduction_calculated = $tax_deduction_calculated;
-                $taxdeduction->workspace = getActiveWorkSpace();
-                $taxdeduction->created_by = creatorId();
-                $taxdeduction->save();
+                // apply tax deductions
+                foreach ($taxDeductions as $taxDeduction) {
+                    // if no salary remains break the loop
+                    if ($remaining_salary <= 0) {
+                        break;
+                    }
+                    // if threshold is not defined
+                    if (!(isset($deduction['min_salary']) || isset($deduction['max_salary']))){
+                        // if a fixed amount is being applied
+                        if ($taxDeduction['amount_type'] == 'fixed'){
+                            // create a new entry
+                            $taxDeductionNew = new TaxDeduction;
+                            $taxDeductionNew->employee_id = $employee->id;
+                            $taxDeductionNew->title = $taxDeduction['name'];
+                            $taxDeductionNew->salary_amount = $taxable_salary;
+                            $taxDeductionNew->difference = 0;
+                            $taxDeductionNew->tax_deduction_value_type = $taxDeduction['amount_type'];
+                            $taxDeductionNew->tax_deduction_value = $taxDeduction['amount'];
+                            $taxDeductionNew->tax_deduction_calculated = $taxDeduction['amount'];
+                            $taxDeductionNew->workspace = getActiveWorkSpace();
+                            $taxDeductionNew->created_by = creatorId();
+                            $taxDeductionNew->save();
+
+                            // keep remaining same
+                            $remaining_salary = $taxable_salary;
+                        }else{
+                            // calculate tax
+                            $tax_deduction_rate = $taxDeduction['amount'] / 100;
+                            $tax_deduction_calculated = round($taxable_salary * $tax_deduction_rate, 2);
+
+                            // create a new entry
+                            $taxDeductionNew = new TaxDeduction;
+                            $taxDeductionNew->employee_id = $employee->id;
+                            $taxDeductionNew->title = $taxDeduction['name'];
+                            $taxDeductionNew->salary_amount = $taxable_salary;
+                            $taxDeductionNew->difference = 0;
+                            $taxDeductionNew->tax_deduction_value_type = $taxDeduction['amount_type'];
+                            $taxDeductionNew->tax_deduction_value = $taxDeduction['amount'];
+                            $taxDeductionNew->tax_deduction_calculated = $tax_deduction_calculated;
+                            $taxDeductionNew->workspace = getActiveWorkSpace();
+                            $taxDeductionNew->created_by = creatorId();
+                            $taxDeductionNew->save();
+
+                            // keep remaining same
+                            $remaining_salary = $taxable_salary;
+                        }
+                    }else{
+                        // threshold was defined
+                        // assign variables
+                        $min = isset($taxDeduction['min_salary']) ? $taxDeduction['min_salary'] : 0;
+                        $max = isset($taxDeduction['max_salary']) ? $taxDeduction['max_salary'] : PHP_INT_MAX;
+
+                        // if a fixed amount is being applied
+                        if ($taxDeduction['amount_type'] == 'fixed'){
+                            $taxable_amount = min($remaining_salary, $max - $min);
+                            $max_available_salary = min($remaining_salary, $max);
+                            // create a new entry
+                            $taxDeductionNew = new TaxDeduction;
+                            $taxDeductionNew->employee_id = $employee->id;
+                            $taxDeductionNew->title = $taxDeduction['name'];
+                            $taxDeductionNew->salary_amount = round($max_available_salary, 2);
+                            $taxDeductionNew->difference = round($taxable_amount, 2);
+                            $taxDeductionNew->tax_deduction_value_type = $taxDeduction['amount_type'];
+                            $taxDeductionNew->tax_deduction_value = $taxDeduction['amount'];
+                            $taxDeductionNew->tax_deduction_calculated = $taxDeduction['amount'];
+                            $taxDeductionNew->workspace = getActiveWorkSpace();
+                            $taxDeductionNew->created_by = creatorId();
+                            $taxDeductionNew->save();
+
+                            // keep remaining same
+                            $remaining_salary -= $taxable_amount;
+                            $combined += $taxable_amount;
+                        }else{
+                            // calculate tax
+                            $taxable_amount = min($remaining_salary, $max - $min);
+                            $max_available_salary = min($remaining_salary, $max);
+                            $tax_deduction_rate = $taxDeduction['amount'] / 100;
+                            $tax_deduction_calculated = round($taxable_amount * $tax_deduction_rate, 2);
+
+                            // create a new entry
+                            $taxDeductionNew = new TaxDeduction;
+                            $taxDeductionNew->employee_id = $employee->id;
+                            $taxDeductionNew->title = $taxDeduction['name'];
+                            $taxDeductionNew->salary_amount = round($max_available_salary, 2);
+                            $taxDeductionNew->difference = round($taxable_amount, 2);
+                            $taxDeductionNew->tax_deduction_value_type = $taxDeduction['amount_type'];
+                            $taxDeductionNew->tax_deduction_value = $taxDeduction['amount'];
+                            $taxDeductionNew->tax_deduction_calculated = $tax_deduction_calculated;
+                            $taxDeductionNew->workspace = getActiveWorkSpace();
+                            $taxDeductionNew->created_by = creatorId();
+                            $taxDeductionNew->save();
+
+                            // keep remaining same
+                            $remaining_salary -= $taxable_amount;
+                            $combined += $taxable_amount;
+                        }
+                    }
+                }
             }
-            // END Third Tax Bracket
-        
             // END Tax Deduction Section
         
             // Tax Relief Section
-        
-            // Personal Relief
-            $taxrelief = new TaxRelief;
-            $taxrelief->employee_id = $employee->id;
-            $taxrelief->title = 'Personal Relief';
-            $taxrelief->tax_relief_value_type = 'fixed';
-            $taxrelief->tax_relief_value = round(2400, 2);
-            $taxrelief->workspace = getActiveWorkSpace();
-            $taxrelief->created_by = creatorId();
-            $taxrelief->save();
-        
-            // Insurance Relief
-            $taxrelief = new TaxRelief;
-            $taxrelief->employee_id = $employee->id;
-            $taxrelief->title = 'Insurance Relief';
-            $taxrelief->tax_relief_value_type = 'fixed';
-            $taxrelief->tax_relief_value = round(255, 2);
-            $taxrelief->workspace = getActiveWorkSpace();
-            $taxrelief->created_by = creatorId();
-            $taxrelief->save();
-        
-            // Affordable Housing Relief
-            $taxrelief = new TaxRelief;
-            $taxrelief->employee_id = $employee->id;
-            $taxrelief->title = 'Affordable Housing Relief';
-            $taxrelief->tax_relief_value_type = 'fixed';
-            $taxrelief->tax_relief_value = round(337.5, 2);
-            $taxrelief->workspace = getActiveWorkSpace();
-            $taxrelief->created_by = creatorId();
-            $taxrelief->save();
-        
+            if(isset($taxReliefs)){
+                foreach ($taxReliefs as $name => $taxRelief) {
+                    // if threshold is not defined
+                    if(!(isset($taxRelief['min_salary']) || isset($taxRelief['max_salary']))){
+                        // create a new entry
+                        $taxReliefNew = new TaxRelief;
+                        $taxReliefNew->employee_id = $employee->id;
+                        $taxReliefNew->title = $taxRelief['name'];
+                        $taxReliefNew->tax_relief_value_type = $taxRelief['amount_type'];
+                        $taxReliefNew->tax_relief_value = $taxRelief['amount'];
+                        $taxReliefNew->workspace = getActiveWorkSpace();
+                        $taxReliefNew->created_by = creatorId();
+                        $taxReliefNew->save();
+                    }else{
+                        // threshold was defined
+                        // assign variables
+                        $min = 0;
+                        $max = 99999999999999;
+                        if (isset($taxRelief['min_salary'])){
+                            $min = $taxRelief['min_salary'];
+                        }
+                        if (isset($taxRelief['max_salary'])){
+                            $max = $taxRelief['max_salary'];
+                        }
+                        // check if employee salary falls in the threshold
+                        if ($employee->salary >= $min && $employee->salary <= $max){
+                            // create a new entry
+                            $taxReliefNew = new TaxRelief;
+                            $taxReliefNew->employee_id = $employee->id;
+                            $taxReliefNew->title = $taxRelief['name'];
+                            $taxReliefNew->tax_relief_value_type = $taxRelief['amount_type'];
+                            $taxReliefNew->tax_relief_value = $taxRelief['amount'];
+                            $taxReliefNew->workspace = getActiveWorkSpace();
+                            $taxReliefNew->created_by = creatorId();
+                            $taxReliefNew->save();
+                        }
+                    }
+                }
+            }
             // END Tax Relief Section
         
         } catch (ModelNotFoundException $e) {

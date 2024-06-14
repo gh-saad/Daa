@@ -24,6 +24,10 @@
             <a href="{{ route('deductionoption.index') }}" class="list-group-item list-group-item-action border-0 {{ (request()->is('deductionoption*') ? 'active' : '')}}">{{__('Deduction Option')}}<div class="float-end"><i class="ti ti-chevron-right"></i></div></a>
         @endcan
 
+        @can('deductionoption manage')
+            <a href="{{ route('salarymodtemplate.index') }}" class="list-group-item list-group-item-action border-0 {{ (request()->is('salarymodtemplate*') ? 'active' : '')}}">{{__('Default Salary Modification')}}<div class="float-end"><i class="ti ti-chevron-right"></i></div></a>
+        @endcan
+
         @can('documenttype manage')
             <a href="{{ route('document-type.index') }}" class="list-group-item list-group-item-action border-0 {{ (Request::route()->getName() == 'document-type.index' ? 'active' : '')}}">{{__('Document Type')}}<div class="float-end"><i class="ti ti-chevron-right"></i></div></a>
         @endcan
