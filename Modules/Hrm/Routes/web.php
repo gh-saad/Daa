@@ -325,6 +325,22 @@ Route::group(['middleware' => 'PlanModuleCheck:Hrm'], function ()
             'auth',
         ]
     );
+    // default salary modification template
+    Route::resource('salarymodtemplate', 'SalaryModTemplateController')->middleware(
+        [
+            'auth',
+        ]
+    );
+    Route::get('salarymodtemplate/delete/{entry}/{name}', 'SalaryModTemplateController@delete_entry')->name('salarymodtemplate.entry.delete')->middleware(
+        [
+            'auth',
+        ]
+    );
+    Route::post('salarymodtemplate/update/{entry}/{name}', 'SalaryModTemplateController@update_entry')->name('salarymodtemplate.entry.update')->middleware(
+        [
+            'auth',
+        ]
+    );
     // Payroll
     Route::resource('setsalary', 'SetSalaryController')->middleware(
         [
