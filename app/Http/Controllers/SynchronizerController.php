@@ -182,8 +182,8 @@ class SynchronizerController extends Controller
                     $member_data["type"] = 'client';
 
                     $db_member = DB::table($db_table)->where("email", $member[4])->first();
-                    $customer = DB::table($customer_table)->where("user_id", $db_member->id);
                     if ($db_member){
+                        $customer = DB::table($customer_table)->where("user_id", $db_member->id);
                         // member already exist update it
                         unset($member_data["created_at"]);
                         unset($member_data["password"]);
@@ -194,10 +194,10 @@ class SynchronizerController extends Controller
                         if ($customer->count() != 0){
                             // update the customer entry
                             $customer_data = $customer->first();
-                            $customer_data["name"] = $db_member->name;
-                            $customer_data["email"] = $db_member->email;
-                            $customer_data["contact"] = $db_member->contact_no;
-                            $customer->update($customer_data);
+                            $customer_data->name = $db_member->name;
+                            $customer_data->email = $db_member->email;
+                            $customer_data->contact = $db_member->contact_no;
+                            $customer->update((array) $customer_data);
                         }else{
                             // create customer entry
                             $customer_data = [
