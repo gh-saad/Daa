@@ -160,134 +160,42 @@
                                     <h5 class="mb-0 ms-3">{{ __('Liabilities & Equity') }}</h5>
                                 </div>
                                 <div class="border-start border-end">
-                                    @foreach ($totalAccounts as $type => $accounts)
-                                        @if ($accounts != [] && $type != 'Assets')
+                                    @foreach ($totalAccounts as $typeName => $subTypes)
+                                        @if ($typeName != 'Assets')
                                             <div class="account-main-inner py-2">
-                                                <p class="fw-bold ps-2 mb-2">{{ $type }}</p>
+                                                <p class="fw-bold ps-2 mb-2">{{ $typeName }}</p>
                                                 @php
                                                     $total = 0;
                                                 @endphp
-                                                @foreach ($accounts as $account)
+                                                @foreach ($subTypes as $subTypeName => $accounts)
                                                     <div class="border-bottom py-2">
-                                                        <p class="fw-bold ps-4 mb-2">
-                                                            {{ $account['subType'] == true ? $account['subType'] : '' }}
-                                                        </p>
-                                                        @foreach ($account['account'] as $records)
-                                                            @if ($collapseview == 'collapse')
-                                                                @foreach ($records as $key => $record)
-                                                                    @if ($record['account'] == 'parentTotal')
-                                                                        <div
-                                                                            class="account-inner d-flex align-items-center justify-content-between ps-5">
-                                                                            <div class="mb-2 account-arrow">
-                                                                                <div class="">
-                                                                                    <a
-                                                                                        href="{{ route('report.balance.sheet', ['horizontal', 'expand']) }}"><i
-                                                                                            class="ti ti-chevron-down account-icon"></i></a>
-                                                                                </div>
-                                                                                <a href="{{ route('report.ledger', $record['account_id']) }}?account={{ $record['account_id'] }}"
-                                                                                   class="text-primary">{{ str_replace('Total ', '', $record['account_name']) }}</a>
-                                                                            </div>
-                                                                            <p class="mb-2 ms-3 text-center">
-                                                                                {{ $record['account_code'] }}</p>
-                                                                            <p
-                                                                                class="text-primary mb-2 float-end text-end me-3">
-                                                                                {{ currency_format_with_sym($record['netAmount']) }}
-                                                                            </p>
-                                                                        </div>
-                                                                    @endif
-                                                                    @if (($key < count($account['account']) - 1 && $record['account'] == '') || $record['account'] != 'subAccount')
-                                                                        @if (
-                                                                            (!preg_match('/\btotal\b/i', $record['account_name']) && $record['account'] == '') ||
-                                                                                $record['account'] == 'subAccount')
-                                                                            <div
-                                                                                class="account-inner d-flex align-items-center justify-content-between ps-5">
-                                                                                <p class="mb-2 ms-3"><a
-                                                                                        href="{{ route('report.ledger', $record['account_id']) }}?account={{ $record['account_id'] }}"
-                                                                                        class="text-primary">{{ $record['account_name'] }}</a>
-                                                                                </p>
-                                                                                <p class="mb-2 text-center">
-                                                                                    {{ $record['account_code'] }}</p>
-                                                                                <p
-                                                                                    class="text-primary mb-2 float-end text-end me-3">
-                                                                                    {{ currency_format_with_sym($record['netAmount']) }}
-                                                                                </p>
-                                                                            </div>
-                                                                        @endif
-                                                                    @endif
-                                                                @endforeach
-                                                            @else
-                                                                @foreach ($records as $key => $record)
-                                                                    @if ($record['account'] == 'parent' || $record['account'] == 'parentTotal')
-                                                                        <div
-                                                                            class="account-inner d-flex align-items-center justify-content-between ps-5">
-                                                                            @if ($record['account'] == 'parent')
-                                                                                <div class="mb-2 account-arrow">
-                                                                                    <div class="">
-                                                                                        <a
-                                                                                            href="{{ route('report.balance.sheet', ['horizontal', 'collapse']) }}"><i
-                                                                                                class="ti ti-chevron-down account-icon"></i></a>
-                                                                                    </div>
-                                                                                    <a href="{{ route('report.ledger', $record['account_id']) }}?account={{ $record['account_id'] }}"
-                                                                                       class="{{ $record['account'] == 'parent' ? 'text-primary' : 'text-dark' }} fw-bold">{{ $record['account_name'] }}</a>
-                                                                                </div>
-                                                                            @else
-                                                                                <p class="mb-2"><a href="#"
-                                                                                                   class="text-dark fw-bold">{{ $record['account_name'] }}</a>
-                                                                                </p>
-                                                                            @endif
-                                                                            <p class="mb-2 ms-3 text-center">
-                                                                                {{ $record['account_code'] }}</p>
-                                                                            <p
-                                                                                class="text-dark fw-bold mb-2 float-end text-end me-3">
-                                                                                {{ currency_format_with_sym($record['netAmount']) }}
-                                                                            </p>
-                                                                        </div>
-                                                                    @endif
-                                                                    @if (($key < count($account['account']) - 1 && $record['account'] == '') || $record['account'] == 'subAccount')
-                                                                        @if (
-                                                                            (!preg_match('/\btotal\b/i', $record['account_name']) && $record['account'] == '') ||
-                                                                                $record['account'] == 'subAccount')
-                                                                            <div
-                                                                                class="account-inner d-flex align-items-center justify-content-between ps-5">
-                                                                                <p class="mb-2 ms-3"><a
-                                                                                        href="{{ route('report.ledger', $record['account_id']) }}?account={{ $record['account_id'] }}"
-                                                                                        class="text-primary">{{ $record['account_name'] }}</a>
-                                                                                </p>
-                                                                                <p class="mb-2 text-center">
-                                                                                    {{ $record['account_code'] }}</p>
-                                                                                <p
-                                                                                    class="text-primary mb-2 float-end text-end me-3">
-                                                                                    {{ currency_format_with_sym($record['netAmount']) }}
-                                                                                </p>
-                                                                            </div>
-                                                                        @endif
-                                                                    @endif
-                                                                @endforeach
-                                                            @endif
+                                                        <p class="fw-bold ps-4 mb-2">{{ $subTypeName }}</p>
+                                                        @foreach ($accounts as $account)
+                                                            <div class="account-inner d-flex align-items-center justify-content-between ps-5">
+                                                                <p class="mb-2 ms-3">
+                                                                    <a href="{{ route('report.ledger', $account['account_id']) }}?account={{ $account['account_id'] }}" class="text-primary">
+                                                                        {{ $account['account_name'] }}
+                                                                    </a>
+                                                                </p>
+                                                                <p class="mb-2 text-center">{{ $account['account_code'] }}</p>
+                                                                <p class="text-primary mb-2 float-end text-end me-3">
+                                                                    {{ currency_format_with_sym($account['total_amount']) }}
+                                                                </p>
+                                                            </div>
+                                                            @php
+                                                                $total += $account['total_amount'];
+                                                            @endphp
                                                         @endforeach
-                                                        <div
-                                                            class="account-inner d-flex align-items-center justify-content-between ps-4">
-                                                            <p class="fw-bold mb-2">
-                                                                {{ $record['account_name'] ? $record['account_name'] : '' }}
-                                                            </p>
-                                                            <p class="fw-bold mb-2 text-end me-3">
-                                                                {{ $record['netAmount'] ? currency_format_with_sym($record['netAmount']) : currency_format_with_sym(0) }}
-                                                            </p>
-                                                        </div>
                                                     </div>
-
-                                                    @php
-                                                        $total += $record['netAmount'] ? $record['netAmount'] : 0;
-                                                    @endphp
                                                 @endforeach
-                                                <div
-                                                    class="account-title d-flex align-items-center justify-content-between border-top border-bottom py-2 px-2 pe-0">
-                                                    <h6 class="fw-bold mb-0">{{ 'Total for ' . $type }}</h6>
+                                                <div class="account-title d-flex align-items-center justify-content-between border-top border-bottom py-2 px-2 pe-0">
+                                                    <h6 class="fw-bold mb-0">{{ 'Total for ' . $typeName }}</h6>
                                                     <h6 class="fw-bold mb-0 text-end me-3">
-                                                        {{ currency_format_with_sym($total) }}</h6>
+                                                        {{ currency_format_with_sym($total) }}
+                                                    </h6>
                                                 </div>
                                                 @php
-                                                    if ($type != 'Assets') {
+                                                    if ($typeName != 'Assets') {
                                                         $totalAmount += $total;
                                                     }
                                                 @endphp
@@ -295,15 +203,14 @@
                                         @endif
                                     @endforeach
                                     @if ($totalAmount != 0)
-                                        <div
-                                            class="d-flex align-items-center justify-content-between border-bottom py-2 px-0">
+                                        <div class="d-flex align-items-center justify-content-between border-bottom py-2 px-0">
                                             <h6 class="fw-bold mb-0 ms-2">{{ 'Total for Liabilities & Equity' }}</h6>
                                             <h6 class="fw-bold mb-0 text-end me-3">
-                                                {{ currency_format_with_sym($totalAmount) }}</h6>
+                                                {{ currency_format_with_sym($totalAmount) }}
+                                            </h6>
                                         </div>
                                     @endif
                                 </div>
-
                             </div>
 
                             @php
@@ -316,130 +223,43 @@
                                     <h5 class="mb-0 ms-3">{{ __('Assets') }}</h5>
                                 </div>
                                 <div class="border-start border-end">
-                                    @foreach ($totalAccounts as $type => $accounts)
-                                        @if ($accounts != [] && $type == 'Assets')
+                                    @foreach ($totalAccounts as $typeName => $subTypes)
+                                        @if ($typeName == 'Assets')
                                             <div class="account-main-inner py-2">
-                                                @if ($type == 'Liabilities')
-                                                    <p class="fw-bold mb-3"> {{ __('Liabilities & Equity') }}</p>
-                                                @endif
-                                                <p class="fw-bold ps-2 mb-2">{{ $type }}</p>
-                                                @foreach ($accounts as $account)
-                                                    <div class="border-bottom py-2">
-                                                        <p class="fw-bold ps-4 mb-2">
-                                                            {{ $account['subType'] == true ? $account['subType'] : '' }}
-                                                        </p>
-                                                        @foreach ($account['account'] as $records)
-                                                            @if ($collapseview == 'collapse')
-                                                                @foreach ($records as $key => $record)
-                                                                    @if ($record['account'] == 'parentTotal')
-                                                                        <div
-                                                                            class="account-inner d-flex align-items-center justify-content-between ps-5">
-                                                                            <div class="mb-2 account-arrow">
-                                                                                <div class="">
-                                                                                    <a
-                                                                                        href="{{ route('report.balance.sheet', ['horizontal', 'expand']) }}"><i
-                                                                                            class="ti ti-chevron-down account-icon"></i></a>
-                                                                                </div>
-                                                                                <a href="{{ route('report.ledger', $record['account_id']) }}?account={{ $record['account_id'] }}"
-                                                                                   class="text-primary">{{ str_replace('Total ', '', $record['account_name']) }}</a>
-                                                                            </div>
-                                                                            <p class="mb-2 ms-3 text-center">
-                                                                                {{ $record['account_code'] }}</p>
-                                                                            <p
-                                                                                class="text-primary mb-2 float-end text-end me-3">
-                                                                                {{ currency_format_with_sym($record['netAmount']) }}
-                                                                            </p>
-                                                                        </div>
-                                                                    @endif
-                                                                    @if (($key < count($account['account']) - 1 && $record['account'] == '') || $record['account'] != 'subAccount')
-                                                                        @if (
-                                                                            (!preg_match('/\btotal\b/i', $record['account_name']) && $record['account'] == '') ||
-                                                                                $record['account'] == 'subAccount')
-                                                                            <div
-                                                                                class="account-inner d-flex align-items-center justify-content-between ps-5">
-                                                                                <p class="mb-2 ms-3"><a
-                                                                                        href="{{ route('report.ledger', $record['account_id']) }}?account={{ $record['account_id'] }}"
-                                                                                        class="text-primary">{{ $record['account_name'] }}</a>
-                                                                                </p>
-                                                                                <p class="mb-2 text-center">
-                                                                                    {{ $record['account_code'] }}</p>
-                                                                                <p
-                                                                                    class="text-primary mb-2 float-end text-end me-3">
-                                                                                    {{ currency_format_with_sym($record['netAmount']) }}
-                                                                                </p>
-                                                                            </div>
-                                                                        @endif
-                                                                    @endif
-                                                                @endforeach
-                                                            @else
-                                                                @foreach ($records as $key => $record)
-                                                                    @if ($record['account'] == 'parent' || $record['account'] == 'parentTotal')
-                                                                        <div
-                                                                            class="account-inner d-flex align-items-center justify-content-between ps-5">
-                                                                            @if ($record['account'] == 'parent')
-                                                                                <div class="mb-2 account-arrow">
-                                                                                    <div class="">
-                                                                                        <a
-                                                                                            href="{{ route('report.balance.sheet', ['horizontal', 'collapse']) }}"><i
-                                                                                                class="ti ti-chevron-down account-icon"></i></a>
-                                                                                    </div>
-                                                                                    <a href="{{ route('report.ledger', $record['account_id']) }}?account={{ $record['account_id'] }}"
-                                                                                       class="{{ $record['account'] == 'parent' ? 'text-primary' : 'text-dark' }} fw-bold">{{ $record['account_name'] }}</a>
-                                                                                </div>
-                                                                            @else
-                                                                                <p class="mb-2"><a href="#"
-                                                                                                   class="text-dark fw-bold">{{ $record['account_name'] }}</a>
-                                                                                </p>
-                                                                            @endif
-                                                                            <p class="mb-2 ms-3 text-center">
-                                                                                {{ $record['account_code'] }}</p>
-                                                                            <p
-                                                                                class="text-dark fw-bold mb-2 float-end text-end me-3">
-                                                                                {{ currency_format_with_sym($record['netAmount']) }}
-                                                                            </p>
-                                                                        </div>
-                                                                    @endif
-                                                                    @if (($key < count($account['account']) - 1 && $record['account'] == '') || $record['account'] == 'subAccount')
-                                                                        @if (
-                                                                            (!preg_match('/\btotal\b/i', $record['account_name']) && $record['account'] == '') ||
-                                                                                $record['account'] == 'subAccount')
-                                                                            <div
-                                                                                class="account-inner d-flex align-items-center justify-content-between ps-5">
-                                                                                <p class="mb-2 ms-3"><a
-                                                                                        href="{{ route('report.ledger', $record['account_id']) }}?account={{ $record['account_id'] }}"
-                                                                                        class="text-primary">{{ $record['account_name'] }}</a>
-                                                                                </p>
-                                                                                <p class="mb-2 text-center">
-                                                                                    {{ $record['account_code'] }}</p>
-                                                                                <p
-                                                                                    class="text-primary mb-2 float-end text-end me-3">
-                                                                                    {{ currency_format_with_sym($record['netAmount']) }}
-                                                                                </p>
-                                                                            </div>
-                                                                        @endif
-                                                                    @endif
-                                                                @endforeach
-                                                            @endif
-                                                        @endforeach
-
-                                                        <div
-                                                            class="account-inner d-flex align-items-center justify-content-between ps-4">
-                                                            <p class="fw-bold mb-2">
-                                                                {{ $record['account_name'] ? $record['account_name'] : 0 }}
-                                                            </p>
-                                                            <p class="fw-bold mb-2 text-end me-3">
-                                                                {{ $record['netAmount'] ? currency_format_with_sym($record['netAmount']) : currency_format_with_sym(0) }}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-
-                                                    @php
-                                                        $total += $record['netAmount'] ? $record['netAmount'] : 0;
-                                                    @endphp
-                                                @endforeach
+                                                <p class="fw-bold ps-2 mb-2">{{ $typeName }}</p>
                                                 @php
-                                                    if ($type == 'Assets') {
-                                                        $totalAmounts += $total;
+                                                    $total = 0;
+                                                @endphp
+                                                @foreach ($subTypes as $subTypeName => $accounts)
+                                                    <div class="border-bottom py-2">
+                                                        <p class="fw-bold ps-4 mb-2">{{ $subTypeName }}</p>
+                                                        @foreach ($accounts as $account)
+                                                            <div class="account-inner d-flex align-items-center justify-content-between ps-5">
+                                                                <p class="mb-2 ms-3">
+                                                                    <a href="{{ route('report.ledger', $account['account_id']) }}?account={{ $account['account_id'] }}" class="text-primary">
+                                                                        {{ $account['account_name'] }}
+                                                                    </a>
+                                                                </p>
+                                                                <p class="mb-2 text-center">{{ $account['account_code'] }}</p>
+                                                                <p class="text-primary mb-2 float-end text-end me-3">
+                                                                    {{ currency_format_with_sym($account['total_amount']) }}
+                                                                </p>
+                                                            </div>
+                                                            @php
+                                                                $total += $account['total_amount'];
+                                                            @endphp
+                                                        @endforeach
+                                                    </div>
+                                                @endforeach
+                                                <div class="account-title d-flex align-items-center justify-content-between border-top border-bottom py-2 px-2 pe-0">
+                                                    <h6 class="fw-bold mb-0">{{ 'Total for ' . $typeName }}</h6>
+                                                    <h6 class="fw-bold mb-0 text-end me-3">
+                                                        {{ currency_format_with_sym($total) }}
+                                                    </h6>
+                                                </div>
+                                                @php
+                                                    if ($typeName == 'Assets') {
+                                                        $totalAmount += $total;
                                                     }
                                                 @endphp
 

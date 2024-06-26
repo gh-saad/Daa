@@ -739,6 +739,12 @@ if(! function_exists('ActivatedModule')){
     {
         $data = [];
         $activated_module = user::$superadmin_activated_module;
+        $cache_key = 'activated_modules_' . ($user_id ?? 'default');
+
+        // Check if data is already cached
+        if (Cache::has($cache_key)) {
+            return Cache::get($cache_key);
+        }
 
         if($user_id != null)
         {
@@ -785,6 +791,7 @@ if(! function_exists('ActivatedModule')){
             }
 
         }
+        Cache::put($cache_key, $data, now()->addHours(1));
         return $data;
     }
 }

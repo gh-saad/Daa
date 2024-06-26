@@ -47,7 +47,7 @@
 @php
     $selectAcc = [
         [
-            'id' => 0,
+            'id' => null,
             'code' => '',
             'name' => 'Select Account',
             'parent' => 0,
@@ -82,11 +82,10 @@
                                             {{ Form::date('end_date', $filter['endDateRange'], ['class' => 'month-btn form-control']) }}
                                         </div>
                                     </div>
-
                                     <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
                                         <div class="btn-box">
                                             {{ Form::label('account', __('Account'), ['class' => 'form-label']) }}
-                                            <select name="account" class="form-control" required="required">
+                                            <select name="account" class="form-control select2" required="required" style="width: 100%;">
                                                 @foreach ($accounts as $chartAccount)
                                                     <option value="{{ $chartAccount['id'] }}" class="subAccount"
                                                         {{ isset($_GET['account']) && $chartAccount['id'] == $_GET['account'] ? 'selected' : '' }}>
@@ -153,7 +152,10 @@
                                         $totalCredit = 0;
                                         $accountArrays = [];
 
-                                        foreach ($chart_accounts as $key => $account) {
+                                        // dd($chart_accounts);
+                                    @endphp
+                                    @foreach($chart_accounts as $key => $account)
+                                        @php
                                             $chartDatas = \Modules\Account\Entities\AccountUtility::getAccountData(
                                                 $account['id'],
                                                 $filter['startDateRange'],
@@ -165,198 +167,200 @@
                                             $accountName = \Modules\Account\Entities\ChartOfAccount::find(
                                                 $account['id'],
                                             );
-                                        }
-                                    @endphp
-                                    @forelse($chartDatas['invoice'] as $invoiceData)
-                                        <tr>
-                                            <td>{{ $accountName->name }}</td>
-                                            @php
-                                                $invoice = \App\Models\Invoice::where(
-                                                    'id',
-                                                    $invoiceData->invoice_id,
-                                                )->first();
-                                            @endphp
-                                            <td>{{ !empty($invoice->customer) ? $invoice->customer->name : '-' }}</td>
-                                            <td>{{ \App\Models\Invoice::invoiceNumberFormat($invoice->invoice_id) }}</td>
-                                            <td>{{ $invoiceData->created_at->format('d-m-Y') }}</td>
-                                            <td>-</td>
+                                        @endphp
+                                    
+                                        @forelse($chartDatas['invoice'] as $invoiceData)
+                                            <tr>
+                                                <td>{{ $accountName->name }}</td>
+                                                @php
+                                                    $invoice = \App\Models\Invoice::where(
+                                                        'id',
+                                                        $invoiceData->invoice_id,
+                                                    )->first();
+                                                @endphp
+                                                <td>{{ !empty($invoice->customer) ? $invoice->customer->name : '-' }}</td>
+                                                <td>{{ \App\Models\Invoice::invoiceNumberFormat($invoice->invoice_id) }}</td>
+                                                <td>{{ $invoiceData->created_at->format('d-m-Y') }}</td>
+                                                <td>-</td>
 
-                                            @php
-                                                $total = $invoiceData->price * $invoiceData->quantity;
-                                                $balance += $total;
-                                                $totalCredit += $total;
-                                            @endphp
-                                            <td>{{ currency_format_with_sym($total) }}</td>
-                                            <td>{{ currency_format_with_sym($balance) }}</td>
-                                        </tr>
-                                    @empty
-                                    @endforelse
+                                                @php
+                                                    $total = $invoiceData->price * $invoiceData->quantity;
+                                                    $balance += $total;
+                                                    $totalCredit += $total;
+                                                @endphp
+                                                <td>{{ currency_format_with_sym($total) }}</td>
+                                                <td>{{ currency_format_with_sym($balance) }}</td>
+                                            </tr>
+                                        @empty
+                                        @endforelse
 
-                                    @forelse($chartDatas['invoicepayment'] as $invoicePaymentData)
-                                        <tr>
-                                            <td>{{ $accountName->name }}</td>
-                                            @php
-                                                $invoice = \App\Models\Invoice::where(
-                                                    'id',
-                                                    $invoicePaymentData->invoice_id,
-                                                )->first();
-                                            @endphp
-                                            <td>{{ !empty($invoice->customer) ? $invoice->customer->name : '-' }}</td>
-                                            <td>{{ \App\Models\Invoice::invoiceNumberFormat(optional($invoice)->invoice_id) }}
-                                                {{ __(' Manually Payment') }}</td>
-                                            <td>{{ $invoicePaymentData->created_at->format('d-m-Y') }}</td>
-                                            <td>-</td>
-                                            <td>{{ currency_format_with_sym($invoicePaymentData->amount) }}</td>
-                                            @php
-                                                $balance += $invoicePaymentData->amount;
-                                                $totalCredit += $invoicePaymentData->amount;
-                                            @endphp
-                                            <td>{{ currency_format_with_sym($balance) }}</td>
-                                        </tr>
-                                    @empty
-                                    @endforelse
+                                        @forelse($chartDatas['invoicepayment'] as $invoicePaymentData)
+                                            <tr>
+                                                <td>{{ $accountName->name }}</td>
+                                                @php
+                                                    $invoice = \App\Models\Invoice::where(
+                                                        'id',
+                                                        $invoicePaymentData->invoice_id,
+                                                    )->first();
+                                                @endphp
+                                                <td>{{ !empty($invoice->customer) ? $invoice->customer->name : '-' }}</td>
+                                                <td>{{ \App\Models\Invoice::invoiceNumberFormat(optional($invoice)->invoice_id) }}
+                                                    {{ __(' Manually Payment') }}</td>
+                                                <td>{{ $invoicePaymentData->created_at->format('d-m-Y') }}</td>
+                                                <td>-</td>
+                                                <td>{{ currency_format_with_sym($invoicePaymentData->amount) }}</td>
+                                                @php
+                                                    $balance += $invoicePaymentData->amount;
+                                                    $totalCredit += $invoicePaymentData->amount;
+                                                @endphp
+                                                <td>{{ currency_format_with_sym($balance) }}</td>
+                                            </tr>
+                                        @empty
+                                        @endforelse
 
-                                    @forelse($chartDatas['revenue'] as $revenueData)
-                                        <tr>
-                                            <td>{{ $accountName->name }}</td>
-                                            <td>{{ !empty($revenueData->customer) ? $revenueData->customer->name : '-' }}
-                                            </td>
-                                            <td>{{ __('Revenue') }}</td>
-                                            <td>{{ $revenueData->created_at->format('d-m-Y') }}</td>
-                                            <td>-</td>
-                                            <td>{{ currency_format_with_sym($revenueData->amount) }}</td>
-                                            @php
-                                                $balance += $revenueData->amount;
-                                                $totalCredit += $revenueData->amount;
-                                            @endphp
-                                            <td>{{ currency_format_with_sym($balance) }}</td>
-                                        </tr>
-                                    @empty
-                                    @endforelse
+                                        @forelse($chartDatas['revenue'] as $revenueData)
+                                            <tr>
+                                                <td>{{ $accountName->name }}</td>
+                                                <td>{{ !empty($revenueData->customer) ? $revenueData->customer->name : '-' }}
+                                                </td>
+                                                <td>{{ __('Revenue') }}</td>
+                                                <td>{{ $revenueData->created_at->format('d-m-Y') }}</td>
+                                                <td>-</td>
+                                                <td>{{ currency_format_with_sym($revenueData->amount) }}</td>
+                                                @php
+                                                    $balance += $revenueData->amount;
+                                                    $totalCredit += $revenueData->amount;
+                                                @endphp
+                                                <td>{{ currency_format_with_sym($balance) }}</td>
+                                            </tr>
+                                        @empty
+                                        @endforelse
 
-                                    @forelse($chartDatas['bill'] as $billProduct)
-                                        <tr>
-                                            <td>{{ $accountName->name }}</td>
-                                            @php
+                                        @forelse($chartDatas['bill'] as $billProduct)
+                                            <tr>
+                                                <td>{{ $accountName->name }}</td>
+                                                @php
 
-                                                $bill = Modules\Account\Entities\Bill::find($billProduct->bill_id);
+                                                    $bill = Modules\Account\Entities\Bill::find($billProduct->bill_id);
+                                                    $vendor = \Modules\Account\Entities\Vender::find(
+                                                        !empty($bill) ? $bill->vendor_id : '',
+                                                    );
+                                                @endphp
+                                                <td>{{ !empty($vendor) ? $vendor->name : '-' }}</td>
+                                                <td>{{ Modules\Account\Entities\Bill::billNumberFormat($bill->bill_id) }}</td>
+                                                <td>{{ $billProduct->created_at->format('d-m-Y') }}</td>
+                                                <td>-</td>
+
+                                                @php
+                                                    $total = $billProduct->price * $billProduct->quantity;
+                                                    $balance += $total;
+                                                    $totalCredit += $total;
+                                                @endphp
+                                                <td>{{ currency_format_with_sym($total) }}</td>
+                                                <td>{{ currency_format_with_sym($balance) }}</td>
+                                            </tr>
+                                        @empty
+                                        @endforelse
+
+                                        @forelse($chartDatas['billdata'] as $billData)
+                                            @php
+                                                $bill = Modules\Account\Entities\Bill::find($billData->ref_id);
                                                 $vendor = \Modules\Account\Entities\Vender::find(
                                                     !empty($bill) ? $bill->vendor_id : '',
                                                 );
                                             @endphp
-                                            <td>{{ !empty($vendor) ? $vendor->name : '-' }}</td>
-                                            <td>{{ Modules\Account\Entities\Bill::billNumberFormat($bill->bill_id) }}</td>
-                                            <td>{{ $billProduct->created_at->format('d-m-Y') }}</td>
-                                            <td>-</td>
+                                            <tr>
+                                                <td>{{ $accountName->name }}</td>
+                                                <td>{{ !empty($vendor) ? $vendor->name : '-' }}</td>
+                                                @if (!empty($bill->bill_id))
+                                                    <td>{{ Modules\Account\Entities\Bill::billNumberFormat($bill->bill_id) }}
+                                                    </td>
+                                                @else
+                                                    <td>-</td>
+                                                @endif
 
-                                            @php
-                                                $total = $billProduct->price * $billProduct->quantity;
-                                                $balance += $total;
-                                                $totalCredit += $total;
-                                            @endphp
-                                            <td>{{ currency_format_with_sym($total) }}</td>
-                                            <td>{{ currency_format_with_sym($balance) }}</td>
-                                        </tr>
-                                    @empty
-                                    @endforelse
-
-                                    @forelse($chartDatas['billdata'] as $billData)
-                                        @php
-                                            $bill = Modules\Account\Entities\Bill::find($billData->ref_id);
-                                            $vendor = \Modules\Account\Entities\Vender::find(
-                                                !empty($bill) ? $bill->vendor_id : '',
-                                            );
-                                        @endphp
-                                        <tr>
-                                            <td>{{ $accountName->name }}</td>
-                                            <td>{{ !empty($vendor) ? $vendor->name : '-' }}</td>
-                                            @if (!empty($bill->bill_id))
-                                                <td>{{ Modules\Account\Entities\Bill::billNumberFormat($bill->bill_id) }}
-                                                </td>
-                                            @else
+                                                <td>{{ $billData->created_at->format('d-m-Y') }}</td>
+                                                <td>{{ currency_format_with_sym($billData->price) }}</td>
                                                 <td>-</td>
-                                            @endif
+                                                @php
+                                                    $balance += $billData->price;
+                                                    $totalDebit += $billData->price;
+                                                @endphp
+                                                <td>{{ currency_format_with_sym($totalCredit - $totalDebit) }}</td>
+                                            </tr>
+                                        @empty
+                                        @endforelse
 
-                                            <td>{{ $billData->created_at->format('d-m-Y') }}</td>
-                                            <td>{{ currency_format_with_sym($billData->price) }}</td>
-                                            <td>-</td>
+                                        @forelse($chartDatas['billpayment'] as $billPaymentData)
                                             @php
-                                                $balance += $billData->price;
-                                                $totalDebit += $billData->price;
+                                                $bill = Modules\Account\Entities\BillPayment::where(
+                                                    'bill_id',
+                                                    $billPaymentData->bill_id,
+                                                )->first();
+                                                $billId = Modules\Account\Entities\Bill::find($billPaymentData->bill_id);
+                                                $vendor = \Modules\Account\Entities\Vender::find($billId->vendor_id);
                                             @endphp
-                                            <td>{{ currency_format_with_sym($totalCredit - $totalDebit) }}</td>
-                                        </tr>
-                                    @empty
-                                    @endforelse
+                                            <tr>
+                                                <td>{{ $accountName->name }}</td>
+                                                <td>{{ !empty($vendor) ? $vendor->name : '-' }}</td>
+                                                <td>{{ Modules\Account\Entities\Bill::billNumberFormat($billId->bill_id) }}{{ __(' Manually Payment') }}
+                                                </td>
+                                                <td>{{ $billPaymentData->created_at->format('d-m-Y') }}</td>
+                                                <td>{{ currency_format_with_sym($billPaymentData->amount) }}</td>
+                                                <td>-</td>
+                                                @php
+                                                    $balance += $billPaymentData->amount;
+                                                    $totalDebit += $billPaymentData->amount;
+                                                @endphp
+                                                <td>{{ currency_format_with_sym($totalCredit - $totalDebit) }}</td>
+                                            </tr>
+                                        @empty
+                                        @endforelse
 
-                                    @forelse($chartDatas['billpayment'] as $billPaymentData)
-                                        @php
-                                            $bill = Modules\Account\Entities\BillPayment::where(
-                                                'bill_id',
-                                                $billPaymentData->bill_id,
-                                            )->first();
-                                            $billId = Modules\Account\Entities\Bill::find($billPaymentData->bill_id);
-                                            $vendor = \Modules\Account\Entities\Vender::find($billId->vendor_id);
-                                        @endphp
-                                        <tr>
-                                            <td>{{ $accountName->name }}</td>
-                                            <td>{{ !empty($vendor) ? $vendor->name : '-' }}</td>
-                                            <td>{{ Modules\Account\Entities\Bill::billNumberFormat($billId->bill_id) }}{{ __(' Manually Payment') }}
-                                            </td>
-                                            <td>{{ $billPaymentData->created_at->format('d-m-Y') }}</td>
-                                            <td>{{ currency_format_with_sym($billPaymentData->amount) }}</td>
-                                            <td>-</td>
+                                        @forelse($chartDatas['payment'] as $paymentData)
                                             @php
-                                                $balance += $billPaymentData->amount;
-                                                $totalDebit += $billPaymentData->amount;
+                                                $vendor = \Modules\Account\Entities\Vender::find($paymentData->vendor_id);
                                             @endphp
-                                            <td>{{ currency_format_with_sym($totalCredit - $totalDebit) }}</td>
-                                        </tr>
-                                    @empty
-                                    @endforelse
+                                            <tr>
+                                                <td>{{ $accountName->name }}</td>
+                                                <td>{{ !empty($vendor) ? $vendor->name : '-' }}</td>
+                                                <td>{{ __('Payment') }}</td>
+                                                <td>{{ $paymentData->created_at->format('d-m-Y') }}</td>
 
-                                    @forelse($chartDatas['payment'] as $paymentData)
-                                        @php
-                                            $vendor = \Modules\Account\Entities\Vender::find($paymentData->vendor_id);
-                                        @endphp
-                                        <tr>
-                                            <td>{{ $accountName->name }}</td>
-                                            <td>{{ !empty($vendor) ? $vendor->name : '-' }}</td>
-                                            <td>{{ __('Payment') }}</td>
-                                            <td>{{ $paymentData->created_at->format('d-m-Y') }}</td>
-
-                                            <td>{{ currency_format_with_sym($paymentData->amount) }}</td>
-                                            <td>-</td>
-                                            @php
-                                                $balance += $paymentData->amount;
-                                                $totalDebit += $paymentData->amount;
-                                            @endphp
-                                            <td>{{ currency_format_with_sym($totalCredit - $totalDebit) }}</td>
-                                        </tr>
-                                    @empty
-                                    @endforelse
+                                                <td>{{ currency_format_with_sym($paymentData->amount) }}</td>
+                                                <td>-</td>
+                                                @php
+                                                    $balance += $paymentData->amount;
+                                                    $totalDebit += $paymentData->amount;
+                                                @endphp
+                                                <td>{{ currency_format_with_sym($totalCredit - $totalDebit) }}</td>
+                                            </tr>
+                                        @empty
+                                        @endforelse
 
 
 
-                                    @forelse($chartDatas['journalItem'] as $journalData)
-                                        
-                                        <tr>
-                                            <td>{{ $accountName->name }}</td>
-                                            <td></td>
-                                            <td>{{ __('Journal Entry') }}</td>
-                                            <td>{{ $journalData->created_at->format('d-m-Y') }}</td>
-                                            <td>{{ currency_format_with_sym($journalData->debit) }}</td>
-                                            <td>{{ currency_format_with_sym($journalData->credit) }}</td>
-                                            @php
-                                                $balance += $journalData->credit;
-                                                $balance -= $journalData->debit;
-                                                $totalCredit += $journalData->credit;
-                                                $totalCredit -= $journalData->debit;
-                                            @endphp
-                                            <td>{{ currency_format_with_sym($balance) }}</td>
-                                        </tr>
-                                    @empty
-                                    @endforelse
+                                        @forelse($chartDatas['journalItem'] as $journalData)
+                                            
+                                            <tr>
+                                                <td>{{ $accountName->name }}</td>
+                                                <td>--</td>
+                                                <td>{{ __('Journal Entry') }}</td>
+                                                <td>{{ $journalData->created_at->format('d-m-Y') }}</td>
+                                                <td>{{ currency_format_with_sym($journalData->debit) }}</td>
+                                                <td>{{ currency_format_with_sym($journalData->credit) }}</td>
+                                                @php
+                                                    $balance += $journalData->credit;
+                                                    $balance -= $journalData->debit;
+                                                    $totalCredit += $journalData->credit;
+                                                    $totalCredit -= $journalData->debit;
+                                                @endphp
+                                                <td>{{ currency_format_with_sym($balance) }}</td>
+                                            </tr>
+                                        @empty
+                                        @endforelse
+                                    @endforeach
+                                    
                                 </tbody>
                             </table>
                         </div>

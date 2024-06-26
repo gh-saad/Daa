@@ -103,29 +103,38 @@ class ReportController extends Controller
         if (Auth::user()->can('report balance sheet')) {
             $start = $request->start_date ?? date('Y-01-01');
             $end = $request->end_date ?? date('Y-m-d', strtotime('+1 day'));
-
+    
             $types = ChartOfAccountType::where('workspace', getActiveWorkSpace())
                 ->whereIn('name', ['Assets', 'Liabilities', 'Equity'])->get();
-
+    
             $totalAccounts = [];
             foreach ($types as $type) {
+    
                 $subTypes = ChartOfAccountSubType::where('type', $type->id)->get();
-
                 foreach ($subTypes as $subType) {
+    
                     $accounts = ChartOfAccount::where('sub_type', $subType->id)
                         ->where('type', $type->id)->where('workspace', getActiveWorkSpace())->get();
                     foreach ($accounts as $account) {
-                        $transactions = Transaction::join('bank_accounts', 'transactions.account', '=', 'bank_accounts.id')
-                            ->join('chart_of_accounts', 'bank_accounts.chart_account_id', '=', 'chart_of_accounts.id')
-                            ->where('chart_account_id', $account->id)
-                            ->where('transactions.date', '>=', $start)
-                            ->where('transactions.date', '<=', $end)
-                            ->get();
-
+                        
+                        $transactions = Transaction::join(
+                            "chart_of_accounts",
+                            "transactions.account",
+                            "=",
+                            "chart_of_accounts.id"
+                        )
+                        ->select(
+                            "transactions.*", 
+                            "chart_of_accounts.type as chart_type"
+                        )
+                        ->where("transactions.account", $account->id)
+                        ->whereBetween("transactions.date", [$start, $end])
+                        ->get();
+        
                         $balance = $transactions->sum(function ($transaction) {
-                            return $transaction->type == 'credit' ? $transaction->amount : -$transaction->amount;
+                            return $transaction->type == 'Credit' ? $transaction->amount : -$transaction->amount;
                         });
-
+    
                         if ($balance != 0) {
                             $totalAccounts[$type->name][$subType->name][$account->id] = [
                                 'account_id' => $account->id,
@@ -137,10 +146,11 @@ class ReportController extends Controller
                     }
                 }
             }
+    
             $filter['startDateRange'] = $start;
             $filter['endDateRange'] = $end;
             if ($request->view == 'horizontal' || $view == 'horizontal') {
-                return view('doubleentry::report.balance_sheet_horizontal', compact('filter', 'totalAccounts', 'collapseview'));
+                return view('doubleentry::report.balance_sheet_horizontal', compact('filter', 'totalAccounts', 'collapseview', 'types'));
             } elseif ($view == '' || $view == 'vertical') {
                 return view('doubleentry::report.balance_sheet', compact('filter', 'totalAccounts', 'collapseview', 'types'));
             } else {
@@ -149,8 +159,7 @@ class ReportController extends Controller
         } else {
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
-    }
-
+    }    
 
     // 
     public function profitLoss(Request $request, $view = '', $collapseView = 'expand')
