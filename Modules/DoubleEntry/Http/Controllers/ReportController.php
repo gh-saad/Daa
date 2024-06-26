@@ -116,13 +116,21 @@ class ReportController extends Controller
                     $accounts = ChartOfAccount::where('sub_type', $subType->id)
                         ->where('type', $type->id)->where('workspace', getActiveWorkSpace())->get();
                     foreach ($accounts as $account) {
-    
-                        $transactions = Transaction::join('chart_of_accounts', 'transactions.account', '=', 'chart_of_accounts.id')
-                            ->where('account', $account->id)
-                            ->where('transactions.date', '>=', $start)
-                            ->where('transactions.date', '<=', $end)
-                            ->get();
-    
+                        
+                        $transactions = Transaction::join(
+                            "chart_of_accounts",
+                            "transactions.account",
+                            "=",
+                            "chart_of_accounts.id"
+                        )
+                        ->select(
+                            "transactions.*", 
+                            "chart_of_accounts.type as chart_type"
+                        )
+                        ->where("transactions.account", $account->id)
+                        ->whereBetween("transactions.date", [$start, $end])
+                        ->get();
+        
                         $balance = $transactions->sum(function ($transaction) {
                             return $transaction->type == 'Credit' ? $transaction->amount : -$transaction->amount;
                         });
