@@ -264,8 +264,8 @@ class ReportController extends Controller
 
                 //---------------------------INVOICE INCOME-----------------------------------------------
 
-                $invoices = Invoice:: selectRaw('MONTH(send_date) as month,YEAR(send_date) as year,category_id,invoice_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->where('invoice_module','!=','taskly');
-                $invoices->whereRAW('YEAR(send_date) =?', [$year]);
+                $invoices = Invoice:: selectRaw('MONTH(issue_date) as month,YEAR(issue_date) as year,category_id,invoice_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->where('invoice_module','!=','taskly');
+                $invoices->whereRAW('YEAR(issue_date) =?', [$year]);
                 if(!empty($request->customer))
                 {
                     $invoices->where('user_id', '=', $cust->user_id);
@@ -435,8 +435,8 @@ class ReportController extends Controller
 
                 //     ------------------------------------BILL EXPENSE----------------------------------------------------
 
-                $bills = Bill:: selectRaw('MONTH(send_date) as month,YEAR(send_date) as year,category_id,bill_id,id')->where('workspace',getActiveWorkSpace())->where('status', '!=', 0);
-                $bills->whereRAW('YEAR(send_date) =?', [$year]);
+                $bills = Bill:: selectRaw('MONTH(bill_date) as month,YEAR(bill_date) as year,category_id,bill_id,id')->where('workspace',getActiveWorkSpace())->where('status', '!=', 0);
+                $bills->whereRAW('YEAR(bill_date) =?', [$year]);
 
                 if(!empty($request->vendor))
                 {
@@ -571,8 +571,8 @@ class ReportController extends Controller
 
                 // ------------------------------TOTAL BILL EXPENSE-----------------------------------------------------------
 
-                $bills = Bill:: selectRaw('MONTH(send_date) as month,YEAR(send_date) as year,category_id,bill_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0);
-                $bills->whereRAW('YEAR(send_date) =?', [$year]);
+                $bills = Bill:: selectRaw('MONTH(bill_date) as month,YEAR(bill_date) as year,category_id,bill_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0);
+                $bills->whereRAW('YEAR(bill_date) =?', [$year]);
 
                 if(!empty($request->vendor))
                 {
@@ -640,8 +640,8 @@ class ReportController extends Controller
                 }
 
                 // ------------------------------TOTAL INVOICE INCOME-----------------------------------------------------------
-                $invoices = Invoice:: selectRaw('MONTH(send_date) as month,YEAR(send_date) as year,category_id,invoice_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->where('invoice_module','!=','taskly');
-                $invoices->whereRAW('YEAR(send_date) =?', [$year]);
+                $invoices = Invoice:: selectRaw('MONTH(issue_date) as month,YEAR(issue_date) as year,category_id,invoice_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->where('invoice_module','!=','taskly');
+                $invoices->whereRAW('YEAR(issue_date) =?', [$year]);
                 if(!empty($request->customer))
                 {
                     $invoices->where('user_id', '=', $cust->user_id);
@@ -1022,8 +1022,8 @@ class ReportController extends Controller
 
                 //-----------------------INVOICE INCOME---------------------------------------------
 
-                $invoices = Invoice:: selectRaw('MONTH(send_date) as month,YEAR(send_date) as year,category_id,invoice_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->where('invoice_module','!=','taskly');
-                $invoices->whereRAW('YEAR(send_date) =?', [$year]);
+                $invoices = Invoice:: selectRaw('MONTH(issue_date) as month,YEAR(issue_date) as year,category_id,invoice_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->where('invoice_module','!=','taskly');
+                $invoices->whereRAW('YEAR(issue_date) =?', [$year]);
                 if(!empty($request->customer))
                 {
                     $invoices->where('customer_id', '=', $request->customer);
@@ -1184,8 +1184,8 @@ class ReportController extends Controller
 
                 //    ----------------------------EXPENSE BILL-----------------------------------------------------------------------
 
-                $bills = Bill:: selectRaw('MONTH(send_date) as month,YEAR(send_date) as year,category_id,bill_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0);
-                $bills->whereRAW('YEAR(send_date) =?', [$year]);
+                $bills = Bill:: selectRaw('MONTH(bill_date) as month,YEAR(bill_date) as year,category_id,bill_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0);
+                $bills->whereRAW('YEAR(bill_date) =?', [$year]);
                 if(!empty($request->customer))
                 {
                     $bills->where('vendor_id', '=', $request->vendor);
@@ -1295,7 +1295,7 @@ class ReportController extends Controller
 
             $status = Invoice::$statues;
 
-            $invoices = Invoice::selectRaw('invoices.*,MONTH(send_date) as month,YEAR(send_date) as year');
+            $invoices = Invoice::selectRaw('invoices.*,MONTH(issue_date) as month,YEAR(issue_date) as year');
 
             if($request->status != '')
             {
@@ -1321,7 +1321,7 @@ class ReportController extends Controller
                 $end   = strtotime(date('Y-12'));
             }
 
-            $invoices->where('send_date', '>=', date('Y-m-01', $start))->where('send_date', '<=', date('Y-m-t', $end));
+            $invoices->where('issue_date', '>=', date('Y-m-01', $start))->where('issue_date', '<=', date('Y-m-t', $end));
 
 
             $filter['startDateRange'] = date('M-Y', $start);
@@ -1373,7 +1373,7 @@ class ReportController extends Controller
 
             $status = Bill::$statues;
 
-            $bills = Bill::selectRaw('bills.*,MONTH(send_date) as month,YEAR(send_date) as year')->where('bill_module','!=','taskly');
+            $bills = Bill::selectRaw('bills.*,MONTH(bill_date) as month,YEAR(bill_date) as year')->where('bill_module','!=','taskly');
 
             if(!empty($request->start_month) && !empty($request->end_month))
             {
@@ -1386,7 +1386,7 @@ class ReportController extends Controller
                 $end   = strtotime(date('Y-12'));
             }
 
-            $bills->where('send_date', '>=', date('Y-m-01', $start))->where('send_date', '<=', date('Y-m-t', $end));
+            $bills->where('bill_date', '>=', date('Y-m-01', $start))->where('bill_date', '<=', date('Y-m-t', $end));
 
             $filter['startDateRange'] = date('M-Y', $start);
             $filter['endDateRange']   = date('M-Y', $end);
