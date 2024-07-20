@@ -21,6 +21,9 @@ Route::group(['middleware' => 'PlanModuleCheck:ProductService'], function ()
     Route::resource('tax', 'TaxController')->middleware(['auth']);
     Route::get('product-service-grid', 'ProductServiceController@grid')->name('product-service.grid');
     Route::resource('product-service', 'ProductServiceController')->middleware(['auth']);
+
+    
+
     // Product Stock
     Route::resource('productstock', 'ProductStockController')->middleware(['auth']);
 
@@ -34,4 +37,5 @@ Route::group(['middleware' => 'PlanModuleCheck:ProductService'], function ()
     Route::post('/vehicle/purchase-status/{id}', 'ProductServiceController@vehicle_update_purchase_status')->name('vehicle.purchase-status');
 });
 
-
+Route::get('create-service', 'ProductServiceController@create_service')->name('create-service');
+Route::post('create-service-store', 'ProductServiceController@store_service')->name('create-service-store');

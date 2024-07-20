@@ -74,7 +74,7 @@
 
                 selector.parent().parent().find('.product_id').append('<option value="0"> {{ __('Select Item') }} </option>');
                 $.each(data, function(key, value) {
-                    selector.parent().parent().find('.product_id').append('<option value="' + key + '">' + value.sku + ' ' + value.name +
+                    selector.parent().parent().find('.product_id').append('<option value="' + value.id + '">' + value.sku + ' ' + value.name +
                         '</option>');
                 });
 
@@ -307,7 +307,7 @@
                         <tr>
                             {{ Form::hidden('id', null, ['class' => 'form-control id']) }}
                             <td  class="form-group pt-0">
-                                {{ Form::select('product_type', $product_type, null, ['class' => 'form-control product_type ', 'required' => 'required', 'placeholder' => '--']) }}
+                                {{ Form::select('product_type', $product_type, null, ['class' => 'form-control product_type ', 'placeholder' => '--']) }}
                             </td>
                             <td width="25%" class="form-group pt-0 product_div">
                                     <select name="item" class="form-control product_id item  js-searchBox" data-url="{{route('bill.product')}}" required>
@@ -324,19 +324,19 @@
                             </td>
                             <td>
                                 <div class="form-group price-input input-group search-form">
-                                    {{ Form::text('quantity', '', ['class' => 'form-control quantity', 'required' => 'required', 'placeholder' => __('Qty'), 'required' => 'required']) }}
+                                    {{ Form::text('quantity', '', ['class' => 'form-control quantity', 'placeholder' => __('Qty')]) }}
                                     <span class="unit input-group-text bg-transparent"></span>
                                 </div>
                             </td>
                             <td>
                                 <div class="form-group price-input input-group search-form">
-                                    {{ Form::text('price', '', ['class' => 'form-control price', 'required' => 'required', 'placeholder' => __('Price'), 'required' => 'required']) }}
+                                    {{ Form::text('price', '', ['class' => 'form-control price', 'placeholder' => __('Price')]) }}
                                     <span class="input-group-text bg-transparent">{{ company_setting('defult_currancy_symbol') }}</span>
                                 </div>
                             </td>
                             <td>
                                 <div class="form-group price-input input-group search-form">
-                                    {{ Form::text('discount', '', ['class' => 'form-control discount', 'required' => 'required', 'placeholder' => __('Discount')]) }}
+                                    {{ Form::text('discount', '', ['class' => 'form-control discount', 'placeholder' => __('Discount')]) }}
                                     <span
                                         class="input-group-text bg-transparent">{{ company_setting('defult_currancy_symbol') }}</span>
                                 </div>
@@ -361,7 +361,7 @@
                                 </a>
                             </td>
                         </tr>
-                        <tr>
+                        {{-- <tr>
                             <td class="form-group">
                                 {{ Form::select('chart_account_id', $chartAccounts,null, array('class' => 'form-control select2 js-searchBox')) }}
                             </td>
@@ -378,7 +378,7 @@
                             <td class="text-end accountamount">
                                 0.00
                             </td>
-                        </tr>
+                        </tr> --}}
 {{--                        <tr>--}}
 {{--                            <td colspan="2">--}}
 {{--                                <div class="form-group">--}}
@@ -475,16 +475,16 @@
                         <tr>
                             <td width="25%" class="form-group pt-0">
                                 {{ Form::hidden('id', null, ['class' => 'form-control id']) }}
-                                {{ Form::select('item', $tasks, null, ['class' => 'form-control item js-searchBox', 'required' => 'required']) }}
+                                {{ Form::select('item', $tasks, null, ['class' => 'form-control item js-searchBox']) }}
                             </td>
                             <td>
                                 <div class="form-group price-input input-group search-form">
-                                    {{ Form::text('price', '', ['class' => 'form-control price', 'required' => 'required', 'placeholder' => __('Price'), 'required' => 'required']) }}
+                                    {{ Form::text('price', '', ['class' => 'form-control price', 'placeholder' => __('Price')]) }}
                                     <span
                                         class="input-group-text bg-transparent">{{ company_setting('defult_currancy_symbol') }}</span>
                                 </div>
                             </td>
-                            {{ Form::hidden('quantity',1, ['class' => 'form-control quantity', 'required' => 'required', 'placeholder' => __('Qty'), 'required' => 'required']) }}
+                            {{ Form::hidden('quantity',1, ['class' => 'form-control quantity', 'placeholder' => __('Qty')]) }}
                             <td>
                                 <div class="form-group price-input input-group search-form">
                                     {{ Form::text('discount', '', ['class' => 'form-control discount', 'placeholder' => __('Discount')]) }}

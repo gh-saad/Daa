@@ -21,6 +21,9 @@
         <a  class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="{{__('Create')}}" data-ajax-popup="true" data-size="lg" data-title="{{ __('Create New Product') }}" data-url="{{ route('product-service.create') }}">
             <i class="ti ti-plus"></i>
         </a>
+        <a  class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="{{__('Create Service')}}" data-ajax-popup="true" data-size="lg" data-title="{{ __('Create New Service') }}" data-url="{{ route('create-service') }}">
+            <i class="ti ti-plus"></i>
+        </a>
 
     </div>
 @endcan

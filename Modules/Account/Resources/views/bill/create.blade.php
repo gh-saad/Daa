@@ -372,7 +372,7 @@
                             $(el.parent().parent().find('.quantity')).val(1);
                             if(item.product != null)
                             {
-                                $(el.parent().parent().find('.price')).val(item.product.sale_price);
+                                $(el.parent().parent().find('.price')).val(item.product.purchase_price);
                                 $(el.parent().parent().parent().find('.pro_description')).val(item.product.description);
 
                             }
@@ -402,7 +402,7 @@
                             var itemTaxPrice = 0;
                             if(item.product != null)
                             {
-                                var itemTaxPrice = parseFloat((totalItemTaxRate / 100) * (item.product.sale_price * 1));
+                                var itemTaxPrice = parseFloat((totalItemTaxRate / 100) * (item.product.purchase_price * 1));
                             }
                             $(el.parent().parent().find('.itemTaxPrice')).val(itemTaxPrice.toFixed(2));
                             $(el.parent().parent().find('.itemTaxRate')).val(totalItemTaxRate.toFixed(2));
