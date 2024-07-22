@@ -38,9 +38,3 @@ remove all roles first
 
 # after changes in the Hrm module for tax deduction and tax relief
 - `php artisan module:migrate Hrm`
-
-# after 15-July-2024
-- `php artisan fetch:currencies`
-- assign KES currency in the system settings for the application.
-- `php artisan migrate --path=/database/migrations/2024_07_18_111042_alter_bank_accounts_table.php`
-- manually assign KES or USD currency in the database, to avoid deleting and re-seeding the database bank_accounts table

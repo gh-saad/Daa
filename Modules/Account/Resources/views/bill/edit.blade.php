@@ -728,7 +728,6 @@
         {{ Form::close() }}
     </div>
 @endsection
-
 @push('scripts')
     <script src="{{ asset('js/jquery-searchbox.js') }}"></script>
 @endpush

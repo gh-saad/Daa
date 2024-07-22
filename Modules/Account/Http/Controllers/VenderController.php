@@ -12,7 +12,6 @@ use Modules\Account\Entities\BillPayment;
 use Modules\Account\Entities\Vender;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Modules\Account\Events\CreateVendor;
 use Modules\Account\Events\DestroyVendor;
 use Modules\Account\Events\UpdateVendor;
@@ -669,111 +668,4 @@ class VenderController extends Controller
             return redirect()->back()->with('error', 'permission Denied');
         }
     }
-
-    public function add_quick_vendor(Request $request)
-    {
-        if (Auth::user()->can('vendor create'))
-        {
-            $rules = [
-                'vendor_name' => 'required',
-                'vendor_contact' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/',
-                'address' => 'required',
-                'city' => 'required',
-                'state' => 'required',
-                'country' => 'required',
-                'zip_code' => 'required',
-            ];
-
-            $validator = \Validator::make($request->all(), $rules);
-
-            if ($validator->fails())
-            {
-                $messages = $validator->getMessageBag();
-                $errors = $messages->toArray();
-                return response()->json(['error' => $errors], 401);
-            }
-
-            $roles = Role::where('name','vendor')->where('guard_name','web')->where('created_by',creatorId())->first();
-            if(empty($roles))
-            {
-                return response()->json(['error' => __('Vendor Role Not found !')], 401);
-            }
-
-            $generated_password = Str::random(8); // randomly generated password
-            $generated_email = $request->input('name').time().'@'.Str::random(8).'.com'; // randomly generated email needs to be unique so use timestamp and the provided request name
-
-            $user['email']      = $generated_email;
-            $user['name']       = $request->input('vendor_name');
-            $user['password']   = \Hash::make($generated_password);
-            $user['email_verified_at'] = date('Y-m-d h:i:s');
-            $user['lang']       = 'en';
-            $user['type']       = $roles->name;
-            $user['is_enable_login'] = 0;
-            $user['contact_no'] = $request->input('vendor_contact');
-            $user['address'] = $request->input('address');
-            $user['country'] = $request->input('country');
-            $user['state'] = $request->input('state');
-            $user['city'] = $request->input('city');
-            $user['zip_code'] = $request->input('zip_code');
-            $user['created_by'] = \Auth::user()->id;
-            $user['workspace_id'] = getActiveWorkSpace();
-            $user['active_workspace'] = getActiveWorkSpace();
-            $user = User::create($user);
-            $user->assignRole($roles);
-            
-            $vendor                   = new Vender();
-            $vendor->vendor_id        = $this->vendorNumber();
-            $vendor->user_id          = $user->id;
-            $vendor->name             = $request->vendor_name;
-            $vendor->contact          = $request->vendor_contact;
-            $vendor->email            = $user->email;
-            $vendor->tax_number       = null;
-            $vendor->billing_name     = $request->vendor_name;
-            $vendor->billing_country  = $request->country;
-            $vendor->billing_state    = $request->state;
-            $vendor->billing_city     = $request->city;
-            $vendor->billing_phone    = $request->vendor_contact;
-            $vendor->billing_zip      = $request->zip_code;
-            $vendor->billing_address  = $request->address;
-
-            if(company_setting('bill_shipping_display')=='on')
-            {
-                $vendor->shipping_name    = $request->vendor_name;
-                $vendor->shipping_country = $request->country;
-                $vendor->shipping_state   = $request->state;
-                $vendor->shipping_city    = $request->city;
-                $vendor->shipping_phone   = $request->vendor_contact;
-                $vendor->shipping_zip     = $request->zip_code;
-                $vendor->shipping_address = $request->address;
-            }
-
-            $vendor->lang             = $user->lang;
-            $vendor->created_by       = \Auth::user()->id;
-            $vendor->workspace        = getActiveWorkSpace();
-            $vendor->save();
-
-            if(module_is_active('CustomField'))
-            {
-                \Modules\CustomField\Entities\CustomField::saveData($vendor, $request->customField);
-            }
-
-            event(new CreateVendor($request,$vendor));
-
-            $this_vendor_name = Vender::vendorNumberFormat($vendor->vendor_id) . ' ' . $vendor->name;
-
-            return response()->json([
-                'success' => 'Vendor added successfully.',
-                'vendor' => [
-                    'id' => $vendor->id,
-                    'name' => $this_vendor_name,
-                ],
-            ]);
-    
-        }
-        else
-        {
-            return response()->json(['error' => __('Permission denied.')], 401);
-        }
-    }
-
 }

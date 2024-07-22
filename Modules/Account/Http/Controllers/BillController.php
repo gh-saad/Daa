@@ -100,18 +100,7 @@ class BillController extends Controller
 
                 $bill_number = Bill::billNumberFormat($this->billNumber());
 
-                $vendors_array = [];
-
-                // Fetch vendors based on active workspace
-                $vendors = Vender::where('workspace', '=', getActiveWorkSpace())->get();
-                
-                foreach ($vendors as $vendor) {
-                    // combine both values
-                    $vendor_detail = Vender::vendorNumberFormat($vendor->vendor_id) . ' ' . $vendor->name;
-                
-                    // Add vendor detail to vendors_array with vendor's ID as key
-                    $vendors_array[$vendor->id] = $vendor_detail;
-                }
+                $vendors = Vender::where('workspace', '=',getActiveWorkSpace())->get()->pluck('name', 'id');
 
                 $product_services = \Modules\ProductService\Entities\ProductService::where('workspace_id', getActiveWorkSpace())->get()->pluck('name', 'id');
                 $product_services->prepend('--', '');
@@ -132,7 +121,7 @@ class BillController extends Controller
                     $projects = \Modules\Taskly\Entities\Project::select('projects.*')->join('user_projects', 'projects.id', '=', 'user_projects.project_id')->where('user_projects.user_id', '=', Auth::user()->id)->where('workspace', getActiveWorkSpace())->projectonly()->get()->pluck('name', 'id');
                 }
 
-                return view('account::bill.create', compact('vendors', 'bill_number', 'vendors_array', 'product_services', 'category', 'vendorId','customFields','product_type','projects','taxs'));
+                return view('account::bill.create', compact('vendors', 'bill_number', 'product_services', 'category', 'vendorId','customFields','product_type','projects','taxs'));
             }
             else
             {
@@ -1662,46 +1651,6 @@ class BillController extends Controller
         }
     }
 
-    public function getVendorDetails($id)
-    {
-        $vendor = Vender::find($id);
-    
-        if (!$vendor) {
-            return response()->json(['error' => 'Vendor not found'], 404);
-        }
-
-        $vendor_email = $vendor->email ? $vendor->email : 'no email provided.';
-
-        if ($vendor->user->is_enable_login == 0){
-            $vendor_email = 'Vendor is not enabled for login.';
-        }
-
-        // general information
-        $general = [
-            'vendor_id' => Vender::vendorNumberFormat($vendor->vendor_id),
-            'name' => $vendor->name ? $vendor->name : 'no name provided.',
-            'email' => $vendor_email,
-            'contact' => $vendor->contact ? $vendor->contact : 'no contact provided.',
-            'tax_number' => $vendor->tax_number ? $vendor->tax_number : 'no tax number provided.',
-        ];
-
-        // billing details
-        $billing = [
-            'billing_name' => $vendor->billing_name ? $vendor->billing_name : 'no name provided.',
-            'billing_country' => $vendor->billing_country ? $vendor->billing_country : 'no country provided.',
-            'billing_state' => $vendor->billing_state ? $vendor->billing_state : 'no state provided.',
-            'billing_city' => $vendor->billing_city ? $vendor->billing_city : 'no city provided.',
-            'billing_phone' => $vendor->billing_phone ? $vendor->billing_phone : 'no phone provided.',
-            'billing_zip' => $vendor->billing_zip ? $vendor->billing_zip : 'no zip provided.',
-            'billing_address' => $vendor->billing_address ? $vendor->billing_address : 'no address provided.',
-        ];
-    
-        return response()->json([
-            'vendor_information' => $general,
-            'vendor_billing_details' => $billing,
-        ]);
-    }
-    
     public function billAttechmentDestroy($id)
     {
 

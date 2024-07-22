@@ -330,17 +330,15 @@
                             </td>
                             <td>
                                 <div class="form-group price-input input-group search-form">
-
-                                    {{ Form::text('price', '', ['class' => 'form-control price', 'required' => 'required', 'placeholder' => __('Price'), 'required' => 'required']) }}
-                                    <span class="input-group-text bg-transparent">{{ company_setting('defult_currancy') }}</span>
-
+                                    {{ Form::text('price', '', ['class' => 'form-control price', 'placeholder' => __('Price')]) }}
+                                    <span class="input-group-text bg-transparent">{{ company_setting('defult_currancy_symbol') }}</span>
                                 </div>
                             </td>
                             <td>
                                 <div class="form-group price-input input-group search-form">
                                     {{ Form::text('discount', '', ['class' => 'form-control discount', 'placeholder' => __('Discount')]) }}
                                     <span
-                                        class="input-group-text bg-transparent">{{ company_setting('defult_currancy') }}</span>
+                                        class="input-group-text bg-transparent">{{ company_setting('defult_currancy_symbol') }}</span>
                                 </div>
                             </td>
                             <td>
@@ -370,7 +368,7 @@
                             <td class="form-group">
                                 <div class="input-group">
                                     {{ Form::text('amount','', array('class' => 'form-control accountAmount','placeholder'=>__('Amount'))) }}
-                                    <span class="input-group-text bg-transparent">{{company_setting('defult_currancy')}}</span>
+                                    <span class="input-group-text bg-transparent">{{company_setting('defult_currancy_symbol')}}</span>
                                 </div>
                             </td>
                             <td colspan="3" class="form-group">
@@ -398,7 +396,7 @@
                             <td>&nbsp;</td>
                             <td></td>
                             <td><strong>{{ __('Sub Total') }}
-                                    ({{ company_setting('defult_currancy') }})</strong>
+                                    ({{ company_setting('defult_currancy_symbol') }})</strong>
                             </td>
                             <td class="text-end subTotal">0.00</td>
                             <td></td>
@@ -410,7 +408,7 @@
                             <td>&nbsp;</td>
                             <td></td>
                             <td><strong>{{ __('Discount') }}
-                                    ({{ company_setting('defult_currancy') }})</strong>
+                                    ({{ company_setting('defult_currancy_symbol') }})</strong>
                             </td>
                             <td class="text-end totalDiscount">0.00</td>
                             <td></td>
@@ -421,7 +419,7 @@
                             <td>&nbsp;</td>
                             <td>&nbsp;</td>
                             <td></td>
-                            <td><strong>{{ __('Tax') }} ({{ company_setting('defult_currancy') }})</strong>
+                            <td><strong>{{ __('Tax') }} ({{ company_setting('defult_currancy_symbol') }})</strong>
                             </td>
                             <td class="text-end totalTax">0.00</td>
                             <td></td>
@@ -433,7 +431,7 @@
                             <td>&nbsp;</td>
                             <td>&nbsp;</td>
                             <td class="blue-text"><strong>{{ __('Total Amount') }}
-                                    ({{ company_setting('defult_currancy') }})</strong></td>
+                                    ({{ company_setting('defult_currancy_symbol') }})</strong></td>
                             <td class="text-end totalAmount blue-text">0.00</td>
                             <td></td>
                         </tr>
@@ -483,7 +481,7 @@
                                 <div class="form-group price-input input-group search-form">
                                     {{ Form::text('price', '', ['class' => 'form-control price', 'placeholder' => __('Price')]) }}
                                     <span
-                                        class="input-group-text bg-transparent">{{ company_setting('defult_currancy') }}</span>
+                                        class="input-group-text bg-transparent">{{ company_setting('defult_currancy_symbol') }}</span>
                                 </div>
                             </td>
                             {{ Form::hidden('quantity',1, ['class' => 'form-control quantity', 'placeholder' => __('Qty')]) }}
@@ -491,7 +489,7 @@
                                 <div class="form-group price-input input-group search-form">
                                     {{ Form::text('discount', '', ['class' => 'form-control discount', 'placeholder' => __('Discount')]) }}
                                     <span
-                                        class="input-group-text bg-transparent">{{ company_setting('defult_currancy') }}</span>
+                                        class="input-group-text bg-transparent">{{ company_setting('defult_currancy_symbol') }}</span>
                                 </div>
                             </td>
                             <td>
@@ -529,7 +527,7 @@
                             <td>&nbsp;</td>
                             <td></td>
                             <td><strong>{{ __('Sub Total') }}
-                                    ({{ company_setting('defult_currancy') }})</strong>
+                                    ({{ company_setting('defult_currancy_symbol') }})</strong>
                             </td>
                             <td class="text-end subTotal">0.00</td>
                             <td></td>
@@ -540,7 +538,7 @@
                             <td>&nbsp;</td>
                             <td></td>
                             <td><strong>{{ __('Discount') }}
-                                    ({{ company_setting('defult_currancy') }})</strong>
+                                    ({{ company_setting('defult_currancy_symbol') }})</strong>
                             </td>
                             <td class="text-end totalDiscount">0.00</td>
                             <td></td>
@@ -550,7 +548,7 @@
                             <td>&nbsp;</td>
                             <td>&nbsp;</td>
                             <td></td>
-                            <td><strong>{{ __('Tax') }} ({{ company_setting('defult_currancy') }})</strong>
+                            <td><strong>{{ __('Tax') }} ({{ company_setting('defult_currancy_symbol') }})</strong>
                             </td>
                             <td class="text-end totalTax">0.00</td>
                             <td></td>
@@ -561,7 +559,7 @@
                             <td>&nbsp;</td>
                             <td>&nbsp;</td>
                             <td class="blue-text"><strong>{{ __('Total Amount') }}
-                                    ({{ company_setting('defult_currancy') }})</strong></td>
+                                    ({{ company_setting('defult_currancy_symbol') }})</strong></td>
                             <td class="text-end totalAmount blue-text">0.00</td>
                             <td></td>
                         </tr>
