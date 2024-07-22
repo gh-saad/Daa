@@ -93,6 +93,8 @@ Route::group(['middleware' => 'PlanModuleCheck:Account'], function ()
      Route::get('vendor/import/modal', 'VenderController@fileImportModal')->name('vendor.import.modal')->middleware(['auth']);
      Route::post('vendor/data/import/', 'VenderController@vendorImportdata')->name('vendor.import.data')->middleware(['auth']);
 
+    Route::post('vendor/quick/add', 'VenderController@add_quick_vendor')->name('add.quick.vendor')->middleware(['auth']);
+
     // credit note
     Route::get('invoice/{id}/credit-note', 'CreditNoteController@create')->name('invoice.credit.note')->middleware(
         [
@@ -242,6 +244,7 @@ Route::group(['middleware' => 'PlanModuleCheck:Account'], function ()
     // settig in account
     Route::post('/accountss/setting/store', 'AccountController@setting')->name('accounts.setting.save')->middleware(['auth']);
 
+    Route::get('/bill/vendor/{id}', 'BillController@getVendorDetails')->name('bill.vendor.details');
 
     // bill template settig in account
 

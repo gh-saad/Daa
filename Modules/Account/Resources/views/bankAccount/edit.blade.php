@@ -3,7 +3,7 @@
     <div class="row">
         <div class="form-group col-md-6">
             {{ Form::label('chart_account_id', __('Account'),['class'=>'form-label']) }}
-            {{ Form::select('chart_account_id', $chart_accounts,null, array('class' => 'form-control select','required'=>'required')) }}
+            {{ Form::select('chart_account_id', $chart_accounts,null, array('id' => 'chart_account_id', 'class' => 'form-control select2','required'=>'required')) }}
         </div>
         <div class="col-md-6">
             <div class="form-group">
@@ -33,6 +33,12 @@
             <div class="form-group">
                 {{ Form::label('contact_number', __('Contact Number'), ['class' => 'form-label']) }}
                 {{ Form::number('contact_number', null, ['class' => 'form-control', 'required' => 'required', 'min' => '0', 'placeholder' => __('Enter Contact Number')]) }}
+            </div>
+        </div>
+        <div class="col-md-12">
+            <div class="form-group">
+                {{ Form::label('currency_id', __('Currency'), ['class' => 'form-label']) }}
+                {{ Form::select('currency_id', $currencies, null, array('id' => 'currency_id', 'class' => 'form-control select2','required'=>'required')) }}
             </div>
         </div>
         <div class="col-md-12">

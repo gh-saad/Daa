@@ -1186,6 +1186,7 @@ class ReportController extends Controller
 
                 $bills = Bill:: selectRaw('MONTH(bill_date) as month,YEAR(bill_date) as year,category_id,bill_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0);
                 $bills->whereRAW('YEAR(bill_date) =?', [$year]);
+
                 if(!empty($request->customer))
                 {
                     $bills->where('vendor_id', '=', $request->vendor);
