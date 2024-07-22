@@ -634,32 +634,11 @@
 
         })
 </Script>
-
-      function items(data)
-      {
-          var in_type = $('#bill_type').val();
-          if (in_type == 'product') {
-              var iteams_id = data.val();
-              var url = data.data('url');
-              var el = data;
-              $.ajax({
-                  url: url,
-                  type: 'POST',
-                  headers: {
-                      'X-CSRF-TOKEN': jQuery('#token').val()
-                  },
-                  data: {
-                      'product_id': iteams_id
-                  },
-                  cache: false,
-                  success: function(data) {
-                      var item = JSON.parse(data);
-                      $(el.parent().parent().find('.quantity')).val(1);
-                      if(item.product != null)
-                      {
-                          $(el.parent().parent().find('.price')).val(item.product.purchase_price);
-                          $(el.parent().parent().parent().find('.pro_description')).val(item.product.description);
-
+@if (module_is_active('Account'))
+    <script>
+        $(document).on('change', '.item', function() {
+            items($(this));
+        });
         function items(data)
         {
             var in_type = $('#bill_type').val();
