@@ -42,7 +42,7 @@
 
         <!-- vendor css -->
         <link rel="stylesheet" href="{{ asset('assets/css/plugins/style.css') }}">
-
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="{{ asset('assets/css/plugins/bootstrap-switch-button.min.css') }}">
         <link rel="stylesheet" href="{{ asset('assets/css/plugins/datepicker-bs5.min.css') }}" >
         <link rel="stylesheet" href="{{ asset('assets/css/plugins/flatpickr.min.css') }}" >
@@ -60,6 +60,9 @@
         @else
             <link rel="stylesheet" href="" id="main-style-link">
         @endif
+
+        <!-- Select2 CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
         @stack('css')
         @stack('availabilitylink')
@@ -179,8 +182,9 @@
         <script src="{{ asset('assets/js/plugins/flatpickr.min.js') }}"></script>
         <script src="{{ asset('assets/js/plugins/choices.min.js') }}"></script>
         <script src="{{ asset('js/jquery.form.js') }}"></script>
-
-
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
         <script src="{{ asset('js/custom.js') }}"></script>
         @if($message = Session::get('success'))
@@ -199,6 +203,20 @@
         @if(admin_setting('enable_cookie') == 'on')
             @include('layouts.cookie_consent')
         @endif
+
+        <script>
+            document.addEventListener('DOMContentLoaded', (event) => {
+
+                // Initialize Select2 function
+                function initializeSelect2(selector) {
+                    $(selector).select2({
+                        width: '100%' // Adjust as needed
+                    });
+                }
+
+                initializeSelect2('.select2');
+            });
+        </script>
 
         <script>
             // ajax

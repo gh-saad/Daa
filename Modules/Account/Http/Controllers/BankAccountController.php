@@ -4,6 +4,7 @@ namespace Modules\Account\Http\Controllers;
 
 use App\Models\ChartOfAccount;
 use App\Models\CustomField;
+use App\Models\Currency;
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -49,8 +50,8 @@ class BankAccountController extends Controller
                 ->where('created_by', creatorId())->where('workspace',getActiveWorkSpace())->get()
                 ->pluck('code_name', 'id');
             $chart_accounts->prepend('Select Account', '');
-
-            return view('account::bankAccount.create',compact('chart_accounts'));
+            $currencies = Currency::select(\DB::raw('CONCAT(code, " - ", name) AS code_name, code'))->pluck('code_name', 'code');
+            return view('account::bankAccount.create',compact('chart_accounts', 'currencies'));
         }
         else
         {
@@ -76,6 +77,7 @@ class BankAccountController extends Controller
                                    'opening_balance' => 'required',
                                    'contact_number' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/',
                                    'bank_address' => 'required',
+                                   'currency_id' => 'required',
                                ]
             );
 
@@ -93,6 +95,7 @@ class BankAccountController extends Controller
             $account->opening_balance = $request->opening_balance;
             $account->contact_number  = $request->contact_number;
             $account->bank_address    = $request->bank_address;
+            $account->currency        = $request->currency_id;
             $account->workspace       = getActiveWorkSpace();
             $account->created_by      = \Auth::user()->id;
             $account->save();
@@ -134,7 +137,8 @@ class BankAccountController extends Controller
                     ->pluck('code_name', 'id');
                 $chart_accounts->prepend('Select Account', '');
 
-                return view('account::bankAccount.edit', compact('bankAccount','chart_accounts'));
+                $currencies = Currency::select(\DB::raw('CONCAT(code, " - ", name) AS code_name, code'))->pluck('code_name', 'code');
+                return view('account::bankAccount.edit', compact('bankAccount','chart_accounts', 'currencies'));
             }
             else
             {
@@ -167,6 +171,7 @@ class BankAccountController extends Controller
                                     'opening_balance' => 'required',
                                     'contact_number' => 'required|regex:/^([0-9\s\-\+\(\)]*)$/',
                                     'bank_address' => 'required',
+                                    'currency_id' => 'required',
                                 ]
                 );
 
@@ -183,6 +188,7 @@ class BankAccountController extends Controller
                 $bankAccount->opening_balance = $request->opening_balance;
                 $bankAccount->contact_number  = $request->contact_number;
                 $bankAccount->bank_address    = $request->bank_address;
+                $bankAccount->currency        = $request->currency_id;
                 $bankAccount->save();
                 event(new UpdateBankAccount($request,$bankAccount));
 

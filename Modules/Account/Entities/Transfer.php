@@ -3,6 +3,7 @@
 namespace Modules\Account\Entities;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Currency;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Transfer extends Model
@@ -35,6 +36,14 @@ class Transfer extends Model
     {
         return $this->hasOne(BankAccount::class,'id','to_account')->first();
     }
+
+    public function getRate($currency){
+        // locate currency by code
+        $currency = Currency::where('code', $currency)->first();
+        // get and return rate
+        return $currency->rate;
+    }
+
     public static function bankAccountBalance($id, $amount, $type)
     {
         $bankAccount = BankAccount::find($id);

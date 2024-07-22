@@ -4,6 +4,7 @@ namespace Modules\Account\Http\Controllers;
 
 use Illuminate\Contracts\Support\Renderable;
 use Illuminate\Http\Request;
+use App\Models\Currency;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Modules\Account\Entities\BankAccount;
@@ -20,10 +21,12 @@ class TransferController extends Controller
      */
     public function index(Request $request)
     {
-        if(Auth::user()->can('bank transfer manage'))
-        {
-            $account = BankAccount::where('workspace',getActiveWorkSpace())->get()->pluck('holder_name', 'id');
-
+        if (Auth::user()->can('bank transfer manage')) {
+            $account = BankAccount::select('id', \DB::raw("CONCAT(holder_name, ' - ', currency) AS name"))
+                ->where('workspace', getActiveWorkSpace())
+                ->get()
+                ->pluck('name', 'id');
+    
             $query = Transfer::where('workspace',getActiveWorkSpace());
             if(!empty($request->date))
             {
@@ -61,14 +64,14 @@ class TransferController extends Controller
      */
     public function create()
     {
-        if(Auth::user()->can('bank transfer create'))
-        {
-            $bankAccount = BankAccount::select('*', \DB::raw("CONCAT(bank_name,' ',holder_name) AS name"))->where('workspace', getActiveWorkSpace())->get()->pluck('name', 'id');
+        if (Auth::user()->can('bank transfer create')) {
+            $bankAccount = BankAccount::select('id', \DB::raw("CONCAT(bank_name, ' ', holder_name, ' - ', currency) AS name"))
+                                    ->where('workspace', getActiveWorkSpace())
+                                    ->get()
+                                    ->pluck('name', 'id');
 
             return view('account::transfer.create', compact('bankAccount'));
-        }
-        else
-        {
+        } else {
             return response()->json(['error' => __('Permission denied.')], 401);
         }
     }
@@ -97,17 +100,47 @@ class TransferController extends Controller
                 return redirect()->back()->with('error', $messages->first());
             }
 
-            $transfer                 = new Transfer();
-            $transfer->from_account   = $request->from_account;
-            $transfer->to_account     = $request->to_account;
-            $transfer->amount         = $request->amount;
-            $transfer->date           = $request->date;
-            $transfer->payment_method = 0;
-            $transfer->reference      = $request->reference;
-            $transfer->description    = $request->description;
-            $transfer->created_by      = \Auth::user()->id;
-            $transfer->workspace      = getActiveWorkSpace();
-            $transfer->save();
+            // find from_account bank account
+            $fromAccount = BankAccount::find($request->from_account);
+
+            if($fromAccount->currency == "KES"){
+                $transfer                 = new Transfer();
+                $transfer->from_account   = $request->from_account;
+                $transfer->to_account     = $request->to_account;
+                $transfer->amount         = $request->amount;
+                $transfer->currency       = 'KES';
+                $transfer->date           = $request->date;
+                $transfer->payment_method = 0;
+                $transfer->reference      = $request->reference;
+                $transfer->description    = $request->description;
+                $transfer->created_by      = \Auth::user()->id;
+                $transfer->workspace      = getActiveWorkSpace();
+                $transfer->save();
+            }else{
+                // find currency mentioned for from_account
+                $currency = Currency::where('code', $fromAccount->currency)->first();
+                // get currency rate
+                $rate = $currency->rate;
+                // get KES rate
+                $kes_currency = Currency::where('code', 'KES')->first();
+                $kes_rate = $kes_currency->rate;
+                // convert amount to kes
+                $amount = ( $request->amount / $rate ) * $kes_rate;
+
+                // create transfer entry
+                $transfer                 = new Transfer();
+                $transfer->from_account   = $request->from_account;
+                $transfer->to_account     = $request->to_account;
+                $transfer->amount         = $amount;
+                $transfer->currency       = $fromAccount->currency;
+                $transfer->date           = $request->date;
+                $transfer->payment_method = 0;
+                $transfer->reference      = $request->reference;
+                $transfer->description    = $request->description;
+                $transfer->created_by      = \Auth::user()->id;
+                $transfer->workspace      = getActiveWorkSpace();
+                $transfer->save();
+            }
 
             Transfer::bankAccountBalance($request->from_account, $request->amount, 'debit');
 
@@ -141,13 +174,13 @@ class TransferController extends Controller
     public function edit($id)
     {
         $transfer = Transfer::find($id);
-        if(Auth::user()->can('bank transfer edit'))
-        {
-            $bankAccount = BankAccount::select('*', \DB::raw("CONCAT(bank_name,' ',holder_name) AS name"))->where('workspace', getActiveWorkSpace())->get()->pluck('name', 'id');
+        if (Auth::user()->can('bank transfer edit')) {
+            $bankAccount = BankAccount::select('*', \DB::raw("CONCAT(bank_name, ' ', holder_name, ' - ', currency) AS name"))
+                ->where('workspace', getActiveWorkSpace())
+                ->get()
+                ->pluck('name', 'id');
             return view('account::transfer.edit', compact('bankAccount', 'transfer'));
-        }
-        else
-        {
+        } else {
             return response()->json(['error' => __('Permission denied.')], 401);
         }
     }

@@ -94,9 +94,19 @@
                                 @foreach ($transfers as $transfer)
                                     <tr class="font-style">
                                         <td>{{ company_date_formate( $transfer->date) }}</td>
-                                        <td>{{ !empty($transfer->fromBankAccount())? $transfer->fromBankAccount()->bank_name.' '.$transfer->fromBankAccount()->holder_name:''}}</td>
-                                        <td>{{!empty( $transfer->toBankAccount())? $transfer->toBankAccount()->bank_name.' '. $transfer->toBankAccount()->holder_name:''}}</td>
-                                        <td>{{  currency_format_with_sym( $transfer->amount)}}</td>
+                                        <td>{{ !empty($transfer->fromBankAccount())? $transfer->fromBankAccount()->bank_name.' '.$transfer->fromBankAccount()->holder_name.' - '.$transfer->fromBankAccount()->currency:''}}</td>
+                                        <td>{{!empty( $transfer->toBankAccount())? $transfer->toBankAccount()->bank_name.' '. $transfer->toBankAccount()->holder_name.' - '.$transfer->toBankAccount()->currency:''}}</td>
+                                        @php
+                                            // required variables 
+                                            $amount = $transfer->amount;
+                                            $currency = $transfer->currency;
+                                            // get rates 
+                                            $rate = $transfer->getRate($currency);
+                                            $kes_rate = $transfer->getRate('KES');
+                                            // apply rate and get new amount
+                                            $new_amount = ( $amount / $kes_rate ) * $rate;
+                                        @endphp
+                                        <td>{{ !empty($transfer->fromBankAccount())? $new_amount .' ('.$currency.')': currency_format_with_sym( $transfer->amount )}}</td>
                                         <td>{{  $transfer->reference}}</td>
                                         <td>
                                             <p style="white-space: nowrap;

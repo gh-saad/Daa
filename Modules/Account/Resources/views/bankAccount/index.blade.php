@@ -16,6 +16,15 @@
     @endcan
 </div>
 @endsection
+@push('css')
+<style>
+    .select2-container .select2-selection--single {
+        padding: 6px;
+        font-size: 14px;
+        height: 40px;
+    }
+</style>
+@endpush
 @section('content')
     <div class="row">
         <div class="col-12">
@@ -45,7 +54,7 @@
                                     <td>{{  $account->holder_name}}</td>
                                     <td>{{  $account->bank_name}}</td>
                                     <td>{{  $account->account_number}}</td>
-                                    <td>{{  currency_format_with_sym($account->opening_balance)}}</td>
+                                    <td>{{  $account->opening_balance . ' ('.$account->currency.')'}}</td>
                                     <td>{{  $account->contact_number}}</td>
                                     <td>{{  $account->bank_address}}</td>
                                     @if(Gate::check('bank account edit') || Gate::check('bank account delete'))
@@ -87,3 +96,22 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function () {
+            $('#commonModal').on('shown.bs.modal', function (e) {
+                $('#currency_id').select2({
+                    width: '100%',
+                    dropdownParent: $('#commonModal')
+                });
+            });
+            $('#commonModal').on('shown.bs.modal', function (e) {
+                $('#chart_account_id').select2({
+                    width: '100%',
+                    dropdownParent: $('#commonModal')
+                });
+            });
+        });
+    </script>
+@endpush
