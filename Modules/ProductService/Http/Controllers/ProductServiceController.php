@@ -17,6 +17,7 @@ use Modules\ProductService\Events\CreateProduct;
 use Modules\ProductService\Events\DestroyProduct;
 use Modules\ProductService\Events\UpdateProduct;
 use Illuminate\Support\Facades\Log;
+use Modules\Account\Entities\ChartOfAccount;
 
 class ProductServiceController extends Controller
 {
@@ -70,6 +71,30 @@ class ProductServiceController extends Controller
         }
     }
 
+    public function create_service()
+    {
+        // if(Auth::user()->can('product&service create'))
+        // {
+            $category     = Category::where('created_by', '=',creatorId())->where('workspace_id', '=', getActiveWorkSpace())->where('type', '=', 0)->get()->pluck('name', 'id');
+            $unit         = Unit::where('created_by', '=',creatorId())->where('workspace_id', '=', getActiveWorkSpace())->get()->pluck('name', 'id');
+            $tax          = Tax::where('created_by', '=',creatorId())->where('workspace_id', '=', getActiveWorkSpace())->get()->pluck('name', 'id');
+            $chart_of_account = [];
+            if(module_is_active('Account')){
+                $chart_of_account = ChartOfAccount::where('workspace',getActiveWorkSpace())->get()->pluck('name', 'id');
+            }
+            if(module_is_active('CustomField')){
+                $customFields =  \Modules\CustomField\Entities\CustomField::where('workspace_id',getActiveWorkSpace())->where('module', '=', 'ProductService')->where('sub_module','product & service')->get();
+            }else{
+                $customFields = null;
+            }
+
+            return view('productservice::create_service', compact('category', 'unit', 'tax','customFields', 'chart_of_account'));
+        // }
+        // else
+        // {
+        //     return response()->json(['error' => __('Permission denied.')], 401);
+        // }
+    }
     /**
      * Store a newly created resource in storage.
      * @param Request $request
@@ -154,6 +179,62 @@ class ProductServiceController extends Controller
         }
     }
 
+    public function store_service(Request $request)
+    {
+        if(Auth::user()->can('product&service create'))
+        {
+            $rules = [
+                'name' => 'required',
+                'sku' => 'required',
+                'sale_price' => 'required|numeric',
+                'purchase_price' => 'required|numeric',
+                'category_id' => 'required',
+                'unit_id' => 'required',
+            ];
+
+            $validator = \Validator::make($request->all(), $rules);
+
+            if ($validator->fails()) {
+                $messages = $validator->getMessageBag();
+
+                return redirect()->route('product-service.index')->with('error', $messages->first());
+            }
+
+            $productService                 = new ProductService();
+            $productService->name           = $request->name;
+            $productService->description    = $request->description;
+            $productService->sku            = $request->sku;
+            $productService->sale_price     = $request->sale_price;
+            $productService->purchase_price = $request->purchase_price;
+            $productService->tax_id         = !empty($request->tax_id) ? implode(',', $request->tax_id) : '';
+            $productService->unit_id        = $request->unit_id;
+            if(!empty($request->quantity))
+            {
+                $productService->quantity        = $request->quantity;
+            }
+            else{
+                $productService->quantity   = 0;
+            }
+            $productService->type           = 'service'; #  $request->type;    
+            $productService->sale_chartaccount_id = $request->sale_chartaccount_id ?? 0;
+            $productService->expense_chartaccount_id  = $request->expense_chartaccount_id ?? 0;
+            $productService->category_id    = $request->category_id;
+            $productService->created_by     = creatorId();
+            $productService->workspace_id     = getActiveWorkSpace();
+            $productService->save();
+
+            event(new CreateProduct($request,$productService));
+            if(module_is_active('CustomField'))
+            {
+                \Modules\CustomField\Entities\CustomField::saveData($productService, $request->customField);
+            }
+            return redirect()->back()->with('success', __('Product successfully created.'));
+        }
+        else
+        {
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+    }
     /**
      * Show the specified resource.
      * @param int $id
@@ -592,9 +673,9 @@ class ProductServiceController extends Controller
     {
         $product_services = \Modules\ProductService\Entities\ProductService::where('workspace_id', getActiveWorkSpace());
         if(!empty($request->product_type)){
-            $product_services = $product_services->where('type',$request->product_type);
+            $product_services = $product_services->where('type', $request->product_type);
         }
-        $product_services =  \Modules\ProductService\Entities\ProductService::where('created_by', creatorId())->where('workspace_id',getActiveWorkSpace())->select('sku', 'name', 'id')->get();
+        $product_services =  $product_services->select('sku', 'name', 'id')->get();
         return response()->json($product_services);
     }
 

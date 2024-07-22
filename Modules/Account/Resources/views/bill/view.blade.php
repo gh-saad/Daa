@@ -408,18 +408,18 @@
                                                             -
                                                         @endif
                                                     </td>
-
-                                                    @if ($bill->bill_module == 'account'|| $bill->bill_module == '')
-                                                        @php
-                                                            $chartAccount = \Modules\Account\Entities\ChartOfAccount::find($iteam->chart_account_id);
-                                                        @endphp
-                                                        <td>{{!empty($chartAccount) ? $chartAccount->name : '-'}}</td>
-                                                        <td>{{currency_format_with_sym($iteam->amount)}}</td>
-                                                    @endif
-                                                    <td style="white-space: break-spaces;">{{!empty($iteam->description)?$iteam->description:'-'}}</td>
                                                     @php
                                                         $tr_tex = (array_key_exists($key,$TaxPrice_array) == true) ? $TaxPrice_array[$key] : 0;
                                                     @endphp
+                                                    @if ($bill->bill_module == 'account'|| $bill->bill_module == '')
+                                                        @php
+                                                            $chartAccount = \Modules\Account\Entities\ChartOfAccount::find($iteam->product()->expense_chartaccount_id);
+                                                        @endphp
+                                                        <td>{{!empty($chartAccount) ? $chartAccount->name : '-'}}</td>
+                                                        <td>{{currency_format_with_sym(($iteam->price * $iteam->quantity - $iteam->discount) + $tr_tex)}}</td>
+                                                    @endif
+                                                    <td style="white-space: break-spaces;">{{!empty($iteam->description)?$iteam->description:'-'}}</td>
+                                                    
                                                     <td class="">{{ currency_format_with_sym(($iteam->price * $iteam->quantity - $iteam->discount) + $tr_tex)}}</td>
                                                 </tr>
                                             @endforeach

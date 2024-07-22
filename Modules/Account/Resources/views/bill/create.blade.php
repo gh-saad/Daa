@@ -635,11 +635,30 @@
         })
 </Script>
 
-@if (module_is_active('Account'))
-    <script>
-        $(document).on('change', '.item', function() {
-            items($(this));
-        });
+      function items(data)
+      {
+          var in_type = $('#bill_type').val();
+          if (in_type == 'product') {
+              var iteams_id = data.val();
+              var url = data.data('url');
+              var el = data;
+              $.ajax({
+                  url: url,
+                  type: 'POST',
+                  headers: {
+                      'X-CSRF-TOKEN': jQuery('#token').val()
+                  },
+                  data: {
+                      'product_id': iteams_id
+                  },
+                  cache: false,
+                  success: function(data) {
+                      var item = JSON.parse(data);
+                      $(el.parent().parent().find('.quantity')).val(1);
+                      if(item.product != null)
+                      {
+                          $(el.parent().parent().find('.price')).val(item.product.purchase_price);
+                          $(el.parent().parent().parent().find('.pro_description')).val(item.product.description);
 
         function items(data)
         {
@@ -672,22 +691,41 @@
                             $(el.parent().parent().find('.price')).val(0);
                             $(el.parent().parent().parent().find('.pro_description')).val('');
 
-                        }
+                            var taxes = '';
+                            var tax = [];
 
-                        var taxes = '';
-                        var tax = [];
+                            var totalItemTaxRate = 0;
 
-                        var totalItemTaxRate = 0;
+                            if (item.taxes == 0) {
+                                taxes += '-';
+                            } else {
+                                for (var i = 0; i < item.taxes.length; i++) {
+                                    taxes += '<span class="badge bg-primary p-2 px-3 rounded mt-1 mr-1">' +
+                                        item.taxes[i].name + ' ' + '(' + item.taxes[i].rate + '%)' +
+                                        '</span>';
+                                    tax.push(item.taxes[i].id);
+                                    totalItemTaxRate += parseFloat(item.taxes[i].rate);
+                                }
+                            }
+                            var itemTaxPrice = 0;
+                            if(item.product != null)
+                            {
+                                var itemTaxPrice = parseFloat((totalItemTaxRate / 100) * (item.product.purchase_price * 1));
+                            }
+                            $(el.parent().parent().find('.itemTaxPrice')).val(itemTaxPrice.toFixed(2));
+                            $(el.parent().parent().find('.itemTaxRate')).val(totalItemTaxRate.toFixed(2));
+                            $(el.parent().parent().find('.taxes')).html(taxes);
+                            $(el.parent().parent().find('.tax')).val(tax);
+                            $(el.parent().parent().find('.unit')).html(item.unit);
+                            $(el.parent().parent().find('.discount')).val(0);
+                            $(el.parent().parent().find('.amount')).html(item.totalAmount);
 
-                        if (item.taxes == 0) {
-                            taxes += '-';
-                        } else {
-                            for (var i = 0; i < item.taxes.length; i++) {
-                                taxes += '<span class="badge bg-primary p-2 px-3 rounded mt-1 mr-1">' +
-                                    item.taxes[i].name + ' ' + '(' + item.taxes[i].rate + '%)' +
-                                    '</span>';
-                                tax.push(item.taxes[i].id);
-                                totalItemTaxRate += parseFloat(item.taxes[i].rate);
+
+                            var inputs = $(".amount");
+                            var subTotal = 0;
+                            for (var i = 0; i < inputs.length; i++) {
+                                subTotal = parseFloat(subTotal) + parseFloat($(inputs[i]).html());
+
                             }
                         }
                         var itemTaxPrice = 0;

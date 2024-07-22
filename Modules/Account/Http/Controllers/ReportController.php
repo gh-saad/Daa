@@ -435,8 +435,8 @@ class ReportController extends Controller
 
                 //     ------------------------------------BILL EXPENSE----------------------------------------------------
 
-                $bills = Bill:: selectRaw('MONTH(issue_date) as month,YEAR(issue_date) as year,category_id,bill_id,id')->where('workspace',getActiveWorkSpace())->where('status', '!=', 0);
-                $bills->whereRAW('YEAR(issue_date) =?', [$year]);
+                $bills = Bill:: selectRaw('MONTH(bill_date) as month,YEAR(bill_date) as year,category_id,bill_id,id')->where('workspace',getActiveWorkSpace())->where('status', '!=', 0);
+                $bills->whereRAW('YEAR(bill_date) =?', [$year]);
 
                 if(!empty($request->vendor))
                 {
@@ -571,8 +571,8 @@ class ReportController extends Controller
 
                 // ------------------------------TOTAL BILL EXPENSE-----------------------------------------------------------
 
-                $bills = Bill:: selectRaw('MONTH(issue_date) as month,YEAR(issue_date) as year,category_id,bill_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0);
-                $bills->whereRAW('YEAR(issue_date) =?', [$year]);
+                $bills = Bill:: selectRaw('MONTH(bill_date) as month,YEAR(bill_date) as year,category_id,bill_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0);
+                $bills->whereRAW('YEAR(bill_date) =?', [$year]);
 
                 if(!empty($request->vendor))
                 {
@@ -1184,8 +1184,9 @@ class ReportController extends Controller
 
                 //    ----------------------------EXPENSE BILL-----------------------------------------------------------------------
 
-                $bills = Bill:: selectRaw('MONTH(issue_date) as month,YEAR(issue_date) as year,category_id,bill_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0);
-                $bills->whereRAW('YEAR(issue_date) =?', [$year]);
+                $bills = Bill:: selectRaw('MONTH(bill_date) as month,YEAR(bill_date) as year,category_id,bill_id,id')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0);
+                $bills->whereRAW('YEAR(bill_date) =?', [$year]);
+
                 if(!empty($request->customer))
                 {
                     $bills->where('vendor_id', '=', $request->vendor);
@@ -1373,7 +1374,7 @@ class ReportController extends Controller
 
             $status = Bill::$statues;
 
-            $bills = Bill::selectRaw('bills.*,MONTH(issue_date) as month,YEAR(issue_date) as year')->where('bill_module','!=','taskly');
+            $bills = Bill::selectRaw('bills.*,MONTH(bill_date) as month,YEAR(bill_date) as year')->where('bill_module','!=','taskly');
 
             if(!empty($request->start_month) && !empty($request->end_month))
             {
@@ -1386,7 +1387,7 @@ class ReportController extends Controller
                 $end   = strtotime(date('Y-12'));
             }
 
-            $bills->where('issue_date', '>=', date('Y-m-01', $start))->where('issue_date', '<=', date('Y-m-t', $end));
+            $bills->where('bill_date', '>=', date('Y-m-01', $start))->where('bill_date', '<=', date('Y-m-t', $end));
 
             $filter['startDateRange'] = date('M-Y', $start);
             $filter['endDateRange']   = date('M-Y', $end);

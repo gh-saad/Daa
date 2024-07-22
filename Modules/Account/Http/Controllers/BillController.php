@@ -204,7 +204,7 @@ class BillController extends Controller
                             $billProduct->tax = $products[$i]['tax'];
                             $billProduct->discount = $products[$i]['discount'];
                             $billProduct->price = $products[$i]['price'];
-                            $billProduct->description = str_replace("'", "", $products[$i]['description']);
+                            $billProduct->description = str_replace("'", "", $products[$i]['description'] ?? "");
                             $billProduct->save();
                         }
 
