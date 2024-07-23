@@ -44,24 +44,36 @@ class Transfer extends Model
         return $currency->rate;
     }
 
-    public static function bankAccountBalance($id, $amount, $type)
+    public static function bankAccountBalance($id, $amount, $currency = null, $type)
     {
+        if ($currency === null) {
+            $currency = company_setting('defult_currancy');
+        }
+
+        $provided_currency = Currency::where('code', $currency)->first();
+        $provided_currency_rate = $provided_currency->rate;
+
+        $default_currency = Currency::where('code', company_setting('defult_currancy'))->first();
+        $default_currency_rate = $default_currency->rate;
+
+        $new_amount = ($amount / $default_currency_rate) * $provided_currency_rate;
+    
         $bankAccount = BankAccount::find($id);
-        if($bankAccount)
+        if ($bankAccount)
         {
-            if($type == 'credit')
+            if ($type == 'credit')
             {
-                $oldBalance                   = $bankAccount->opening_balance;
-                $bankAccount->opening_balance = $oldBalance + $amount;
+                $oldBalance = $bankAccount->opening_balance;
+                $bankAccount->opening_balance = $oldBalance + $new_amount;
                 $bankAccount->save();
             }
-            elseif($type == 'debit')
+            elseif ($type == 'debit')
             {
-                $oldBalance                   = $bankAccount->opening_balance;
-                $bankAccount->opening_balance = $oldBalance - $amount;
+                $oldBalance = $bankAccount->opening_balance;
+                $bankAccount->opening_balance = $oldBalance - $new_amount;
                 $bankAccount->save();
             }
         }
-
     }
+    
 }

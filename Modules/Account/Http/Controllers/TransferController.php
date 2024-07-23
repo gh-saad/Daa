@@ -100,15 +100,18 @@ class TransferController extends Controller
                 return redirect()->back()->with('error', $messages->first());
             }
 
-            // find from_account bank account
+            // find from_account and to_account bank account
             $fromAccount = BankAccount::find($request->from_account);
+            $toAccount = BankAccount::find($request->to_account);
 
-            if($fromAccount->currency == "KES"){
+            if($fromAccount->currency == company_setting('currency_format')){
+
+                // create transfer entry
                 $transfer                 = new Transfer();
                 $transfer->from_account   = $request->from_account;
                 $transfer->to_account     = $request->to_account;
                 $transfer->amount         = $request->amount;
-                $transfer->currency       = 'KES';
+                $transfer->currency       = company_setting('currency_format');
                 $transfer->date           = $request->date;
                 $transfer->payment_method = 0;
                 $transfer->reference      = $request->reference;
@@ -116,16 +119,21 @@ class TransferController extends Controller
                 $transfer->created_by      = \Auth::user()->id;
                 $transfer->workspace      = getActiveWorkSpace();
                 $transfer->save();
+
+                // credit and debit balance
+                Transfer::bankAccountBalance($request->from_account, $request->amount, $fromAccount->currency, 'debit');
+                Transfer::bankAccountBalance($request->to_account, $request->amount, $toAccount->currency, 'credit');
+
             }else{
                 // find currency mentioned for from_account
                 $currency = Currency::where('code', $fromAccount->currency)->first();
                 // get currency rate
                 $rate = $currency->rate;
-                // get KES rate
-                $kes_currency = Currency::where('code', 'KES')->first();
-                $kes_rate = $kes_currency->rate;
-                // convert amount to kes
-                $amount = ( $request->amount / $rate ) * $kes_rate;
+                // get default rate
+                $default_currency = Currency::where('code', company_setting('defult_currancy'))->first();
+                $default_rate = $default_currency->rate;
+                // convert amount
+                $amount = ( $request->amount / $rate ) * $default_rate;
 
                 // create transfer entry
                 $transfer                 = new Transfer();
@@ -140,11 +148,13 @@ class TransferController extends Controller
                 $transfer->created_by      = \Auth::user()->id;
                 $transfer->workspace      = getActiveWorkSpace();
                 $transfer->save();
+                
+                // credit and debit balance
+                Transfer::bankAccountBalance($request->from_account, $amount, $fromAccount->currency, 'debit');
+                Transfer::bankAccountBalance($request->to_account, $amount, $toAccount->currency, 'credit');
+
             }
 
-            Transfer::bankAccountBalance($request->from_account, $request->amount, 'debit');
-
-            Transfer::bankAccountBalance($request->to_account, $request->amount, 'credit');
             event(new CreateBankTransfer($request,$transfer));
 
             return redirect()->route('bank-transfer.index')->with('success', __('Amount successfully transfer.'));
