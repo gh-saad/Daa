@@ -1630,3 +1630,22 @@ if (!function_exists('delete_directory'))
         return rmdir($dir);
     }
 }
+
+if (!function_exists('getRate'))
+{
+    function getRate($currency){
+        // locate currency by code
+        $currency = Currency::where('code', $currency)->first();
+        // get and return rate
+        return $currency->rate;
+    }
+}
+
+if (!function_exists('currency_format_with_code')) {
+    function currency_format_with_code($price, $code)
+    {
+        $formatted_price = number_format(round($price, 2), 2, '.', '');
+
+        return $formatted_price." ".$code;
+    }
+}
