@@ -71,7 +71,7 @@
                                         <a href="{{ route('purchase.show',\Crypt::encrypt($purchase->id)) }}" class="btn btn-outline-primary">#{{ $purchase->lot_number ? $purchase->lot_number : 'LOT00#'; }}</a>
                                     </td>
                                     <td>
-
+                                        #{{ $purchase->bl_number ? $purchase->bl_number : 'BL00#'; }}
                                     </td>
                                     @if(!empty($purchase->vender_name))
                                             <td> {{ (!empty( $purchase->vender_name)?$purchase->vender_name:'') }} </td>

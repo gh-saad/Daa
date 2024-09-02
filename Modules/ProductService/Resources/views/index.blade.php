@@ -77,7 +77,7 @@
                             <th >Engine CC</th>
                             <th >Engine No</th>
                             <th>Push Price</th>
-                            <th>Purchased by</th>
+                            <th>Purchased from</th>
                             <th>Purchased Status</th>
                             <th>Bid No</th>
                             <th>Bid Date</th>
@@ -106,7 +106,7 @@
                                 <td class="text-center">{{ $productService->engine_cc}}</td>
                                 <td class="text-center">{{ $productService->engine_no}}</td>
                                 <td>{{ currency_format_with_sym($productService->sale_price) }}</td>
-                                <td class="text-center">{{ $productService->purchased_by}}</td>
+                                <td class="text-center">{{ $productService->purchased_from}}</td>
                                 <td class="text-center">{{ $productService->purchased_status}}</td>
                                 <td class="text-center">{{ $productService->bid_no}}</td>
                                 <td class="text-center">{{ $productService->bid_date}}</td>

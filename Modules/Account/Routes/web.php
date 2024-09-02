@@ -253,6 +253,7 @@ Route::group(['middleware' => 'PlanModuleCheck:Account'], function ()
     Route::post('/account/setting/store', 'BillController@saveBillTemplateSettings')->name('bill.template.setting')->middleware(['auth']);
 
     // Account Report
+    Route::get('report/supplier', 'ReportController@supplier_report')->name('supplier.report')->middleware(['auth']);
     Route::get('report/transaction', 'TransactionController@index')->name('transaction.index')->middleware(['auth']);
     Route::get('report/account-statement-report', 'ReportController@accountStatement')->name('report.account.statement')->middleware(['auth']);
     Route::get('report/income-summary', 'ReportController@incomeSummary')->name('report.income.summary')->middleware(['auth']);
@@ -315,14 +316,6 @@ Route::group(['middleware' => 'PlanModuleCheck:Account'], function ()
     Route::post('warehouse-transfer/getproduct', 'WarehouseTransferController@getproduct')->name('warehouse-transfer.getproduct')->middleware(['auth']);
     Route::post('warehouse-transfer/getquantity', 'WarehouseTransferController@getquantity')->name('warehouse-transfer.getquantity')->middleware(['auth']);
 
-
-
-
-
-
-
-
-
-
-
-
+    // add by jamal 02/09/2024
+    Route::get('/get-vehicles-for-vendor/{vendorId}', 'VenderController@getVehiclesForVendor')->middleware(['auth']);
+    Route::get('/get-product-details/{vehicleId}', 'VenderController@getVehicleDetails')->middleware(['auth']);

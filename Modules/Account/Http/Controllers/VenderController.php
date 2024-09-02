@@ -776,4 +776,65 @@ class VenderController extends Controller
         }
     }
 
+    public function getVehiclesForVendor($vendorId){
+        $vendor = Vender::find($vendorId);
+        $vehicles = \Modules\ProductService\Entities\ProductService::where('purchased_from', $vendor->name)->get(['id', 'name']);
+        return response()->json(['vehicles' => $vehicles, 'vendor' => $vendor]);
+    }
+
+    public function getVehicleDetails($vehicleId) {
+        $vehicle = \Modules\ProductService\Entities\ProductService::find($vehicleId);
+    
+        if ($vehicle) {
+            $product = [
+                'sku' => $vehicle->sku,
+                'name' => $vehicle->name,
+                'colour' => $vehicle->colour,
+                'fuel' => $vehicle->fuel,
+                'mfg_year' => $vehicle->mfg_year,
+                'vehicle_status' => $vehicle->vehicle_status,
+                'engine_no' => $vehicle->engine_no,
+                'engine_cc' => $vehicle->engine_cc,
+            ];
+    
+            // Initialize purchase array
+            $purchase = [];
+    
+            // Find purchase product
+            $purchase_product = \Modules\POS\Entities\PurchaseProduct::where('product_id', $vehicleId)
+                ->where('product_type', 'product')
+                ->first();
+    
+            if ($purchase_product) {
+                // Get purchase payments for the purchase
+                $purchase_payments = \Modules\POS\Entities\PurchasePayment::where('purchase_id', $purchase_product->purchase_id)->get();
+    
+                // Calculate total amount paid
+                $total_paid = $purchase_payments->sum('amount');
+    
+                // Find the last payment date
+                $last_payment_date = $purchase_payments->sortByDesc('created_at')->first()->date ?? null;
+    
+                // Populate purchase array
+                $purchase['price'] = $purchase_product->price;
+                $purchase['discount'] = $purchase_product->discount;
+                $purchase['price_paid'] = $total_paid;
+                $purchase['last_payment_date'] = $last_payment_date;
+
+                // Get purchase
+                $purchase_for_this = \Modules\POS\Entities\Purchase::find($purchase_product->purchase_id);
+                
+                // Populate purchase array further
+                $purchase['date'] = $purchase_for_this->purchase_date;
+                $purchase['status'] = $purchase_for_this->status;
+                $purchase['lot_no'] = $purchase_for_this->lot_number;
+                $purchase['bl_no'] = $purchase_for_this->bl_number;
+            }
+    
+            return response()->json(['product' => $product, 'purchase' => $purchase]);
+        } else {
+            return response()->json(['product' => null, 'purchase' => null]);
+        }
+    }    
+    
 }

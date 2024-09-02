@@ -207,13 +207,18 @@ class PurchaseController extends Controller
 
                 //Warehouse Stock Report
                 if(isset($products[$i]['item']))
-
                 {
                     Purchase::addWarehouseStock( $products[$i]['item'],$products[$i]['quantity'],$request->warehouse_id);
                 }
 
-            }
+                // update product status
+                $product = \Modules\ProductService\Entities\ProductService::find($products[$i]['item']);
+                $product->purchased_status = 'Awaiting Payment';
+                $product->purchased_by = \Auth::user()->id;
+                $product->purchased_from = $vender->name;
+                $product->save();
 
+            }
 
             return redirect()->route('purchase.index', $purchase->id)->with('success', __('Purchase successfully created.'));
         }
@@ -897,11 +902,12 @@ class PurchaseController extends Controller
             $purchasePayment->category   = 'Purchase';
             $purchasePayment->account    = $request->account_id;
 
+            $vender_acc = \Modules\Account\Entities\Vender::where('user_id', $purchase->vender_id)->first();
+
             if(module_is_active('Account'))
             {
                 \Modules\Account\Entities\Transaction::addTransaction($purchasePayment);
 
-                $vender_acc = \Modules\Account\Entities\Vender::where('id', $purchase->vender_id)->first();
                 if(empty($vender_acc))
                 {
                     $Vendor = $vender_acc;
@@ -936,7 +942,9 @@ class PurchaseController extends Controller
                     }
                 }
 
-                \Modules\Account\Entities\Transfer::bankAccountBalance($request->account_id, $request->amount, 'credit');
+                // find bank account
+                $bank_account = \Modules\Account\Entities\BankAccount::where('id', $request->account_id)->first();
+                \Modules\Account\Entities\Transfer::bankAccountBalance($request->account_id, $request->amount, $bank_account->currency, 'credit');
 
                 $account_payment = new \Modules\Account\Entities\Payment();
                 $account_payment->date = $purchasePayment->date;
@@ -958,12 +966,26 @@ class PurchaseController extends Controller
 
             // Loop through each item and update purchase status
             foreach($items as $item) {
-                $send_update_request = new Request();
-                $send_update_request->merge([
-                    'purchased_by' => \Auth::user()->id,
-                ]);
+                // $send_update_request = new Request();
+                // $send_update_request->merge([
+                //     'purchased_by' => \Auth::user()->id,
+                // ]);
 
-                $response = \Illuminate\Support\Facades\Http::post(route('vehicle.purchase-status', $item->id), $send_update_request->all());
+                // $response = \Illuminate\Support\Facades\Http::post(route('vehicle.purchase-status', $item->id), $send_update_request->all());
+                
+                // update product status
+                $product = \Modules\ProductService\Entities\ProductService::find($item->product_id);
+                if($purchase->status == 3){
+                    $product->purchased_status = 'Partially Paid';
+                }else if($purchase->status == 4){
+                    $product->purchased_status = 'Paid';
+                }
+                $product->purchased_by = \Auth::user()->id;
+                if($vender_acc){
+                    $product->purchased_from = $vender_acc->name;
+                }
+                $product->save();
+
             }
 
             $payment         = new PurchasePayment();

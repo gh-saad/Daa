@@ -46,14 +46,22 @@ class Transfer extends Model
 
     public static function bankAccountBalance($id, $amount, $currency = null, $type)
     {
+        // absolute default currency
+        if (company_setting('defult_currancy') != null){
+            $adc = company_setting('defult_currancy');
+        }else{
+            $adc = 'KES';
+        }
+
+        // if provided currency
         if ($currency === null) {
-            $currency = company_setting('defult_currancy');
+            $currency = $adc;
         }
 
         $provided_currency = Currency::where('code', $currency)->first();
         $provided_currency_rate = $provided_currency->rate;
 
-        $default_currency = Currency::where('code', company_setting('defult_currancy'))->first();
+        $default_currency = Currency::where('code', $adc)->first();
         $default_currency_rate = $default_currency->rate;
 
         $new_amount = ($amount / $default_currency_rate) * $provided_currency_rate;

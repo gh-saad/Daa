@@ -16,6 +16,7 @@ class BankAccount extends Model
         'account_number',
         'opening_balance',
         'contact_number',
+        'currency',
         'bank_address',
         'workspace',
         'created_by',
