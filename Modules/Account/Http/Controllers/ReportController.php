@@ -1841,26 +1841,30 @@ class ReportController extends Controller
                 $filter['startDateRange'] = 'Jan-' . $year;
                 $filter['endDateRange']   = 'Dec-' . $year;
 
+                $date = "2024-05-02";
                 // Opening Balance
                 $openingCash = 0;
                 $openingEquity = 0;
                 $openingPrime = 0;
                 $cash_account = BankAccount::where(['holder_name' => 'cash', 'workspace' => getActiveWorkSpace()])->first();
                 if($cash_account){
-                    $openingCash = Transaction::where('account', $cash_account->id)->where('date', '<', date('Y-m-d'))->sum('amount');
+                    $openingCash = Transaction::where('account', $cash_account->id)->where('date', '<', $date)->sum('amount');
                 }
                 $equity_kes_account = BankAccount::where(['bank_name' => 'EQUITY BANK KES', 'workspace' => getActiveWorkSpace()])->first();
                 if($equity_kes_account){
-                    $openingEquity = Transaction::where('account', $equity_kes_account->id)->where('date', '<', date('Y-m-d'))->sum('amount');
+                    $openingEquity = Transaction::where('account', $equity_kes_account->id)->where('date', '<', $date)->sum('amount');
                 }
                 $prime_kes_account = BankAccount::where(['bank_name' => 'PRIME BANK -KES', 'workspace' => getActiveWorkSpace()])->first();
                 if($prime_kes_account){
-                    $openingPrime = Transaction::where('account', $prime_kes_account->id)->where('date', '<', date('Y-m-d'))->sum('amount');
+                    $openingPrime = Transaction::where('account', $prime_kes_account->id)->where('date', '<', $date)->sum('amount');
+                }
+                $prime_usd_account = BankAccount::where(['bank_name' => 'PRIME BANK -KES', 'workspace' => getActiveWorkSpace()])->first();
+                if($prime_kes_account){
+                    $openingPrimeUsd = Transaction::where('account', $prime_kes_account->id)->where('date', '<', $date)->sum('amount');
                 }
                 // Opening Balance End
                 
                 // Sales Summary for the given date
-                $date = "2024-05-02";
                 $sales = Invoice::leftJoin('invoice_products', 'invoices.id', '=', 'invoice_products.invoice_id')
                     ->where('invoices.issue_date', $date)
                     ->selectRaw('SUM(invoice_products.price) as total_price, SUM(invoice_products.discount) as total_discount')
@@ -1872,24 +1876,44 @@ class ReportController extends Controller
                 $salesTotal = $sales->total_price - $sales->total_discount;
                 // Sales Summary for the given date End
 
+                // Registration
+                // SELECT * FROM `revenues` where category_id = 12 and workspace = 1;
+                $category_id = \Modules\ProductService\Entities\Category::where(['name' => 'Subscription', 'type' => '1', 'workspace_id' => getActiveWorkspace()])->first();
+                $subscriptionCashTotal = Revenue::where(['category_id' => $category_id->id, 'account_id' => $cash_account->id,'workspace' => getActiveWorkspace()])->sum('amount');
+                $subscriptionEquityKesTotal = Revenue::where(['category_id' => $category_id->id, 'account_id' => $equity_kes_account->id, 'workspace' => getActiveWorkspace()])->sum('amount');
+                $subscriptionPrimeKesTotal = Revenue::where(['category_id' => $category_id->id, 'account_id' => $prime_kes_account->id, 'workspace' => getActiveWorkspace()])->sum('amount');
+                $subscriptionTotal = $subscriptionCashTotal + $subscriptionEquityKesTotal + $subscriptionPrimeKesTotal;
+                // Registration end
+
                 // transfer Equity
-                // SELECT sum(amount) FROM `bank_transfers` where from_account = 1;
-                $transferCashToPrimeKesTotal = Transfer::where(['from_account' => $cash_account->id, 'to_account'=> $prime_kes_account->id, 'date' => date('Y-m-d')])->sum('amount');
-                $transferEquityKesToPrimeKesTotal = Transfer::where(['from_account' => $equity_kes_account->id, 'to_account'=> $prime_kes_account->id, 'date' => date('Y-m-d')])->sum('amount');
+                $transferEquityKesToCashTotal = Transfer::where(['from_account' => $equity_kes_account->id, 'to_account'=> $cash_account->id, 'date' => $date])->sum('amount');
+                $transferCashToPrimeKesTotal = Transfer::where(['from_account' => $cash_account->id, 'to_account'=> $prime_kes_account->id, 'date' => $date])->sum('amount');
+                $transferEquityKesToPrimeKesTotal = Transfer::where(['from_account' => $equity_kes_account->id, 'to_account'=> $prime_kes_account->id, 'date' => $date])->sum('amount');
+                $tranferFromEquityKes = $transferEquityKesToCashTotal + $transferEquityKesToPrimeKesTotal;
                 $transferPrimeKesTotal = $transferCashToPrimeKesTotal + $transferEquityKesToPrimeKesTotal;
                 // transfer Equity
 
+                // 
+                $transferCashToPrimeUsdTotal = Transfer::where(['from_account' => $cash_account->id, 'to_account'=> $prime_kes_account->id, 'date' => $date])->sum('amount');
+                
                 $data['date'] = $date;
                 $data['openingCash'] = $openingCash;
                 $data['openingEquity'] = $openingEquity;
                 $data['openingPrime'] = $openingPrime;
+                $data['openingPrimeUsd'] = $openingPrimeUsd;
                 $data['openingTotal'] = $openingCash +  $openingEquity + $openingPrime;
 
                 $data['salesTotal'] = $salesTotal;
                 $data['salesBalance'] = $salesTotal - $salesPaymentsTotal->amount;
+                $data['subscriptionCashTotal'] = $subscriptionCashTotal;
+                $data['subscriptionEquityKesTotal'] = $subscriptionEquityKesTotal;
+                $data['subscriptionPrimeKesTotal'] = $subscriptionPrimeKesTotal;
+                $data['subscriptionTotal'] = $subscriptionCashTotal + $subscriptionEquityKesTotal + $subscriptionPrimeKesTotal;
+                
                 $data['transferCashToPrimeKesTotal'] = $transferCashToPrimeKesTotal;
                 $data['transferEquityKesToPrimeKesTotal'] = $transferEquityKesToPrimeKesTotal;
                 $data['transferPrimeKesTotal'] = $transferPrimeKesTotal;
+                $data['tranferFromEquityKes'] = $tranferFromEquityKes;
                 return view('account::report.cash_summary', compact('filter'), $data);
             }
             else

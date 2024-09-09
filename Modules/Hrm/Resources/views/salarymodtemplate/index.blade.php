@@ -276,7 +276,7 @@
         </div>
         @endcan
         <!-- END Saturation Deduction -->
-        <!-- Tax Deduction -->
+        {{-- <!-- Tax Deduction -->
         @can('saturation deduction manage')
         <div class="card set-card mb-2">
             <div class="card-header">
@@ -397,7 +397,7 @@
             </div>
         </div>
         @endcan
-        <!-- END Tax Relief -->
+        <!-- END Tax Relief --> --}}
         <!-- Other Payment -->
         @can('other payment manage')
         <div class="card set-card mb-2">

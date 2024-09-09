@@ -58,8 +58,8 @@
                                     </div>
                                     <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
                                         <div class="btn-box">
-                                            {{ Form::label('year', __('Year'), ['class' => 'form-label']) }}
-                                            {{ Form::select('year',$yearList,isset($_GET['year'])?$_GET['year']:'', array('class' => 'form-control ')) }}
+                                            {{ Form::label('date', __('Date'), ['class' => 'form-label']) }}
+                                            {{ Form::input('date', 'date', date('m/d/Y'), ['class' => 'form-control']) }}
                                         </div>
                                     </div>
                                 </div>
@@ -135,10 +135,10 @@
                                             </tr>
                                             <tr>
                                                 <td>REGISTRATION</td>
-                                                <td>-</td>
-                                                <td>-</td>
-                                                <td>-</td>
-                                                <td>-</td>
+                                                <td>{{$subscriptionCashTotal}}</td>
+                                                <td>{{$subscriptionEquityKesTotal}}</td>
+                                                <td>{{$subscriptionPrimeKesTotal}}</td>
+                                                <td>{{$subscriptionTotal}}</td>
                                             </tr>
                                             <tr>
                                                 <td>OTHER INCOME </td>
@@ -149,10 +149,10 @@
                                             </tr>
                                             <tr>
                                                 <td>BANK TRANSFER FROM EQUITY KES </td>
+                                                <td>{{$transferCashToPrimeKesTotal}}</td>
                                                 <td>-</td>
-                                                <td>-</td>
-                                                <td>-</td>
-                                                <td></td>
+                                                <td>{{$transferEquityKesToPrimeKesTotal}}</td>
+                                                <td>{{$tranferFromEquityKes}}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -235,6 +235,7 @@
                                         <tbody>
                                             <tr>
                                                 <td>OPENING</td>
+                                                <td>{{ currency_format_with_code($openingPrimeUsd / $rate, "USD") }}</td>
                                                 <td>{{ currency_format_with_code($openingEquity / $rate, "USD") }}</td>
                                                 <td>{{ currency_format_with_code($openingTotal / $rate, "USD") }}</td>
                                             </tr>

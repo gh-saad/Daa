@@ -64,17 +64,20 @@
                                 <b class="m-0"> {{ __('Gross Income') }} </b>
                                 <div class="project-amnt pt-1">{{ currency_format_with_sym($employee->get_gross_income()) }}</div>
                             </div>
+                            @php
+                                $grossIncome = payroll_calculator_kenya($employee->get_gross_income());
+                            @endphp
                             <div class="project-info-inner mr-3 col-6 mb-3">
                                 <b class="m-0"> {{ __('Taxable Income') }} </b>
-                                <div class="project-amnt pt-1">{{ currency_format_with_sym($employee->get_net_pay_before_taxes()) }}</div>
+                                <div class="project-amnt pt-1">{{ currency_format_with_sym($grossIncome['taxAbleAmount']) }}</div>
                             </div>
                             <div class="project-info-inner mr-3 col-6 mb-3">
-                                <b class="m-0"> {{ __('Net Tax Liablity') }} </b>
-                                <div class="project-amnt pt-1">{{ currency_format_with_sym($employee->get_net_tax_liability()) }}</div>
+                                <b class="m-0"> {{ __('Net Deductions') }} </b>
+                                <div class="project-amnt pt-1">{{ currency_format_with_sym($grossIncome['totalDeduction']) }}</div>
                             </div>
                             <div class="project-info-inner mr-3 col-6 mb-3">
                                 <b class="m-0"> {{ __('Net Income') }} </b>
-                                <div class="project-amnt pt-1">{{ currency_format_with_sym($employee->get_net_salary()) }}</div>
+                                <div class="project-amnt pt-1">{{ currency_format_with_sym($grossIncome['netSalary']) }}</div>
                             </div>
                         </div>
                     </div>
@@ -443,7 +446,7 @@
                 </div>
             @endcan
 
-            <!-- Tax Deduction -->
+            {{-- <!-- Tax Deduction -->
             @can('saturation deduction manage')
                 <div class="col-md-6">
                     <div class="card set-card">
@@ -617,7 +620,7 @@
                         </div>
                     </div>
                 </div>
-            @endcan
+            @endcan --}}
 
             <!-- other payment-->
             @can('other payment manage')

@@ -46,7 +46,10 @@
                     <div class="row mt-2">
                         <div class="col-md-12">
                             <div class="table-responsive">
-                                <table class="table  table-md">
+                                <table class="table table-md">
+                                    @php
+                                        $salary_data = payroll_calculator_kenya($payslip->basic_salary);
+                                    @endphp
                                     <tbody>
                                         <tr class="font-bold">
                                             <th>{{ __('Earning') }}</th>
@@ -59,8 +62,10 @@
                                             <td>-</td>
                                             <td>-</td>
                                             <td class="text-right">
-                                                {{ currency_format($payslip->basic_salary) }}</td>
+                                                {{ currency_format_with_sym($payslip->basic_salary) }}
+                                            </td>
                                         </tr>
+                                        
                                             @php
                                                 $allowances = json_decode($payslipDetail['payslip']->allowance);
                                             @endphp
@@ -130,20 +135,68 @@
                                                     </td>
                                                 </tr>
                                             @endforeach
+                                            
+                                            <tr class="font-bold">
+                                                <th colspan="4">{{ __('Deduction Before tax') }}</th>
+                                            </tr>
+                                            <tr>
+                                                <td>{{ __('NSSF') }}</td>
+                                                <td>-</td>
+                                                <td>-</td>
+                                                <td class="text-right">
+                                                    {{ $salary_data['NSSF'] }}
+                                                </td>
+                                            </tr>
+                                                
 
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover table-md">
-                                    <tbody>
-                                        <tr class="font-bold">
-                                            <th>{{ __('Deduction') }}</th>
-                                            <th>{{ __('Title') }}</th>
-                                            <th>{{ __('type') }}</th>
-                                            <th class="text-right">{{ __('Amount') }}</th>
-                                        </tr>
+                                            <tr class="font-bold">
+                                                <th colspan="3">{{ __('Taxable Pay') }}</th>
+                                                <th>{{ $salary_data['taxAbleAmount'] }}</th>
+                                            </tr>
+                                            <tr>
+                                                <td>{{ __('Income TAX') }}</td>
+                                                <td>-</td>
+                                                <td>-</td>
+                                                <td class="text-right">
+                                                    {{ $salary_data['incomeTax'] }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>{{ __('Tax Relief') }}</td>
+                                                <td>-</td>
+                                                <td>-</td>
+                                                <td class="text-right">
+                                                    {{ $salary_data['taxRelief'] }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>{{ __('P.A.Y.E') }}</td>
+                                                <td>-</td>
+                                                <td>-</td>
+                                                <td class="text-right">
+                                                    {{ $salary_data['PAYE'] }}
+                                                </td>
+                                            </tr>
 
+                                            <tr class="font-bold">
+                                                <th colspan="4">{{ __('Deduction After Tax') }}</th>
+                                            </tr>
+                                            <tr>
+                                                <td>{{ __('NHIF') }}</td>
+                                                <td>-</td>
+                                                <td>-</td>
+                                                <td class="text-right">
+                                                    {{ $salary_data['NHIF'] }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>{{ __('Housing Levy') }}</td>
+                                                <td>-</td>
+                                                <td>-</td>
+                                                <td class="text-right">
+                                                    {{ $salary_data['housingLevy'] }}
+                                                </td>
+                                            </tr>
                                             @php
                                                 $loans = json_decode($payslipDetail['payslip']->loan);
                                             @endphp
@@ -166,7 +219,7 @@
                                             @php
                                                 $saturation_deductions = json_decode($payslipDetail['payslip']->saturation_deduction);
                                             @endphp
-                                            @foreach ($saturation_deductions as $saturation_deduction)
+                                            {{-- @foreach ($saturation_deductions as $saturation_deduction)
                                                 <tr>
                                                     <td>{{ __('Saturation Deduction') }}</td>
                                                     <td>{{ $saturation_deduction->title }}</td>
@@ -181,7 +234,7 @@
                                                         </td>
                                                     @endif
                                                 </tr>
-                                            @endforeach
+                                            @endforeach --}}
                                     </tbody>
                                 </table>
                             </div>
@@ -195,25 +248,35 @@
                                         <div class="invoice-detail-name font-weight-bold">{{ __('Total Earning') }}
                                         </div>
                                         <div class="invoice-detail-value">
-                                            {{ currency_format($payslipDetail['totalEarning']) }}</div>
+                                            {{ currency_format_with_sym($payslip->basic_salary) }}
+                                            {{-- {{ currency_format($payslipDetail['totalEarning']) }}</div> --}}
                                     </div>
                                     <div class="invoice-detail-item pb-2">
-                                        <div class="invoice-detail-name font-weight-bold">{{ __('Total Deduction') }}
+                                        <div class="invoice-detail-name font-weight-bold">
+                                            {{ __('Total Deduction') }}
+                                            
                                         </div>
                                         <div class="invoice-detail-value">
-                                            {{ currency_format($payslipDetail['totalDeduction']) }}</div>
+                                            {{ currency_format_with_sym($salary_data['totalDeduction']) }}
+                                            {{-- {{ currency_format($payslipDetail['totalDeduction']) }} --}}
+                                        </div>
                                     </div>
                                     <div class="invoice-detail-item pb-2">
                                         <div class="invoice-detail-name font-weight-bold">{{ __('Net Tax Deduction') }}
                                         </div>
                                         <div class="invoice-detail-value">
-                                            {{ currency_format($payslipDetail['NetTaxDeduction']) }}</div>
+                                            
+                                            {{ currency_format_with_sym($salary_data['PAYE']) }}    
+                                            {{-- {{ currency_format($payslipDetail['NetTaxDeduction']) }} --}}
+                                        </div>
                                     </div>
                                     <hr class="mt-2 mb-2">
                                     <div class="invoice-detail-item">
                                         <div class="invoice-detail-name font-weight-bold">{{ __('Net Salary') }}</div>
                                         <div class="invoice-detail-value invoice-detail-value-lg">
-                                            {{ currency_format($payslip->net_payble) }}</div>
+                                            {{ currency_format_with_sym($salary_data['netSalary']) }}
+                                            {{-- {{ currency_format($payslip->net_payble) }} --}}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
