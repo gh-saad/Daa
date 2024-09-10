@@ -139,11 +139,11 @@
                                             $total_debit += $account['debit'];
                                         @endphp
                                         <div class="d-flex align-items-center justify-content-between ps-4">
-                                            <p class="mb-2 ms-3">
-                                                <a href="" class="text-primary">
+                                            <p class="mb-2 ms-3" style="width: 8%;">
+                                                <a href="#" class="text-primary">
                                                     {{ $account['name'] }}</a>
                                             </p>
-                                            <p class="mb-2 ms-3 text-center">{{ $account['code'] }}</p>
+                                            <p class="mb-2 text-center">{{ $account['code'] }}</p>
                                             <p class="text-dark">{{ currency_format_with_sym($account['debit']) }}
                                             </p>
                                             <p class="text-dark">{{ currency_format_with_sym($account['credit']) }}</p>

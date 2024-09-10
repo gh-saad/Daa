@@ -18,7 +18,6 @@ public_html/storage
 public_html/hot
 
 storage/*.key
-.env
 Homestead.yaml
 Homestead.json
 /.vagrant
@@ -77,3 +76,5 @@ uploads/payment/1715845665_1715765684_photo3.jpg
 uploads/payment/1715846131_1715765684_photo3.jpg
 uploads/payment/1715920715_1715846131_1715765684_photo3.jpg
 uploads/payment/1715940301_1715776589_1715765684_photo3(1).jpg
+.env
+.gitignore

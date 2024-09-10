@@ -55,7 +55,7 @@
                                 <th> {{__('Lot Number')}}</th>
                                 <th> {{__('BL Number')}}</th>
                                 <th> {{__('Vendor')}}</th>
-                                <th> {{__('Category')}}</th>
+                                <!-- <th> {{__('Category')}}</th> -->
                                 <th> {{__('Purchase Date')}}</th>
                                 <th>{{__('Status')}}</th>
                                 @if(Gate::check('purchase edit') || Gate::check('purchase delete') || Gate::check('purchase show'))
@@ -71,7 +71,7 @@
                                         <a href="{{ route('purchase.show',\Crypt::encrypt($purchase->id)) }}" class="btn btn-outline-primary">#{{ $purchase->lot_number ? $purchase->lot_number : 'LOT00#'; }}</a>
                                     </td>
                                     <td>
-
+                                        #{{ $purchase->bl_number ? $purchase->bl_number : 'BL00#'; }}
                                     </td>
                                     @if(!empty($purchase->vender_name))
                                             <td> {{ (!empty( $purchase->vender_name)?$purchase->vender_name:'') }} </td>
@@ -85,11 +85,11 @@
                                         @endif
                                     @endif
 
-                                    @if(module_is_active('ProductService'))
+                                    <!-- @if(module_is_active('ProductService'))
                                           <td>{{ !empty($purchase->category)?$purchase->category->name:'-'}}</td>
                                     @else
                                       <td>-</td>
-                                    @endif
+                                    @endif -->
 
                                     <td>{{ company_date_formate($purchase->purchase_date) }}</td>
 

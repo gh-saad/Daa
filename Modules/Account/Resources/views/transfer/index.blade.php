@@ -102,9 +102,9 @@
                                             $currency = $transfer->currency;
                                             // get rates 
                                             $rate = $transfer->getRate($currency);
-                                            $kes_rate = $transfer->getRate('KES');
+                                            $default_rate = $transfer->getRate(company_setting('defult_currancy'));
                                             // apply rate and get new amount
-                                            $new_amount = ( $amount / $kes_rate ) * $rate;
+                                            $new_amount = ( $amount / $default_rate ) * $rate;
                                         @endphp
                                         <td>{{ !empty($transfer->fromBankAccount())? $new_amount .' ('.$currency.')': currency_format_with_sym( $transfer->amount )}}</td>
                                         <td>{{  $transfer->reference}}</td>

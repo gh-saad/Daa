@@ -32,10 +32,11 @@
             <div class="row mb-0">
                 <div class="col-6">
                     <div class="card">
-                        <div class="card-header">
+                        <div class="card-header" style="padding-bottom: 10px !important;">
                             <div class="row">
                                 <div class="col-6">
                                     <h5 class="d-inline-block font-weight-400">{{ __('Vendor') }}</h5>
+                                    <p class="text-muted">select a pre-existing vendor, or quickly add a new vendor</p>
                                 </div>
                                 <div class="col-6 text-end">
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVendorModal">

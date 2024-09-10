@@ -1487,6 +1487,20 @@ class ReportController extends Controller
         return $years;
     }
 
+    // supplier report
+    public function supplier_report(){
+        // create an array of all vendor names from \Modules\Account\Entities\Vender
+        $venders = \Modules\Account\Entities\Vender::pluck('name', 'id');
+        
+        // create an array of all vehicle names with chassis number from \Modules\ProductService\Entities\ProductService
+        $vehicles = \Modules\ProductService\Entities\ProductService::all()->mapWithKeys(function($item) {
+            return [$item->id => $item->sku . ' - ' . $item->name];
+        });
+        
+        // send to view
+        return view('account::report.supplier_report', compact('venders', 'vehicles'));
+    }
+  
     public function cashSummary(){
         if(Auth::user()->can('report loss & profit  manage'))
             {
