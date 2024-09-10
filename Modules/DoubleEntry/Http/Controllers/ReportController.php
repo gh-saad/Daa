@@ -259,22 +259,19 @@ class ReportController extends Controller
                             $start,
                             $end,
                         );
-                        // "invoice", credit
-                        // "invoicepayment", credit
-                        // "revenue", credit
-                        // "bill", credit
-
-                        // "billdata", debit
-                        // "billpayment", debit
-                        // "payment", debit
-                        // "journalItem,
                         foreach ($chartDatas as $key => $payments) {
                             foreach ($payments as $payment) {
                                 $total = $payment->amount;
 
                                 if ($key == 'billdata' || $key == 'billpayment' || $key == 'payment') {
                                     $total_debit += $total;
-                                } else {
+                                }
+                                else if($key == "journalItem") {
+                                    $journal_entry = \Modules\DoubleEntry\Entities\JournalEntry::find($payment->journal_id);
+                                    $total_debit += currency_conversion($payment->debit, $journal_entry->currency, company_setting('defult_currancy'));
+                                    $total_credit += currency_conversion($payment->credit, $journal_entry->currency, company_setting('defult_currancy'));
+                                } 
+                                else {
                                     $total_credit += $total;
                                 }
                             }

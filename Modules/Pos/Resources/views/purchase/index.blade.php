@@ -55,7 +55,7 @@
                                 <th> {{__('Lot Number')}}</th>
                                 <th> {{__('BL Number')}}</th>
                                 <th> {{__('Vendor')}}</th>
-                                <th> {{__('Category')}}</th>
+                                <!-- <th> {{__('Category')}}</th> -->
                                 <th> {{__('Purchase Date')}}</th>
                                 <th>{{__('Status')}}</th>
                                 @if(Gate::check('purchase edit') || Gate::check('purchase delete') || Gate::check('purchase show'))
@@ -85,11 +85,11 @@
                                         @endif
                                     @endif
 
-                                    @if(module_is_active('ProductService'))
+                                    <!-- @if(module_is_active('ProductService'))
                                           <td>{{ !empty($purchase->category)?$purchase->category->name:'-'}}</td>
                                     @else
                                       <td>-</td>
-                                    @endif
+                                    @endif -->
 
                                     <td>{{ company_date_formate($purchase->purchase_date) }}</td>
 

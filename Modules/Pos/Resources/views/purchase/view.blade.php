@@ -32,6 +32,15 @@
         .border-primary {
             border-color: #EE1D23 !important;
         }
+        .select2-selection__rendered {
+            line-height: 31px !important;
+        }
+        .select2-container .select2-selection--single {
+            height: 35px !important;
+        }
+        .select2-selection__arrow {
+            height: 34px !important;
+        }
     </style>
 @endpush
 
@@ -71,9 +80,9 @@
                                     </p>
 
                                     @if($purchase->status==0)
-                                            @can('purchase send')
-                                                <a href="{{ route('purchase.sent',$purchase->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" data-original-title="{{__('Mark Sent')}}"><i class="ti ti-send mr-2"></i>{{__('Send')}}</a>
-                                            @endcan
+                                        @can('purchase send')
+                                            <a href="{{ route('purchase.sent',$purchase->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" data-original-title="{{__('Mark Sent')}}"><i class="ti ti-send mr-2"></i>{{__('Send')}}</a>
+                                        @endcan
                                     @endif
                                 </div>
                                 <div class="col-md-6 col-lg-4 col-xl-4">
@@ -83,9 +92,9 @@
                                     <h6 class="text-info my-3">{{__('Get Paid')}}</h6>
                                     <p class="text-muted text-sm mb-3">{{__('Status')}} : {{__('Awaiting payment')}} </p>
                                     @if($purchase->status!= 0)
-                                                @can('purchase payment create')
-                                                    <a href="#" data-url="{{ route('purchase.payment',$purchase->id) }}" data-ajax-popup="true" data-title="{{__('Add Payment')}}" class="btn btn-sm btn-info" data-original-title="{{__('Add Payment')}}"><i class="ti ti-report-money mr-2"></i>{{__('Add Payment')}}</a> <br>
-                                                @endcan
+                                        @can('purchase payment create')
+                                            <a href="#" data-url="{{ route('purchase.payment',$purchase->id) }}" data-ajax-popup="true" data-title="{{__('Add Payment')}}" class="btn btn-sm btn-info" data-original-title="{{__('Add Payment')}}"><i class="ti ti-report-money mr-2"></i>{{__('Add Payment')}}</a> <br>
+                                        @endcan
                                     @endif
 
                                 </div>
@@ -193,10 +202,6 @@
                                             <div class="col">
                                                 <small class="font-style">
                                                     <strong>{{__('Billed To')}} :</strong><br>
-
-                                                    @if(!empty($purchase->vender_name))
-                                                        {{ (!empty( $purchase->vender_name)?$purchase->vender_name:'') }}
-                                                    @else
                                                     {{ !empty($vendor->billing_name) ? $vendor->billing_name : '' }}<br>
                                                     {{ !empty($vendor->billing_address) ? $vendor->billing_address : '' }}<br>
                                                     {{ !empty($vendor->billing_city) ? $vendor->billing_city . ' ,' : '' }}
@@ -204,8 +209,7 @@
                                                     {{ !empty($vendor->billing_zip) ? $vendor->billing_zip : '' }}<br>
                                                     {{ !empty($vendor->billing_country) ? $vendor->billing_country : '' }}<br>
                                                     {{ !empty($vendor->billing_phone) ? $vendor->billing_phone : '' }}<br>
-                                                        <strong>{{__('Tax Number ')}} : </strong>{{!empty($vendor->tax_number)?$vendor->tax_number:''}}
-                                                    @endif
+                                                    <strong>{{__('Tax Number ')}} : </strong>{{!empty($vendor->tax_number)?$vendor->tax_number:''}}
                                                 </small>
                                             </div>
                                         @if( company_setting('shipping_display')=='on')
@@ -275,134 +279,79 @@
                                                         <tr>
                                                             <th class="text-dark" data-width="40">#</th>
                                                             <th class="text-dark">{{__('Item Type')}}</th>
-                                                            <th class="text-dark">{{__('Item')}}</th>
-                                                            <th class="text-dark">{{__('Quantity')}}</th>
+                                                            <th class="text-dark">{{__('Chasis No')}}</th>
+                                                            <th class="text-dark">{{__('Item Name')}}</th>
                                                             <th class="text-dark">{{__('Rate')}}</th>
                                                             <th class="text-dark">{{__('Discount')}} </th>
-                                                            <th class="text-dark">{{__('Tax')}}</th>
                                                             <th class="text-dark">{{__('Description')}}</th>
                                                             <th class="text-end text-dark" width="12%">{{__('Price')}}<br>
-                                                                <small class="text-danger font-weight-bold">{{__('After discount & tax')}}</small>
+                                                                <small class="text-danger font-weight-bold">{{__('After discount')}}</small>
                                                             </th>
 
                                                         </tr>
                                                         @php
-                                                            $totalQuantity=0;
                                                             $totalRate=0;
-                                                            $totalTaxPrice=0;
                                                             $totalDiscount=0;
-                                                            $taxesData=[];
-                                                            $TaxPrice_array = [];
                                                         @endphp
 
                                                         @foreach($iteams as $key =>$iteam)
-                                                            @if(!empty($iteam->tax))
-                                                                @php
-                                                                    $taxes=Modules\Pos\Entities\Purchase::taxs($iteam->tax);
-                                                                    $totalQuantity+=$iteam->quantity;
-                                                                    $totalRate+=$iteam->price;
-                                                                    $totalDiscount+=$iteam->discount;
-                                                                    foreach($taxes as $taxe){
-                                                                        $taxDataPrice=Modules\Pos\Entities\Purchase::taxRate($taxe->rate,$iteam->price,$iteam->quantity,$iteam->discount);
-                                                                        if (array_key_exists($taxe->name,$taxesData))
-                                                                        {
-                                                                            $taxesData[$taxe->name] = $taxesData[$taxe->name]+$taxDataPrice;
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            $taxesData[$taxe->name] = $taxDataPrice;
-                                                                        }
-                                                                    }
-                                                                @endphp
-                                                            @endif
+                                                            @php
+                                                                $totalRate+=currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy'));
+                                                                $totalDiscount+=currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy'));
+                                                            @endphp
+
                                                             <tr>
                                                                 <td>{{$key+1}}</td>
                                                                 <td>{{!empty($iteam->product_type) ? Str::ucfirst($iteam->product_type) : '--'}}</td>
+                                                                <td>{{!empty($iteam->product())?$iteam->product()->sku:''}}</td>
                                                                 <td>{{!empty($iteam->product())?$iteam->product()->name:''}}</td>
-                                                                <td>{{$iteam->quantity}}</td>
-                                                                <td>{{currency_format_with_sym($iteam->price)}}</td>
-                                                                <td>{{currency_format_with_sym($iteam->discount)}}</td>
-                                                                <td>
-                                                                    @if(!empty($iteam->tax))
-                                                                        <table>
-                                                                            @php
-                                                                                $totalTaxRate = 0;
-                                                                                $data=0;
-                                                                            @endphp
-                                                                            @foreach($taxes as $tax)
-                                                                                @php
-                                                                                    $taxPrice=Modules\Pos\Entities\Purchase::taxRate($tax->rate,$iteam->price,$iteam->quantity,$iteam->discount);
-                                                                                    $totalTaxPrice+=$taxPrice;
-                                                                                    $data+=$taxPrice;
-                                                                                @endphp
-                                                                                <tr>
-                                                                                    <td class="">{{$tax->name .' ('.$tax->rate .'%)'}}</td>
-                                                                                    <td>{{currency_format_with_sym($taxPrice)}}</td>
-                                                                                </tr>
-                                                                            @endforeach
-                                                                            @php
-                                                                                array_push($TaxPrice_array,$data);
-                                                                            @endphp
-                                                                        </table>
-                                                                    @else
-                                                                        -
-                                                                    @endif
-                                                                </td>
+                                                                <td>{{ number_format(currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>
+                                                                <td>{{ number_format(currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                                 <td style="white-space: break-spaces;">{{!empty($iteam->description)?$iteam->description:'-'}}</td>
-                                                                <td class="text-end">{{ currency_format_with_sym(($iteam->price * $iteam->quantity - $iteam->discount) + $totalTaxPrice)}}</td>{{--text-right--}}
+                                                                <td class="text-end">{{ number_format(currency_conversion(($iteam->price - $iteam->discount), $iteam->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>{{--text-right--}}
                                                             </tr>
                                                         @endforeach
                                                         <tfoot>
                                                         <tr>
                                                             <td></td>
-                                                            <td></td>
                                                             <td><b>{{__('Total')}}</b></td>
-                                                            <td><b>{{$totalQuantity}}</b></td>
-                                                            <td><b>{{currency_format_with_sym($totalRate)}}</b></td>
-                                                            <td><b>{{currency_format_with_sym($totalDiscount)}}</b></td>
-                                                            <td><b>{{currency_format_with_sym($totalTaxPrice)}}</b></td>
+                                                            <td></td>
+                                                            <td></td>
+                                                            <td><b>{{ number_format($totalRate, 2) . ' ' . company_setting('defult_currancy') }}</b></td>
+                                                            <td><b>{{ number_format($totalDiscount, 2) . ' ' . company_setting('defult_currancy') }}</b></td>
 
                                                         </tr>
                                                         <tr>
-                                                            <td colspan="7"></td>
+                                                            <td colspan="6"></td>
                                                             <td class="text-end"><b>{{__('Sub Total')}}</b></td>
-                                                            <td class="text-end">{{currency_format_with_sym($purchase->getSubTotal())}}</td>
+                                                            <td class="text-end">{{ number_format($purchase->getSubTotal(), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                         </tr>
 
                                                             <tr>
-                                                                <td colspan="7"></td>
+                                                                <td colspan="6"></td>
                                                                 <td class="text-end"><b>{{__('Discount')}}</b></td>
-                                                                <td class="text-end">{{currency_format_with_sym($purchase->getTotalDiscount())}}</td>
+                                                                <td class="text-end">{{ number_format($purchase->getTotalDiscount(), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                             </tr>
 
-                                                        @if(!empty($taxesData))
-                                                            @foreach($taxesData as $taxName => $taxPrice)
-                                                                <tr>
-                                                                    <td colspan="7"></td>
-                                                                    <td class="text-end"><b>{{$taxName}}</b></td>
-                                                                    <td class="text-end">{{ currency_format_with_sym($taxPrice) }}</td>
-                                                                </tr>
-                                                            @endforeach
-                                                        @endif
                                                         <tr>
-                                                            <td colspan="7"></td>
+                                                            <td colspan="6"></td>
                                                             <td class="blue-text text-end"><b>{{__('Total')}}</b></td>
-                                                            <td class="blue-text text-end">{{currency_format_with_sym($purchase->getTotal())}}</td>
+                                                            <td class="blue-text text-end">{{ number_format($purchase->getTotal(), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td colspan="7"></td>
+                                                            <td colspan="6"></td>
                                                             <td class="text-end"><b>{{__('Paid')}}</b></td>
-                                                            <td class="text-end">{{currency_format_with_sym(($purchase->getTotal()-$purchase->getDue()))}}</td>
+                                                            <td class="text-end">{{ number_format(($purchase->getTotal()-$purchase->getDue()), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td colspan="7"></td>
+                                                            <td colspan="6"></td>
                                                             <td class="text-end"><b>{{__('Debit Note')}}</b></td>
-                                                            <td class="text-end">{{ currency_format_with_sym(($purchase->purchaseTotalDebitNote()))}}</td>
+                                                            <td class="text-end">{{ number_format($purchase->purchaseTotalDebitNote(), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td colspan="7"></td>
+                                                            <td colspan="6"></td>
                                                             <td class="text-end"><b>{{__('Due')}}</b></td>
-                                                            <td class="text-end">{{currency_format_with_sym($purchase->getDue())}}</td>
+                                                            <td class="text-end">{{ number_format($purchase->getDue(), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                         </tr>
                                                         </tfoot>
                                                     </table>
@@ -633,37 +582,49 @@
 @endsection
 
 @push('scripts')
-<script src="{{ Module::asset('Pos:Resources/assets/js/dropzone.min.js') }}"></script>
-<script>
-    Dropzone.autoDiscover = false;
-    myDropzone = new Dropzone("#dropzonewidget", {
-        maxFiles: 20,
-        maxFilesize: 20,
-        parallelUploads: 1,
-        acceptedFiles: ".jpeg,.jpg,.png,.pdf,.doc,.txt",
-        url: "{{ route('purchases.file.upload', [$purchase->id]) }}",
-        success: function(file, response) {
-            if (response.is_success) {
-                // dropzoneBtn(file, response);
+    <script src="{{ Module::asset('Pos:Resources/assets/js/dropzone.min.js') }}"></script>
+    <script>
+        Dropzone.autoDiscover = false;
+        myDropzone = new Dropzone("#dropzonewidget", {
+            maxFiles: 20,
+            maxFilesize: 20,
+            parallelUploads: 1,
+            acceptedFiles: ".jpeg,.jpg,.png,.pdf,.doc,.txt",
+            url: "{{ route('purchases.file.upload', [$purchase->id]) }}",
+            success: function(file, response) {
+                if (response.is_success) {
+                    // dropzoneBtn(file, response);
+                    myDropzone.removeFile(file);
+                    toastrs('{{ __('Success') }}', 'File Successfully Uploaded', 'success');
+                } else {
+                    myDropzone.removeFile(response.error);
+                    toastrs('Error', response.error, 'error');
+                }
+            },
+            error: function(file, response) {
                 myDropzone.removeFile(file);
-                toastrs('{{ __('Success') }}', 'File Successfully Uploaded', 'success');
-            } else {
-                myDropzone.removeFile(response.error);
-                toastrs('Error', response.error, 'error');
+                if (response.error) {
+                    toastrs('Error', response.error, 'error');
+                } else {
+                    toastrs('Error', response, 'error');
+                }
             }
-        },
-        error: function(file, response) {
-            myDropzone.removeFile(file);
-            if (response.error) {
-                toastrs('Error', response.error, 'error');
-            } else {
-                toastrs('Error', response, 'error');
-            }
-        }
-    });
-    myDropzone.on("sending", function(file, xhr, formData) {
-        formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
-        formData.append("purchase_id", {{ $purchase->id }});
-    });
-</script>
+        });
+        myDropzone.on("sending", function(file, xhr, formData) {
+            formData.append("_token", $('meta[name="csrf-token"]').attr('content'));
+            formData.append("purchase_id", {{ $purchase->id }});
+        });
+    </script>
+
+    <!-- select2 modal initialization -->
+    <script>
+        $(document).ready(function() {
+            $('#commonModal').on('shown.bs.modal', function () {
+                $('#currency').select2({
+                    dropdownParent: $('#commonModal'),
+                    width: '100%'
+                });
+            });
+        });
+    </script>
 @endpush

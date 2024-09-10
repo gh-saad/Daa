@@ -13,6 +13,7 @@ use Modules\Pos\Entities\PurchasePayment;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\EmailTemplate;
 use App\Models\User;
+use App\Models\Currency;
 use Modules\Pos\Entities\PosUtility;
 use Rawilk\Settings\Support\Context;
 use Modules\Pos\Entities\WarehouseProduct;
@@ -25,6 +26,7 @@ use Modules\Pos\Events\SentPurchase;
 use Modules\Pos\Events\UpdatePurchase;
 use Illuminate\Support\Facades\File;
 use Modules\Pos\Entities\PurchaseAttachment;
+use Illuminate\Support\Str;
 
 class PurchaseController extends Controller
 {
@@ -63,27 +65,30 @@ class PurchaseController extends Controller
         {
             if(module_is_active('ProductService'))
             {
-                $category=[];
-                if(module_is_active('ProductService'))
-                {
-                    $category     = \Modules\ProductService\Entities\Category::where('created_by', creatorId())->where('workspace_id',getActiveWorkSpace())->where('type', 2)->get()->pluck('name', 'id');
-                    $category->prepend('Select Category', '');
-
-                }
                 if(module_is_active('CustomField')){
                     $customFields =  \Modules\CustomField\Entities\CustomField::where('workspace_id',getActiveWorkSpace())->where('module', '=', 'pos')->where('sub_module','purchase')->get();
                 }else{
                     $customFields = null;
                 }
 
-                $purchase_number = Purchase::purchaseNumberFormat($this->purchaseNumber());
+                $purchase_number = \Modules\Account\Entities\Purchase::purchaseNumberFormat($this->purchaseNumber());
 
-                $venders=[];
+                $vendors_array = [];
+                $product_services_array = [];
+
                 if(module_is_active('Account'))
                 {
+                    // Fetch vendors based on active workspace
+                    $vendors = \Modules\Account\Entities\Vender::where('workspace', '=', getActiveWorkSpace())->get();
+                    
+                    foreach ($vendors as $vendor) {
+                        // combine both values
+                        $vendor_detail = \Modules\Account\Entities\Vender::vendorNumberFormat($vendor->vendor_id) . ' ' . $vendor->name;
+                    
+                        // Add vendor detail to vendors_array with vendor's ID as key
+                        $vendors_array[$vendor->id] = $vendor_detail;
+                    }
 
-                    $venders     =  User::where('type','vendor')->where('created_by', creatorId())->where('workspace_id',getActiveWorkSpace())->get()->pluck('name', 'id');
-                    $venders->prepend('Select Vendor', '');
                 }
 
                 $warehouse     = Warehouse::where('created_by', creatorId())->where('workspace',getActiveWorkSpace())->get()->pluck('name', 'id');
@@ -93,10 +98,17 @@ class PurchaseController extends Controller
                 $product_type=[];
                 if(module_is_active('ProductService'))
                 {
-                    $product_services =  \Modules\ProductService\Entities\ProductService::where('created_by', creatorId())->where('workspace_id',getActiveWorkSpace())->select('sku', 'name', 'id')->get();
-                    $product_services->prepend(['id'=>null, 'sku' => "Select Items", 'name'=>null]);
+                    $product_services =  \Modules\ProductService\Entities\ProductService::where('workspace_id',getActiveWorkSpace())->where('purchased_status', '=', null)->where('vehicle_status', '=', 'Yard')->get();
                     
-                    $product_type =\Modules\ProductService\Entities\ProductService::$product_type;
+                    foreach ($product_services as $ps) {
+                        // combine both values
+                        $ps_detail = $ps->sku . ' - ' . $ps->name;
+                    
+                        // Add vendor detail to product_services_array with ps's ID as key
+                        $product_services_array[$ps->id] = $ps_detail;
+                    }   
+                    
+                    // $product_type =\Modules\ProductService\Entities\ProductService::$product_type;
                 }
 
             }
@@ -104,7 +116,7 @@ class PurchaseController extends Controller
             {
                 return redirect()->back()->with('error', __('Permission denied.'));
             }
-         return view('pos::purchase.create', compact('venders', 'purchase_number', 'product_services', 'category','vendorId','warehouse','customFields','product_type'));
+         return view('pos::purchase.create', compact('vendors_array', 'vendorId', 'warehouse', 'product_services_array', 'customFields'));
         }
         else
         {
@@ -119,16 +131,14 @@ class PurchaseController extends Controller
      */
     public function store(Request $request)
     {
-
         if(\Auth::user()->can('purchase create'))
         {
             if(module_is_active('Account')){
                 $validator = \Validator::make(
                     $request->all(), [
-                        'vender_id' => 'required',
+                        'vendor_id' => 'required',
                         'warehouse_id' => 'required',
                         'purchase_date' => 'required',
-                        'category_id' => 'required',
                         'items' => 'required',
                         'lot_number'=> 'required',
                         'bl_number'=> 'required',
@@ -141,7 +151,6 @@ class PurchaseController extends Controller
                         'vender_name' => 'required',
                         'warehouse_id' => 'required',
                         'purchase_date' => 'required',
-                        'category_id' => 'required',
                         'items' => 'required',
                         'lot_number'=> 'required',
                         'bl_number'=> 'required',
@@ -153,23 +162,26 @@ class PurchaseController extends Controller
                 $messages = $validator->getMessageBag();
 
                 return redirect()->back()->with('error', $messages->first());
-            }if(!empty($request->vender_id)){
-                $vender = \Modules\Account\Entities\Vender::where('user_id',$request->vender_id)->first();
             }
+            
+            if(!empty($request->vendor_id)){
+                $vendor = \Modules\Account\Entities\Vender::find($request->vendor_id);
+            }
+
             $purchase                  = new Purchase();
             $purchase->purchase_id     = $this->purchaseNumber();
-            $purchase->vender_id       = $request->vender_id;
-            $purchase->user_id         = !empty($vender)? $vender->user_id : null;
-            $purchase->vender_name     = !empty($request->vender_name) ? $request->vender_name : '';
+            $purchase->vender_id       = $vendor->id;
+            $purchase->user_id         = !empty($vendor)? $vendor->user_id : null; // user id can be fetched through vendor id, then why is user id needed in the purchases table?
+            $purchase->vender_name     = !empty($vendor) ? $vendor->name : '';
             $purchase->warehouse_id    = $request->warehouse_id;
             $purchase->purchase_date   = $request->purchase_date;
             $purchase->purchase_number = !empty($request->purchase_number) ? $request->purchase_number : 0;
             $purchase->status          =  0;
-            $purchase->category_id     = $request->category_id;
+            $purchase->category_id     = 33; // using 33 for ASSETS as default for now
             $purchase->workspace       = getActiveWorkSpace();
             $purchase->created_by      = creatorId();
             $purchase->lot_number      = $request->lot_number;
-            $purchase->bl_number      = $request->bl_number;
+            $purchase->bl_number       = $request->bl_number;
             $purchase->save();
 
             if(module_is_active('CustomField'))
@@ -177,48 +189,73 @@ class PurchaseController extends Controller
                 \Modules\CustomField\Entities\CustomField::saveData($purchase, $request->customField);
             }
 
-            event(new CreatePurchase($request,$purchase));
+            event(new CreatePurchase($request, $purchase));
+            
             $products = $request->items;
             for($i = 0; $i < count($products); $i++)
             {
                 $purchaseProduct                = new PurchaseProduct();
                 $purchaseProduct->purchase_id   = $purchase->id;
-                $purchaseProduct->product_type  = $products[$i]['product_type'];
-                $purchaseProduct->product_id    = $products[$i]['item'];
-                $purchaseProduct->quantity      = $products[$i]['quantity'];
-                $purchaseProduct->tax           = $products[$i]['tax'];
-                $purchaseProduct->discount      = $products[$i]['discount'];
-                $purchaseProduct->price         = $products[$i]['price'];
-                $purchaseProduct->description   = $products[$i]['description'];
-                $purchaseProduct->workspace     = getActiveWorkSpace();
+                $purchaseProduct->product_type  = 'product';
+                $purchaseProduct->product_id    = $products[$i];
+                $purchaseProduct->quantity      = 1;
+                $purchaseProduct->currency      = company_setting("defult_currancy");
+                $purchaseProduct->discount      = $request->item_discounts[$i];
+                $purchaseProduct->price         = $request->item_prices[$i];
+                $purchaseProduct->description   = $request->item_desc[$i];
+            
+                // Removing tax related stuff because tax is not recorded by the buyer
 
+                // Tax handling logic
+                // if (module_is_active('ProductService')) {
+                //     if (isset($request->item_taxes[$i]) && !empty($request->item_taxes[$i])) {
+                //         // Generate a random name for the tax entry
+                //         $random_tax_name = 'tax-' . Str::random(5);
+                        
+                //         // Create a new tax entry with the generated name and provided rate
+                //         $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                //         $tax_object_to_create->name = $random_tax_name;
+                //         $tax_object_to_create->rate = $request->item_taxes[$i];
+                //         $tax_object_to_create->created_by = \Auth::user()->id;
+                //         $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                //         $tax_object_to_create->save();
+            
+                //         // Get the ID of this newly added tax entry
+                //         $new_tax_id = $tax_object_to_create->id;
+            
+                //         // Assign the tax ID to the purchase product tax entry
+                //         $purchaseProduct->tax = $new_tax_id;
+                //     } else {
+                //         // If no tax rate is provided, assign a default tax ID
+                //         $purchaseProduct->tax = 1;
+                //     }
+                // } else {
+                //     // If the ProductService module is not active, assign a default tax ID
+                //     $purchaseProduct->tax = 1;
+                // }
+            
+                $purchaseProduct->tax = 1; // Removing tax related stuff because tax is not recorded by the buyer
+                
+                $purchaseProduct->workspace = getActiveWorkSpace();
                 $purchaseProduct->save();
-                //inventory management (Quantity)
-                Purchase::total_quantity('plus',$purchaseProduct->quantity,$purchaseProduct->product_id);
-
-                //Product Stock Report
-                if(module_is_active('Account'))
-                {
-                    $type='Purchase';
+            
+                // Inventory management (Quantity)
+                Purchase::total_quantity('plus', $purchaseProduct->quantity, $purchaseProduct->product_id);
+            
+                // Product Stock Report
+                if (module_is_active('Account')) {
+                    $type = 'Purchase';
                     $type_id = $purchase->id;
-                    $description=$products[$i]['quantity'].'  '.__(' quantity add in purchase').' #'.$purchase->lot_number;
-                    Purchase::addProductStock( $products[$i]['item'],$products[$i]['quantity'],$type,$description,$type_id);
+                    $description = $purchaseProduct->quantity . '  ' . __(' quantity added in purchase') . ' #' . $purchase->lot_number;
+                    Purchase::addProductStock($products[$i], $purchaseProduct->quantity, $type, $description, $type_id);
                 }
-
-                //Warehouse Stock Report
-                if(isset($products[$i]['item']))
-                {
-                    Purchase::addWarehouseStock( $products[$i]['item'],$products[$i]['quantity'],$request->warehouse_id);
+            
+                // Warehouse Stock Report
+                if (isset($products[$i])) {
+                    Purchase::addWarehouseStock($products[$i], $purchaseProduct->quantity, $request->warehouse_id);
                 }
-
-                // update product status
-                $product = \Modules\ProductService\Entities\ProductService::find($products[$i]['item']);
-                $product->purchased_status = 'Awaiting Payment';
-                $product->purchased_by = \Auth::user()->id;
-                $product->purchased_from = $vender->name;
-                $product->save();
-
-            }
+            
+            }                
 
             return redirect()->route('purchase.index', $purchase->id)->with('success', __('Purchase successfully created.'));
         }
@@ -575,7 +612,7 @@ class PurchaseController extends Controller
             event(new SentPurchase($purchase));
             if(!empty($purchase->vender_id != 0))
             {
-                $vender = \Modules\Account\Entities\Vender::where('user_id', $purchase->vender_id)->first();
+                $vender = \Modules\Account\Entities\Vender::find($purchase->vender_id);
                 if(empty($vender))
                 {
                     $vender = User::where('id',$purchase->vender_id)->first();
@@ -587,6 +624,62 @@ class PurchaseController extends Controller
 
                 $purchaseId    = Crypt::encrypt($purchase->id);
                 $purchase->url = route('purchase.pdf', $purchaseId);
+
+                // Get the items associated with the purchase
+                $items = $purchase->items;
+
+                foreach($items as $item){
+
+                    // update product status
+                    $product = \Modules\ProductService\Entities\ProductService::find($item->product_id);
+                    $product->purchased_status = 'Awaiting Payment';
+                    $product->purchased_by = \Auth::user()->id;
+                    $product->purchased_from = $vender->name;
+                    $product->save();
+                    
+                    // adding Journal Entries
+                    // Inventory = Debit = Net price after discount
+                    // Account Payable = Credit = Net price after discount
+
+                    $netPriceAfterDiscount = $item->price - $item->discount;
+
+                    $new_journal_entry = new \Modules\DoubleEntry\Entities\JournalEntry();
+                    $new_journal_entry->date = now();
+                    $new_journal_entry->reference = $purchase->lot_number;
+                    $new_journal_entry->description = 'Purchase Created';
+                    $new_journal_entry->journal_id = $this->journalNumber();
+                    $new_journal_entry->currency = company_setting("defult_currancy");
+                    $new_journal_entry->workspace = getActiveWorkSpace();
+                    $new_journal_entry->created_by = \Auth::user()->id;
+                    $new_journal_entry->save();
+
+                    $first_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+                    $first_journal_item->journal = $new_journal_entry->id;
+                    $first_journal_item->account = 5;
+                    $first_journal_item->description = '-';
+                    $first_journal_item->debit = $netPriceAfterDiscount;
+                    $first_journal_item->credit = 0.00;
+                    $first_journal_item->workspace = getActiveWorkSpace();
+                    $first_journal_item->created_by = \Auth::user()->id;
+                    $first_journal_item->save();
+
+                    $first_transaction = add_quick_transaction('Debit', 5, $netPriceAfterDiscount);
+
+                    $second_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+                    $second_journal_item->journal = $new_journal_entry->id;
+                    $second_journal_item->account = 15;
+                    $second_journal_item->description = '-';
+                    $second_journal_item->debit = 0.00;
+                    $second_journal_item->credit = $netPriceAfterDiscount;
+                    $second_journal_item->workspace = getActiveWorkSpace();
+                    $second_journal_item->created_by = \Auth::user()->id;
+                    $second_journal_item->save();
+
+                    $second_transaction = add_quick_transaction('Credit', 15, $netPriceAfterDiscount);
+
+                }
+
+                // sending email
                 if(!empty(company_setting('Purchase Send')) && company_setting('Purchase Send')  == true)
                 {
                     $uArr = [
@@ -827,6 +920,11 @@ class PurchaseController extends Controller
                 return redirect()->back()->with('error', $messages->first());
             }
 
+            $amount = $request->amount;
+
+            if($request->currency != company_setting('defult_currancy')){
+                $amount = currency_conversion($amount, $request->currency, company_setting('defult_currancy'));
+            }
 
             $purchasePayment                 = new PurchasePayment();
 
@@ -846,13 +944,15 @@ class PurchaseController extends Controller
                 $purchasePayment->account_id     = $request->account_id;
             }
 
-            $purchasePayment->purchase_id        = $purchase_id;
+            $purchasePayment->purchase_id    = $purchase_id;
             $purchasePayment->date           = $request->date;
-            $purchasePayment->amount         = $request->amount;
+            $purchasePayment->amount         = $amount;
+            $purchasePayment->currency       = company_setting('defult_currancy');
             $purchasePayment->account_id     = $request->account_id;
             $purchasePayment->payment_method = 0;
             $purchasePayment->reference      = $request->reference;
             $purchasePayment->description    = $request->description;
+
             if(!empty($request->add_receipt))
             {
                 $fileName = time() . "_" . $request->add_receipt->getClientOriginalName();
@@ -906,7 +1006,6 @@ class PurchaseController extends Controller
 
             if(module_is_active('Account'))
             {
-                \Modules\Account\Entities\Transaction::addTransaction($purchasePayment);
 
                 if(empty($vender_acc))
                 {
@@ -917,10 +1016,10 @@ class PurchaseController extends Controller
                 $bill_payment->name   = !empty($vender['name']) ? $purchasePayment->vendor_name: '';
                 $bill_payment->method = '-';
                 $bill_payment->date   = company_date_formate($request->date);
-                $bill_payment->amount = currency_format_with_sym($request->amount);
+                $bill_payment->amount = currency_format_with_sym($amount);
                 $bill_payment->bill   = 'purchase' . Purchase::purchaseNumberFormat($purchasePayment->purchase_id);
 
-                \Modules\Account\Entities\AccountUtility::userBalance('Vendor', $purchase->vender_id, $request->amount, 'debit');
+                \Modules\Account\Entities\AccountUtility::userBalance('Vendor', $purchase->vender_id, $amount, 'debit');
 
                 if(!empty(company_setting('Bill Payment Create')) && company_setting('Bill Payment Create')  == true)
                 {
@@ -953,8 +1052,8 @@ class PurchaseController extends Controller
                 $account_payment->vendor_id = $purchase->vender_id;
                 $account_payment->category_id = 2; // default for now
                 $account_payment->payment_method = 0; // default for now
-                $account_payment->reference = $purchasePayment->reference;
-                $account_payment->description = $purchasePayment->description;
+                $account_payment->reference = $purchasePayment->reference ?? '-';
+                $account_payment->description = $purchasePayment->description ?? '-';
                 $account_payment->add_receipt = $purchasePayment->add_receipt;
                 $account_payment->workspace = getActiveWorkSpace();
                 $account_payment->created_by = \Auth::user()->id;
@@ -992,12 +1091,48 @@ class PurchaseController extends Controller
             $payment->name   = !empty($vender['name']) ? $purchasePayment->vendor_name: '';
             $payment->method = '-';
             $payment->date   = company_date_formate($request->date);
-            $payment->amount = currency_format_with_sym($request->amount);
+            $payment->amount = currency_format_with_sym($amount);
             $payment->bill   = 'purchase' . Purchase::purchaseNumberFormat($purchasePayment->purchase_id);
 
-            Purchase::userBalance('vendor', $purchase->vender_id, $request->amount, 'debit');
+            Purchase::userBalance('vendor', $purchase->vender_id, $amount, 'debit');
 
-            Purchase::bankAccountBalance($request->account_id, $request->amount, 'debit');
+            // adding Journal Entries
+            // Checking Account = Credit = Payment Amount
+            // Account Payable = Debit = Payment Amount
+
+            $new_journal_entry = new \Modules\DoubleEntry\Entities\JournalEntry();
+            $new_journal_entry->date = now();
+            $new_journal_entry->reference = $purchase->lot_number;
+            $new_journal_entry->description = 'Purchase Payment Made';
+            $new_journal_entry->journal_id = $this->journalNumber();
+            $new_journal_entry->currency = company_setting("defult_currancy");
+            $new_journal_entry->workspace = getActiveWorkSpace();
+            $new_journal_entry->created_by = \Auth::user()->id;
+            $new_journal_entry->save();
+
+            $first_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+            $first_journal_item->journal = $new_journal_entry->id;
+            $first_journal_item->account = 1;
+            $first_journal_item->description = '-';
+            $first_journal_item->debit = 0.00;
+            $first_journal_item->credit = $amount;
+            $first_journal_item->workspace = getActiveWorkSpace();
+            $first_journal_item->created_by = \Auth::user()->id;
+            $first_journal_item->save();
+
+            $first_transaction = add_quick_transaction('Credit', 1, $amount);
+
+            $second_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+            $second_journal_item->journal = $new_journal_entry->id;
+            $second_journal_item->account = 15;
+            $second_journal_item->description = '-';
+            $second_journal_item->debit = $amount;
+            $second_journal_item->credit = 0.00;
+            $second_journal_item->workspace = getActiveWorkSpace();
+            $second_journal_item->created_by = \Auth::user()->id;
+            $second_journal_item->save();
+
+            $second_transaction = add_quick_transaction('Debit', 15, $amount);
 
             if(!empty(company_setting('Purchase Payment Create')) && company_setting('Purchase Payment Create')  == true)
             {
@@ -1388,6 +1523,16 @@ class PurchaseController extends Controller
                 ], 401
             );
         }
+    }
+
+    function journalNumber()
+    {
+        $latest = \Modules\DoubleEntry\Entities\JournalEntry::where('created_by', '=', creatorId())->where('workspace', getActiveWorkSpace())->latest()->first();
+        if (!$latest) {
+            return 1;
+        }
+
+        return $latest->journal_id + 1;
     }
 
     public function fileUploadDestroy($id)

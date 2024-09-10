@@ -1630,3 +1630,63 @@ if (!function_exists('delete_directory'))
         return rmdir($dir);
     }
 }
+
+if (!function_exists('add_quick_transaction'))
+{
+    function add_quick_transaction($type, $account_id, $amount)
+    {
+        $new_transaction = new \Modules\Account\Entities\Transaction();
+        $new_transaction->user_id = \Auth::user()->id;
+        $new_transaction->user_type = '';
+        $new_transaction->account = $account_id;
+        $new_transaction->type = $type;
+        $new_transaction->amount = $amount;
+        $new_transaction->description = '';
+        $new_transaction->date = now();
+        $new_transaction->payment_id = 0;
+        $new_transaction->category = '';
+        $new_transaction->workspace = getActiveWorkSpace();
+        $new_transaction->created_by = \Auth::user()->id;
+        $new_transaction->created_at = now();
+        $new_transaction->updated_at = now();
+        $new_transaction->save();
+
+        return $new_transaction;
+    }
+}
+
+if (!function_exists('get_default_currency_rate'))
+{
+    function get_default_currency_rate()
+    {
+        $default_currency_rate = currency(company_setting('defult_currancy'))->rate;
+        return $default_currency_rate;
+    }
+}
+
+if (!function_exists('get_currency_rate'))
+{
+    function get_currency_rate($code)
+    {
+        $currency_rate = currency($code)->rate;
+        return $currency_rate;
+    }
+}
+
+if (!function_exists('currency_conversion'))
+{
+    function currency_conversion($amount, $from_code, $to_code)
+    {
+        // locate currencies
+        $from_currency = currency($from_code);
+        $to_currency = currency($to_code);
+
+        // multiply amount to from_currency rate
+        $usd_amount = $amount / $from_currency->rate;
+        
+        // multiply amount to to_currency rate
+        $converted_amount = $usd_amount * $to_currency->rate;
+
+        return $converted_amount;
+    }
+}

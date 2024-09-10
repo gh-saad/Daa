@@ -162,6 +162,7 @@ return [
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
         Lab404\Impersonate\ImpersonateServiceProvider::class,
+        Nwidart\Modules\LaravelModulesServiceProvider::class,
 
         /*
          * Package Service Providers...
@@ -249,7 +250,8 @@ return [
         'Google2FA' => PragmaRX\Google2FALaravel\Facade::class,
         'PayPal' => Srmklive\PayPal\Facades\PayPal::class,
         'Paystack' => Unicodeveloper\Paystack\Facades\Paystack::class,
-        'PaytmWallet' => Anand\LaravelPaytmWallet\Facades\PaytmWallet::class
+        'PaytmWallet' => Anand\LaravelPaytmWallet\Facades\PaytmWallet::class,
+        'Modules' => Nwidart\Modules\Facades\Module::class,
     ],
 
 ];

@@ -38,7 +38,7 @@ class Purchase extends Model
     {
         if(module_is_active('Account')){
 
-            return $this->hasOne(\Modules\Account\Entities\Vender::class, 'user_id', 'vender_id');
+            return $this->hasOne(\Modules\Account\Entities\Vender::class, 'id', 'vender_id');
         }
     }
     public function user()
@@ -80,7 +80,7 @@ class Purchase extends Model
         $subTotal = 0;
         foreach($this->items as $product)
         {
-            $subTotal += ($product->price * $product->quantity);
+            $subTotal += currency_conversion(($product->price * $product->quantity), $product->currency, company_setting('defult_currancy'));
         }
 
         return $subTotal;
@@ -104,7 +104,7 @@ class Purchase extends Model
                 $taxes = 0;
             }
 
-            $totalTax += ($taxes / 100) * ($product->price * $product->quantity - $product->discount);
+            $totalTax += currency_conversion((($taxes / 100) * ($product->price * $product->quantity - $product->discount)), $product->currency, company_setting('defult_currancy'));
         }
 
         return $totalTax;
@@ -115,7 +115,7 @@ class Purchase extends Model
         $totalDiscount = 0;
         foreach($this->items as $product)
         {
-            $totalDiscount += $product->discount;
+            $totalDiscount += currency_conversion($product->discount, $product->currency, company_setting('defult_currancy'));
         }
 
         return $totalDiscount;
