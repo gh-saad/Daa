@@ -243,10 +243,11 @@ class Employee extends Model
     {
 
         $employee       = Employee::where('id', '=', $this->id)->first();
+        $payslip = payroll_calculator_kenya($employee->get_gross_income());
 
-        $net_salary     = round($employee->get_net_pay_before_taxes(), 2) - round($employee->get_net_tax_liability(), 2);
+        // $net_salary     = round($employee->get_net_pay_before_taxes(), 2) - round($employee->get_net_tax_liability(), 2);
         
-        return $net_salary;
+        return $payslip['netSalary'];
     }
 
     public static function allowance($id)

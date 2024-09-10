@@ -1690,3 +1690,162 @@ if (!function_exists('currency_conversion'))
         return $converted_amount;
     }
 }
+
+if (!function_exists('getRate'))
+{
+    function getRate($currency){
+        // locate currency by code
+        $currency = Currency::where('code', $currency)->first();
+        // get and return rate
+        return $currency->rate;
+    }
+}
+
+if (!function_exists('currency_format_with_code')) {
+    function currency_format_with_code($price, $code)
+    {
+        $formatted_price = number_format(round($price, 2), 2, '.', '');
+
+        return $formatted_price." ".$code;
+    }
+}
+
+
+# Online Python compiler (interpreter) to run Python online.
+
+function calculateIncomeTax($amount) {
+    $incomeTax = 0;
+    if ($amount <= 24000) {
+        $incomeTax = $amount * 0.10;
+    } else {
+        $incomeTax += 24000 * 0.10;
+
+        if ($amount <= 24000 + 8333) {
+            $incomeTax += ($amount - 24000) * 0.25;
+        } else {
+            $incomeTax += 8333 * 0.25;
+
+            if ($amount <= 24000 + 8333 + 467667) {
+                $incomeTax += ($amount - 24000 - 8333) * 0.30;
+            } else {
+                $incomeTax += 467667 * 0.30;
+
+                if ($amount <= 24000 + 8333 + 467667 + 300000) {
+                    $incomeTax += ($amount - 24000 - 8333 - 467667) * 0.325;
+                } else {
+                    $incomeTax += 300000 * 0.325;
+                    $incomeTax += ($amount - 800000) * 0.35;
+                }
+            }
+        }
+    }
+    return $incomeTax;
+}
+
+function calculateNHIF($amount) {
+    if ($amount <= 5999) {
+        return 150;
+    } elseif ($amount <= 7999) {
+        return 300;
+    } elseif ($amount <= 11999) {
+        return 400;
+    } elseif ($amount <= 14999) {
+        return 500;
+    } elseif ($amount <= 19999) {
+        return 600;
+    } elseif ($amount <= 24999) {
+        return 750;
+    } elseif ($amount <= 29999) {
+        return 850;
+    } elseif ($amount <= 34999) {
+        return 900;
+    } elseif ($amount <= 39999) {
+        return 950;
+    } elseif ($amount <= 44999) {
+        return 1000;
+    } elseif ($amount <= 49999) {
+        return 1100;
+    } elseif ($amount <= 59999) {
+        return 1200;
+    } elseif ($amount <= 69999) {
+        return 1300;
+    } elseif ($amount <= 79999) {
+        return 1400;
+    } elseif ($amount <= 89999) {
+        return 1500;
+    } elseif ($amount <= 99999) {
+        return 1600;
+    } else {
+        return 1700;
+    }
+}
+
+function calculateNSSF($income) {
+    $TIER_1_RATE = 420;
+    $TIER_2_RATE = 1740;
+
+    $TIER_1_LIMIT = 7000;
+    $TIER_2_LIMIT = 36000;
+
+    $TIER_1_income = min($income, $TIER_1_LIMIT);
+    $TIER_2_income = max(0, min($income - $TIER_1_LIMIT, $TIER_2_LIMIT));
+
+    $Tier_1_contribution = $TIER_1_RATE;
+    $Tier_2_contribution = $income > $TIER_1_LIMIT ? $TIER_2_RATE : 0;
+
+    $total_employee_contribution = $Tier_1_contribution + $Tier_2_contribution;
+    $total_employer_contribution = $total_employee_contribution;
+    $total_contribution = $total_employee_contribution + $total_employer_contribution;
+
+    return [
+        "employee" => $total_employee_contribution,
+        "employer" => $total_employer_contribution,
+        "total" => $total_contribution
+    ];
+}
+
+function calculatePaye($incomeTax, $taxRelief) {
+    return max(0, $incomeTax - $taxRelief);
+}
+
+function format_with_kes($amount) {
+    if (is_float($amount)) {
+        $formatted_amount = number_format($amount, 2) . " KES";
+    } else {
+        $formatted_amount = number_format($amount) . " KES";
+    }
+    return $formatted_amount;
+}
+
+function calculateHousingLevy($amount){
+    return $amount * 0.015;
+
+}
+
+if (!function_exists('payroll_calculator_kenya')) {
+    function payroll_calculator_kenya($grossImcome)
+    {
+        $taxRelief = 2400;
+        $NSSF = calculateNSSF($grossImcome);
+        $taxAbleAmount = $grossImcome - $NSSF['employee'];
+        $incomeTax = calculateIncomeTax($taxAbleAmount);
+        $PAYE = calculatePaye($incomeTax, $taxRelief);
+        $HousingLevy = calculateHousingLevy($grossImcome);
+        $NHIF = calculateNHIF($grossImcome);
+        $totalDeduction = $NSSF['employee'] + $PAYE + $NHIF + $HousingLevy;
+        $netSalary = $grossImcome - $totalDeduction;
+
+        return [
+            "grossImcome" => $grossImcome,
+            "NSSF" => $NSSF['employee'],
+            "taxAbleAmount" => $taxAbleAmount,
+            "taxRelief" => $taxRelief,
+            "incomeTax" => $incomeTax,
+            "PAYE" => $PAYE,
+            "housingLevy" => $HousingLevy,
+            "NHIF" => $NHIF,
+            "totalDeduction" => $totalDeduction,
+            "netSalary" => $netSalary
+        ];
+    }
+}

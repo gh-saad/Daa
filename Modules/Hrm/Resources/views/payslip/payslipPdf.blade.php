@@ -61,7 +61,8 @@
                                             <td>{{ __('Basic Salary') }}</td>
                                             <td>-</td>
                                             <td class="text-right">
-                                                {{ currency_format($payslip->basic_salary) }}</td>
+                                                {{ currency_format($payslip->basic_salary) }}
+                                            </td>
                                         </tr>
                                         @php
                                                 $allowances = json_decode($payslipDetail['payslip']->allowance);
