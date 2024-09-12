@@ -206,17 +206,42 @@
                                     <div class="col-3"><p><strong>Engine CC</strong></p></div>:<div class="col-8">${data.product.engine_cc}</div>
                                 `);
 
+                                var price_display = Number(data.purchase.price).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+
+                                var discount_display = Number(data.purchase.discount).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+
+                                var price_after_discount_display = Number(priceAfterDiscount).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+
+                                var price_paid_display = Number(data.purchase.price_paid).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+
+                                var price_still_due_display = Number(priceStillDue).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+
                                 // Update purchase details
                                 $('#purchase-detail').removeClass('text-center').html(`
                                     <div class="col-6">
                                         <div class="row">
                                             <div class="col-3"><p><strong>Lot No</strong></p></div>:<div class="col-8">${data.purchase.lot_no}</div>
                                             <div class="col-3"><p><strong>BL No</strong></p></div>:<div class="col-8">${data.purchase.bl_no}</div>
-                                            <div class="col-3"><p><strong>Price</strong></p></div>:<div class="col-8">${data.purchase.price}</div>
-                                            <div class="col-3"><p><strong>Discount</strong></p></div>:<div class="col-8">${data.purchase.discount}</div>
-                                            <div class="col-3"><p><strong>Price After Discount</strong></p></div>:<div class="col-8">${priceAfterDiscount}</div>
-                                            <div class="col-3"><p><strong>Amount Paid</strong></p></div>:<div class="col-8">${data.purchase.price_paid}</div>
-                                            <div class="col-3"><p><strong>Amount Due</strong></p></div>:<div class="col-8">${priceStillDue}</div>
+                                            <div class="col-3"><p><strong>Price</strong></p></div>:<div class="col-8">${price_display} {{ company_setting('defult_currancy') }}</div>
+                                            <div class="col-3"><p><strong>Discount</strong></p></div>:<div class="col-8">${discount_display} {{ company_setting('defult_currancy') }}</div>
+                                            <div class="col-3"><p><strong>Price After Discount</strong></p></div>:<div class="col-8">${price_after_discount_display} {{ company_setting('defult_currancy') }}</div>
+                                            <div class="col-3"><p><strong>Amount Paid</strong></p></div>:<div class="col-8">${price_paid_display} {{ company_setting('defult_currancy') }}</div>
+                                            <div class="col-3"><p><strong>Amount Due</strong></p></div>:<div class="col-8">${price_still_due_display} {{ company_setting('defult_currancy') }}</div>
                                         </div>
                                     </div>
                                     <div class="col-6">

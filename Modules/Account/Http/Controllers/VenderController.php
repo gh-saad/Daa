@@ -814,11 +814,16 @@ class VenderController extends Controller
     
                 // Find the last payment date
                 $last_payment_date = $purchase_payments->sortByDesc('created_at')->first()->date ?? null;
+
+                // currency conversions
+                $converted_price = currency_conversion($purchase_product->price, $purchase_product->currency, company_setting('defult_currancy'));
+                $converted_discount = currency_conversion($purchase_product->discount, $purchase_product->currency, company_setting('defult_currancy'));
+                $converted_price_paid = currency_conversion($total_paid, $purchase_product->currency, company_setting('defult_currancy'));
     
                 // Populate purchase array
-                $purchase['price'] = $purchase_product->price;
-                $purchase['discount'] = $purchase_product->discount;
-                $purchase['price_paid'] = $total_paid;
+                $purchase['price'] = $converted_price;
+                $purchase['discount'] = $converted_discount;
+                $purchase['price_paid'] = $converted_price_paid;
                 $purchase['last_payment_date'] = $last_payment_date;
 
                 // Get purchase

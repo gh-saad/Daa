@@ -1641,6 +1641,7 @@ if (!function_exists('add_quick_transaction'))
         $new_transaction->account = $account_id;
         $new_transaction->type = $type;
         $new_transaction->amount = $amount;
+        $new_transaction->currency = company_setting('defult_currancy');
         $new_transaction->description = '';
         $new_transaction->date = now();
         $new_transaction->payment_id = 0;

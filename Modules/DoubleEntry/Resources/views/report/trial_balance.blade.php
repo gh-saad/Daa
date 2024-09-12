@@ -140,13 +140,29 @@
                                         @endphp
                                         <div class="d-flex align-items-center justify-content-between ps-4">
                                             <p class="mb-2 ms-3" style="width: 8%;">
-                                                <a href="#" class="text-primary">
-                                                    {{ $account['name'] }}</a>
+                                                <a href="{{ route('report.ledger', $account['id']) }}?account={{ $account['id'] }}" class="text-primary">{{ $account['name'] }}</a>
                                             </p>
                                             <p class="mb-2 text-center">{{ $account['code'] }}</p>
-                                            <p class="text-dark">{{ currency_format_with_sym($account['debit']) }}
+                                            <p class="text-primary">
+                                                @if ($account['debit'] < 0)
+                                                    @php
+                                                        $removedNegative = abs($account['debit']);
+                                                    @endphp
+                                                    {{ '( ' . number_format($removedNegative, 2) . ' ' . company_setting('defult_currancy') . ' )' }}
+                                                @else
+                                                    {{ number_format($account['debit'], 2) . ' ' . company_setting('defult_currancy') }}
+                                                @endif
                                             </p>
-                                            <p class="text-dark">{{ currency_format_with_sym($account['credit']) }}</p>
+                                            <p class="text-primary">
+                                                @if ($account['credit'] < 0)
+                                                    @php
+                                                        $removedNegative = abs($account['credit']);
+                                                    @endphp
+                                                    {{ '( ' . number_format($removedNegative, 2) . ' ' . company_setting('defult_currancy') . ' )' }}
+                                                @else
+                                                    {{ number_format($account['credit'], 2) . ' ' . company_setting('defult_currancy') }}
+                                                @endif
+                                            </p>
                                         </div>
                                     @endforeach
                                 </div>
@@ -161,9 +177,26 @@
                             <h6 class="fw-bold mb-2 ms-3">Total</h6>
                             <h6 class="fw-bold mb-2 ms-3"></h6>
                             <h6 class="fw-bold mb-2 ms-3"></h6>
-                            <h6 class="fw-bold mb-0 text-end">{{ currency_format_with_sym($total_debit) }}</h6>
-                            <h6 class="fw-bold mb-0 text-end ms-3">{{ currency_format_with_sym($total_credit) }}</h6>
-
+                            <h6 class="fw-bold mb-0 text-end">
+                                @if ($total_debit < 0)
+                                    @php
+                                        $removedNegative = abs($total_debit);
+                                    @endphp
+                                    {{ '( ' . number_format($removedNegative, 2) . ' ' . company_setting('defult_currancy') . ' )' }}
+                                @else
+                                    {{ number_format($total_debit, 2) . ' ' . company_setting('defult_currancy') }}
+                                @endif
+                            </h6>
+                            <h6 class="fw-bold mb-0 text-end ms-3">
+                                @if ($total_credit < 0)
+                                    @php
+                                        $removedNegative = abs($total_credit);
+                                    @endphp
+                                    {{ '( ' . number_format($removedNegative, 2) . ' ' . company_setting('defult_currancy') . ' )' }}
+                                @else
+                                    {{ number_format($total_credit, 2) . ' ' . company_setting('defult_currancy') }}
+                                @endif
+                            </h6>
                         </div>
                     @endif
                 </div>

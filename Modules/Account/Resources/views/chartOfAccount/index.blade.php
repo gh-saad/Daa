@@ -124,13 +124,8 @@
 
                                 @foreach ($accounts as $account)
                                     @php
-                                        $balance = 0;
-                                        $totalDebit   = 0;
-                                        $totalCredit  = 0;
-                                        $totalBalance = \Modules\Account\Entities\AccountUtility::getAccountBalance($account->id);
-
+                                        $netAmount = $account->balance($account->id);
                                     @endphp
-
                                     <tr>
                                         <td>{{ !empty($account->code) ? $account->code  :'-'}}</td>
 
@@ -144,9 +139,17 @@
 
 
                                         <td>{{!empty($account->subType)?$account->subType->name:'-'}}</td>
+
                                         <td>
-                                            @if(!empty($totalBalance))
-                                                {{currency_format_with_sym($totalBalance)}}
+                                            @if($netAmount != null)
+                                                @if ($netAmount < 0)
+                                                    @php
+                                                        $removedNegative = abs($netAmount);
+                                                    @endphp
+                                                    {{ '( ' . number_format($removedNegative, 2) . ' ' . company_setting('defult_currancy') . ' )' }}
+                                                @else
+                                                    {{ number_format($netAmount, 2) . ' ' . company_setting('defult_currancy') }}
+                                                @endif
                                             @else
                                                 -
                                             @endif

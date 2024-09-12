@@ -1041,23 +1041,23 @@ class PurchaseController extends Controller
                     }
                 }
 
-                // find bank account
-                $bank_account = \Modules\Account\Entities\BankAccount::where('id', $request->account_id)->first();
-                \Modules\Account\Entities\Transfer::bankAccountBalance($request->account_id, $request->amount, $bank_account->currency, 'credit');
+                // // find bank account
+                // $bank_account = \Modules\Account\Entities\BankAccount::where('id', $request->account_id)->first();
+                // \Modules\Account\Entities\Transfer::bankAccountBalance($request->account_id, $request->amount, $bank_account->currency, 'credit');
 
-                $account_payment = new \Modules\Account\Entities\Payment();
-                $account_payment->date = $purchasePayment->date;
-                $account_payment->amount = $purchasePayment->amount;
-                $account_payment->account_id = $purchasePayment->account_id;
-                $account_payment->vendor_id = $purchase->vender_id;
-                $account_payment->category_id = 2; // default for now
-                $account_payment->payment_method = 0; // default for now
-                $account_payment->reference = $purchasePayment->reference ?? '-';
-                $account_payment->description = $purchasePayment->description ?? '-';
-                $account_payment->add_receipt = $purchasePayment->add_receipt;
-                $account_payment->workspace = getActiveWorkSpace();
-                $account_payment->created_by = \Auth::user()->id;
-                $account_payment->save();
+                // $account_payment = new \Modules\Account\Entities\Payment();
+                // $account_payment->date = $purchasePayment->date;
+                // $account_payment->amount = $purchasePayment->amount;
+                // $account_payment->account_id = $purchasePayment->account_id;
+                // $account_payment->vendor_id = $purchase->vender_id;
+                // $account_payment->category_id = 2; // default for now
+                // $account_payment->payment_method = 0; // default for now
+                // $account_payment->reference = $purchasePayment->reference ?? '-';
+                // $account_payment->description = $purchasePayment->description ?? '-';
+                // $account_payment->add_receipt = $purchasePayment->add_receipt;
+                // $account_payment->workspace = getActiveWorkSpace();
+                // $account_payment->created_by = \Auth::user()->id;
+                // $account_payment->save();
             }
 
             // Get the items associated with the purchase
@@ -1097,8 +1097,10 @@ class PurchaseController extends Controller
             Purchase::userBalance('vendor', $purchase->vender_id, $amount, 'debit');
 
             // adding Journal Entries
-            // Checking Account = Credit = Payment Amount
+            // Bank Account = Credit = Payment Amount
             // Account Payable = Debit = Payment Amount
+
+            $bank_account = \Modules\Account\Entities\BankAccount::find($request->account_id);
 
             $new_journal_entry = new \Modules\DoubleEntry\Entities\JournalEntry();
             $new_journal_entry->date = now();
@@ -1112,7 +1114,7 @@ class PurchaseController extends Controller
 
             $first_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
             $first_journal_item->journal = $new_journal_entry->id;
-            $first_journal_item->account = 1;
+            $first_journal_item->account = $bank_account->chart_account_id;
             $first_journal_item->description = '-';
             $first_journal_item->debit = 0.00;
             $first_journal_item->credit = $amount;
@@ -1120,7 +1122,7 @@ class PurchaseController extends Controller
             $first_journal_item->created_by = \Auth::user()->id;
             $first_journal_item->save();
 
-            $first_transaction = add_quick_transaction('Credit', 1, $amount);
+            $first_transaction = add_quick_transaction('Credit', $bank_account->chart_account_id, $amount);
 
             $second_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
             $second_journal_item->journal = $new_journal_entry->id;
