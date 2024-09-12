@@ -151,73 +151,11 @@
                         </div>
 
                         @php
-                            $totalAmount = 0;
+                            $totalAssets = 0;
+                            $totalLiabilitiesEquity = 0;
                         @endphp
 
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="account-title d-flex align-items-center justify-content-between border py-2">
-                                    <h5 class="mb-0 ms-3">{{ __('Liabilities & Equity') }}</h5>
-                                </div>
-                                <div class="border-start border-end">
-                                    @foreach ($totalAccounts as $typeName => $subTypes)
-                                        @if ($typeName != 'Assets')
-                                            <div class="account-main-inner py-2">
-                                                <p class="fw-bold ps-2 mb-2">{{ $typeName }}</p>
-                                                @php
-                                                    $total = 0;
-                                                @endphp
-                                                @foreach ($subTypes as $subTypeName => $accounts)
-                                                    <div class="border-bottom py-2">
-                                                        <p class="fw-bold ps-4 mb-2">{{ $subTypeName }}</p>
-                                                        @foreach ($accounts as $account)
-                                                            <div class="account-inner d-flex align-items-center justify-content-between ps-5">
-                                                                <p class="mb-2 ms-3">
-                                                                    <a href="{{ route('report.ledger', $account['account_id']) }}?account={{ $account['account_id'] }}" class="text-primary">
-                                                                        {{ $account['account_name'] }}
-                                                                    </a>
-                                                                </p>
-                                                                <p class="mb-2 text-center">{{ $account['account_code'] }}</p>
-                                                                <p class="text-primary mb-2 float-end text-end me-3">
-                                                                    {{ currency_format_with_sym($account['total_amount']) }}
-                                                                </p>
-                                                            </div>
-                                                            @php
-                                                                $total += $account['total_amount'];
-                                                            @endphp
-                                                        @endforeach
-                                                    </div>
-                                                @endforeach
-                                                <div class="account-title d-flex align-items-center justify-content-between border-top border-bottom py-2 px-2 pe-0">
-                                                    <h6 class="fw-bold mb-0">{{ 'Total for ' . $typeName }}</h6>
-                                                    <h6 class="fw-bold mb-0 text-end me-3">
-                                                        {{ currency_format_with_sym($total) }}
-                                                    </h6>
-                                                </div>
-                                                @php
-                                                    if ($typeName != 'Assets') {
-                                                        $totalAmount += $total;
-                                                    }
-                                                @endphp
-                                            </div>
-                                        @endif
-                                    @endforeach
-                                    @if ($totalAmount != 0)
-                                        <div class="d-flex align-items-center justify-content-between border-bottom py-2 px-0">
-                                            <h6 class="fw-bold mb-0 ms-2">{{ 'Total for Liabilities & Equity' }}</h6>
-                                            <h6 class="fw-bold mb-0 text-end me-3">
-                                                {{ currency_format_with_sym($totalAmount) }}
-                                            </h6>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-
-                            @php
-                                $total = 0;
-                                $totalAmounts = 0;
-                            @endphp
-
                             <div class="col-md-6">
                                 <div class="account-title d-flex align-items-center justify-content-between border py-2">
                                     <h5 class="mb-0 ms-3">{{ __('Assets') }}</h5>
@@ -242,7 +180,14 @@
                                                                 </p>
                                                                 <p class="mb-2 text-center">{{ $account['account_code'] }}</p>
                                                                 <p class="text-primary mb-2 float-end text-end me-3">
-                                                                    {{ currency_format_with_sym($account['total_amount']) }}
+                                                                    @if ($account['total_amount'] < 0)
+                                                                        @php
+                                                                            $removedNegative = abs($account['total_amount']);
+                                                                        @endphp
+                                                                        {{ '( ' . number_format($removedNegative, 2) . ' ' . company_setting('defult_currancy') . ' )' }}
+                                                                    @else
+                                                                        {{ number_format($account['total_amount'], 2) . ' ' . company_setting('defult_currancy') }}
+                                                                    @endif
                                                                 </p>
                                                             </div>
                                                             @php
@@ -254,31 +199,121 @@
                                                 <div class="account-title d-flex align-items-center justify-content-between border-top border-bottom py-2 px-2 pe-0">
                                                     <h6 class="fw-bold mb-0">{{ 'Total for ' . $typeName }}</h6>
                                                     <h6 class="fw-bold mb-0 text-end me-3">
-                                                        {{ currency_format_with_sym($total) }}
+                                                        @if ($total < 0)
+                                                            @php
+                                                                $removedNegative = abs($total);
+                                                            @endphp
+                                                            {{ '( ' . number_format($removedNegative, 2) . ' ' . company_setting('defult_currancy') . ' )' }}
+                                                        @else
+                                                            {{ number_format($total, 2) . ' ' . company_setting('defult_currancy') }}
+                                                        @endif
                                                     </h6>
-                                                </div>
                                                 @php
-                                                    if ($typeName == 'Assets') {
-                                                        $totalAmount += $total;
-                                                    }
+                                                    $totalAssets += $total;
                                                 @endphp
-
+                                                </div>
                                             </div>
                                         @endif
                                     @endforeach
-                                    @if ($totalAmounts != 0)
-                                        <div
-                                            class="d-flex align-items-center justify-content-between border-bottom py-2 px-0">
-                                            <h6 class="fw-bold mb-0 ms-2">{{ 'Total for Assets' }}</h6>
-                                            <h6 class="fw-bold mb-0 text-end me-3">
-                                                {{ currency_format_with_sym($totalAmounts) }}</h6>
-                                        </div>
-                                    @endif
                                 </div>
+                            </div>
 
+                            <div class="col-md-6">
+                                <div class="account-title d-flex align-items-center justify-content-between border py-2">
+                                    <h5 class="mb-0 ms-3">{{ __('Liabilities & Equity') }}</h5>
+                                </div>
+                                <div class="border-start border-end">
+                                    @foreach ($totalAccounts as $typeName => $subTypes)
+                                        @if ($typeName != 'Assets')
+                                            <div class="account-main-inner py-2">
+                                                <p class="fw-bold ps-2 mb-2">{{ $typeName }}</p>
+                                                @php
+                                                    $total = 0;
+                                                @endphp
+                                                @foreach ($subTypes as $subTypeName => $accounts)
+                                                    <div class="border-bottom py-2">
+                                                        <p class="fw-bold ps-4 mb-2">{{ $subTypeName }}</p>
+                                                        @foreach ($accounts as $account)
+                                                            <div class="account-inner d-flex align-items-center justify-content-between ps-5">
+                                                                <p class="mb-2 ms-3">
+                                                                    <a href="{{ route('report.ledger', $account['account_id']) }}?account={{ $account['account_id'] }}" class="text-primary">
+                                                                        {{ $account['account_name'] }}
+                                                                    </a>
+                                                                </p>
+                                                                <p class="mb-2 text-center">{{ $account['account_code'] }}</p>
+                                                                <p class="text-primary mb-2 float-end text-end me-3">
+                                                                    @if ($account['total_amount'] < 0)
+                                                                        @php
+                                                                            $removedNegative = abs($account['total_amount']);
+                                                                        @endphp
+                                                                        {{ '( ' . number_format($removedNegative, 2) . ' ' . company_setting('defult_currancy') . ' )' }}
+                                                                    @else
+                                                                        {{ number_format($account['total_amount'], 2) . ' ' . company_setting('defult_currancy') }}
+                                                                    @endif
+                                                                </p>
+                                                            </div>
+                                                            @php
+                                                                $total += $account['total_amount'];
+                                                            @endphp
+                                                        @endforeach
+                                                    </div>
+                                                @endforeach
+                                                <div class="account-title d-flex align-items-center justify-content-between border-top border-bottom py-2 px-2 pe-0">
+                                                    <h6 class="fw-bold mb-0">{{ 'Total for ' . $typeName }}</h6>
+                                                    <h6 class="fw-bold mb-0 text-end me-3">
+                                                        @if ($total < 0)
+                                                            @php
+                                                                $removedNegative = abs($total);
+                                                            @endphp
+                                                            {{ '( ' . number_format($removedNegative, 2) . ' ' . company_setting('defult_currancy') . ' )' }}
+                                                        @else
+                                                            {{ number_format($total, 2) . ' ' . company_setting('defult_currancy') }}
+                                                        @endif
+                                                    </h6>
+                                                @php
+                                                    $totalLiabilitiesEquity += $total;
+                                                @endphp
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
                             </div>
                         </div>
 
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="account-title d-flex align-items-center justify-content-between border-top border-bottom py-2 px-2 pe-0">
+                                    <h6 class="fw-bold mb-0">{{ 'Total for Assets' }}</h6>
+                                    <h6 class="fw-bold mb-0 text-end me-3">
+                                        @if ($totalAssets < 0)
+                                            @php
+                                                $removedNegative = abs($totalAssets);
+                                            @endphp
+                                            {{ '( ' . number_format($removedNegative, 2) . ' ' . company_setting('defult_currancy') . ' )' }}
+                                        @else
+                                            {{ number_format($totalAssets, 2) . ' ' . company_setting('defult_currancy') }}
+                                        @endif
+                                    </h6>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="account-title d-flex align-items-center justify-content-between border-top border-bottom py-2 px-2 pe-0">
+                                    <h6 class="fw-bold mb-0">{{ 'Total for Liabilities & Equity' }}</h6>
+                                    <h6 class="fw-bold mb-0 text-end me-3">
+                                        @if ($totalLiabilitiesEquity < 0)
+                                            @php
+                                                $removedNegative = abs($totalLiabilitiesEquity);
+                                            @endphp
+                                            {{ '( ' . number_format($removedNegative, 2) . ' ' . company_setting('defult_currancy') . ' )' }}
+                                        @else
+                                            {{ number_format($totalLiabilitiesEquity, 2) . ' ' . company_setting('defult_currancy') }}
+                                        @endif
+                                    </h6>
+                                </div>
+                            </div>
+                        </div>
 
                     </div>
                 </div>

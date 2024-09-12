@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Sidebar;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class Install extends Command
 {
@@ -67,6 +68,8 @@ class Install extends Command
         $this->info('# updating chart of accounts.');
 
         try {
+
+            // update the tax expense chart of account
             if (DB::table('chart_of_account_sub_types')->where('name', '=', 'Tax Expense')->first() == null) {
                 DB::table('chart_of_account_sub_types')->insert([
                     'name' => 'Tax Expense',
@@ -89,6 +92,109 @@ class Install extends Command
                         'sub_type' => $tax_expense->id,
                     ]);
             }
+
+            // Create or fetch KES CASH ACCOUNT
+            $kes_cash_account = DB::table('chart_of_accounts')->where('name', '=', 'KES CASH ACCOUNT')->first();
+            if ($kes_cash_account == null) {
+                DB::table('chart_of_accounts')->insert([
+                    'name' => 'KES CASH ACCOUNT',
+                    'code' => 1061,
+                    'type' => 1, // Asset
+                    'sub_type' => 1,
+                    'is_enabled' =>  1,
+                    'description' => null,
+                    'workspace' => 1,
+                    'created_by' => 2,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $kes_cash_account = DB::table('chart_of_accounts')->where('name', '=', 'KES CASH ACCOUNT')->first(); // Fetch after insert
+            }
+
+            // Create or fetch USD CASH ACCOUNT
+            $usd_cash_account = DB::table('chart_of_accounts')->where('name', '=', 'USD CASH ACCOUNT')->first();
+            if ($usd_cash_account == null) {
+                DB::table('chart_of_accounts')->insert([
+                    'name' => 'USD CASH ACCOUNT',
+                    'code' => 1062,
+                    'type' => 1, // Asset
+                    'sub_type' => 1,
+                    'is_enabled' =>  1,
+                    'description' => null,
+                    'workspace' => 1,
+                    'created_by' => 2,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $usd_cash_account = DB::table('chart_of_accounts')->where('name', '=', 'USD CASH ACCOUNT')->first(); // Fetch after insert
+            }
+
+            // Create or fetch KES EQUITY ACCOUNT
+            $kes_equity_account = DB::table('chart_of_accounts')->where('name', '=', 'KES EQUITY ACCOUNT')->first();
+            if ($kes_equity_account == null) {
+                DB::table('chart_of_accounts')->insert([
+                    'name' => 'KES EQUITY ACCOUNT',
+                    'code' => 1063,
+                    'type' => 3, // Equity
+                    'sub_type' => 8,
+                    'is_enabled' =>  1,
+                    'description' => null,
+                    'workspace' => 1,
+                    'created_by' => 2,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $kes_equity_account = DB::table('chart_of_accounts')->where('name', '=', 'KES EQUITY ACCOUNT')->first(); // Fetch after insert
+            }
+
+            // Create or fetch USD EQUITY ACCOUNT
+            $usd_equity_account = DB::table('chart_of_accounts')->where('name', '=', 'USD EQUITY ACCOUNT')->first();
+            if ($usd_equity_account == null) {
+                DB::table('chart_of_accounts')->insert([
+                    'name' => 'USD EQUITY ACCOUNT',
+                    'code' => 1064,
+                    'type' => 3, // Equity
+                    'sub_type' => 8,
+                    'is_enabled' =>  1,
+                    'description' => null,
+                    'workspace' => 1,
+                    'created_by' => 2,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $usd_equity_account = DB::table('chart_of_accounts')->where('name', '=', 'USD EQUITY ACCOUNT')->first(); // Fetch after insert
+            }
+
+            // find bank accounts in the bank_accounts table by using their account_number and then update thier chart_of_account_id
+            $kes_cash_bank_account = DB::table('bank_accounts')->where('account_number', '3000176744')->first();
+            if ($kes_cash_bank_account != null) {
+                DB::table('bank_accounts')
+                ->where('id', $kes_cash_bank_account->id)
+                ->update(['chart_account_id' => $kes_cash_account->id]);
+            }
+            
+            $usd_cash_bank_account = DB::table('bank_accounts')->where('account_number', '3001176750')->first();
+            if ($usd_cash_bank_account != null) {
+                DB::table('bank_accounts')
+                ->where('id', $usd_cash_bank_account->id)
+                ->update(['chart_account_id' => $usd_cash_account->id]);
+            }
+
+            $kes_equity_bank_account = DB::table('bank_accounts')->where('account_number', '0770285366501')->first();
+            if ($kes_equity_bank_account != null) {
+                DB::table('bank_accounts')
+                ->where('id', $kes_equity_bank_account->id)
+                ->update(['chart_account_id' => $kes_equity_account->id]);
+            }
+            
+            $usd_equity_bank_account = DB::table('bank_accounts')->where('account_number', '0770285513198')->first();
+            if ($usd_equity_bank_account != null) {
+                DB::table('bank_accounts')
+                ->where('id', $usd_equity_bank_account->id)
+                ->update(['chart_account_id' => $usd_equity_account->id]);
+            }
+            
+
         } catch (\Exception $e) {
             $this->error("An error occurred: " . $e->getMessage());
             return 1;

@@ -116,25 +116,7 @@ class ReportController extends Controller
                     $accounts = ChartOfAccount::where('sub_type', $subType->id)
                         ->where('type', $type->id)->where('workspace', getActiveWorkSpace())->get();
                     foreach ($accounts as $account) {
-                        
-                        $transactions = Transaction::join(
-                            "chart_of_accounts",
-                            "transactions.account",
-                            "=",
-                            "chart_of_accounts.id"
-                        )
-                        ->select(
-                            "transactions.*", 
-                            "chart_of_accounts.type as chart_type"
-                        )
-                        ->where("transactions.account", $account->id)
-                        ->whereBetween("transactions.date", [$start, $end])
-                        ->get();
-        
-                        $balance = $transactions->sum(function ($transaction) {
-                            return $transaction->type == 'Credit' ? $transaction->amount : -$transaction->amount;
-                        });
-    
+                        $balance = $account->balance($account->id);
                         if ($balance != 0) {
                             $totalAccounts[$type->name][$subType->name][$account->id] = [
                                 'account_id' => $account->id,
@@ -235,18 +217,6 @@ class ReportController extends Controller
                 $end = date('Y-m-t');
             }
             $total_accounts = [];
-            $data = [
-                "invoice" => 0,
-                "invoicepayment" => 0,
-                "revenue" => 0,
-                "bill" => 0,
-                "billdata" => 0,
-                "billpayment" => 0,
-                "payment" => 0,
-                "journalItem" => 0
-            ];
-            $total_debit = 0;
-            $total_credit = 0;
             $types = ChartOfAccountType::where('created_by', creatorId())->where('workspace', getActiveWorkSpace())->get();
             foreach ($types as $type) {
                 $subTypes = ChartOfAccountSubType::where('type', $type->id)->get();
@@ -254,41 +224,16 @@ class ReportController extends Controller
                     $accounts = ChartOfAccount::where('sub_type', $subType->id)
                         ->where('type', $type->id)->where('workspace', getActiveWorkSpace())->get();
                     foreach ($accounts as $account) {
-                        $chartDatas = \Modules\Account\Entities\AccountUtility::getAccountData(
-                            $account->id,
-                            $start,
-                            $end,
-                        );
-                        foreach ($chartDatas as $key => $payments) {
-                            foreach ($payments as $payment) {
-                                $total = $payment->amount;
-
-                                if ($key == 'billdata' || $key == 'billpayment' || $key == 'payment') {
-                                    $total_debit += $total;
-                                }
-                                else if($key == "journalItem") {
-                                    $journal_entry = \Modules\DoubleEntry\Entities\JournalEntry::find($payment->journal_id);
-                                    $total_debit += currency_conversion($payment->debit, $journal_entry->currency, company_setting('defult_currancy'));
-                                    $total_credit += currency_conversion($payment->credit, $journal_entry->currency, company_setting('defult_currancy'));
-                                } 
-                                else {
-                                    $total_credit += $total;
-                                }
-                            }
-                            if ($total_credit != 0 || $total_debit != 0) {
-                                $total_accounts[$type->name][$subType->name][$account->id] = [
-                                    'id' => $account->id,
-                                    'name' => $account->name,
-                                    'code' => $account->code,
-                                    'amount' => $total_credit - $total_debit,
-                                    'credit' => $total_credit,
-                                    'debit' => $total_debit,
-                                ];
-                            }
+                        $balances = $account->credit_and_debit_balance($account->id);
+                        if ($balances['total_debit'] != 0 || $balances['total_credit'] != 0) {
+                            $total_accounts[$type->name][$subType->name][$account->id] = [
+                                'id' => $account->id,
+                                'name' => $account->name,
+                                'code' => $account->code,
+                                'credit' => $balances['total_credit'],
+                                'debit' => $balances['total_debit'],
+                            ];
                         }
-                        // Reset total_credit and total_debit for the next account
-                        $total_credit = 0;
-                        $total_debit = 0;
                     }
                 }
             }
@@ -307,8 +252,6 @@ class ReportController extends Controller
             return redirect()->back()->with('error', __('Permission Denied.'));
         }
     }
-
-
 
     public function salesReport(Request $request)
     {

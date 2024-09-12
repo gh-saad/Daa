@@ -1518,7 +1518,7 @@ class AccountUtility extends Model
         $journalDebit = !empty($journalDebit)?$journalDebit:0;
 
 
-        $balance   =  ($invoiceAmount + $invoicePaymentAmount + $revenueAmount + $journalCredit) - ($journalDebit + $billProductAmount + $billAmount + $billPaymentAmount + $paymentAmount);
+        $balance   =  ($journalDebit + $billProductAmount + $billAmount + $billPaymentAmount + $paymentAmount) - ($invoiceAmount + $invoicePaymentAmount + $revenueAmount + $journalCredit);
 
         return $balance;
 
