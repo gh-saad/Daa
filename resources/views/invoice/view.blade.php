@@ -102,12 +102,14 @@
                                 <p class="text-muted text-sm mb-3"><i
                                         class="ti ti-clock mr-2"></i>{{ __('Created on ') }}{{ company_date_formate($invoice->issue_date) }}
                                 </p>
-                                @can('invoice edit')
-                                    <a href="{{ route('invoice.edit', \Crypt::encrypt($invoice->id)) }}"
-                                        class="btn btn-sm btn-primary" data-bs-toggle="tooltip"
-                                        data-original-title="{{ __('Edit') }}"><i
-                                            class="ti ti-edit mr-2"></i>{{ __('Edit') }}</a>
-                                @endcan
+                                @if($invoice->status == 0)
+                                    @can('invoice edit')
+                                        <a href="{{ route('invoice.edit', \Crypt::encrypt($invoice->id)) }}"
+                                            class="btn btn-sm btn-primary" data-bs-toggle="tooltip"
+                                            data-original-title="{{ __('Edit') }}"><i
+                                                class="ti ti-edit mr-2"></i>{{ __('Edit') }}</a>
+                                    @endcan
+                                @endif
                             </div>
                             <div class="col-md-6 col-lg-4 col-xl-4">
                                 <div class="timeline-icons"><span class="timeline-dots"></span>
@@ -269,23 +271,21 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        @if (!empty($customer->billing_name) && !empty($customer->billing_address) && !empty($customer->billing_zip))
-                                            <div class="col">
-                                                <small class="font-style">
-                                                    <strong>{{ __('Billed To') }} :</strong><br>
-                                                    {{ !empty($customer->billing_name) ? $customer->billing_name : '' }}<br>
-                                                    {{ !empty($customer->billing_address) ? $customer->billing_address : '' }}<br>
-                                                    {{ !empty($customer->billing_city) ? $customer->billing_city . ' ,' : '' }}
-                                                    {{ !empty($customer->billing_state) ? $customer->billing_state . ' ,' : '' }}
-                                                    {{ !empty($customer->billing_zip) ? $customer->billing_zip : '' }}<br>
-                                                    {{ !empty($customer->billing_country) ? $customer->billing_country : '' }}<br>
-                                                    {{ !empty($customer->billing_phone) ? $customer->billing_phone : '' }}<br>
-                                                    <strong>{{ __('Tax Number ') }} :
-                                                    </strong>{{ !empty($customer->tax_number) ? $customer->tax_number : '' }}
+                                        <div class="col">
+                                            <small class="font-style">
+                                                <strong>{{ __('Billed To') }} :</strong><br>
+                                                {{ !empty($customer->billing_name) ? $customer->billing_name : '' }}<br>
+                                                {{ !empty($customer->billing_address) ? $customer->billing_address : '' }}<br>
+                                                {{ !empty($customer->billing_city) ? $customer->billing_city . ' ,' : '' }}
+                                                {{ !empty($customer->billing_state) ? $customer->billing_state . ' ,' : '' }}
+                                                {{ !empty($customer->billing_zip) ? $customer->billing_zip : '' }}<br>
+                                                {{ !empty($customer->billing_country) ? $customer->billing_country : '' }}<br>
+                                                {{ !empty($customer->billing_phone) ? $customer->billing_phone : '' }}<br>
+                                                <strong>{{ __('Tax Number ') }} :
+                                                </strong>{{ !empty($customer->tax_number) ? $customer->tax_number : '' }}
 
-                                                </small>
-                                            </div>
-                                        @endif
+                                            </small>
+                                        </div>
                                         @if (company_setting('invoice_shipping_display') == 'on')
                                             @if (!empty($customer->shipping_name) && !empty($customer->shipping_address) && !empty($customer->shipping_zip))
                                                 <div class="col ">
@@ -376,168 +376,135 @@
                                             <small>{{ __('All items here cannot be deleted.') }}</small>
                                             <div class="table-responsive mt-2">
                                                 <table class="table mb-0 table-striped">
-                                                    <tr>
-                                                        <th data-width="40" class="text-dark">#</th>
-                                                        @if ($invoice->invoice_module == 'account')
-                                                            <th class="text-dark">{{ __('Item Type') }}</th>
-                                                            <th class="text-dark">{{ __('Item') }}</th>
-                                                        @elseif($invoice->invoice_module == 'taskly')
-                                                            <th class="text-dark">{{ __('Project') }}</th>
-                                                        @endif
-
-                                                        <th class="text-dark">{{ __('Quantity') }}</th>
-                                                        <th class="text-dark">{{ __('Rate') }}</th>
-                                                        <th class="text-dark">{{ __('Discount') }}</th>
-                                                        <th class="text-dark">{{ __('Tax') }}</th>
-                                                        <th class="text-dark">{{ __('Description') }}</th>
-                                                        <th class="text-right text-dark" width="12%">{{ __('Price') }}<br>
-                                                            <small
-                                                                class="text-danger font-weight-bold">{{ __('After discount & tax') }}</small>
-                                                        </th>
-                                                    </tr>
-                                                    @php
-                                                        $totalQuantity = 0;
-                                                        $totalRate = 0;
-                                                        $totalTaxPrice = 0;
-                                                        $totalDiscount = 0;
-                                                        $taxesData = [];
-                                                        $TaxPrice_array = [];
-                                                    @endphp
-                                                    @foreach ($iteams as $key => $iteam)
-                                                        @if (!empty($iteam->tax))
-                                                            @php
-                                                                $taxes = \App\Models\Invoice::tax($iteam->tax);
-                                                                $totalQuantity += $iteam->quantity;
-                                                                $totalRate += $iteam->price;
-                                                                $totalDiscount += $iteam->discount;
-                                                                foreach ($taxes as $taxe) {
-                                                                    $taxDataPrice = \App\Models\Invoice::taxRate($taxe->rate, $iteam->price, $iteam->quantity, $iteam->discount);
-                                                                    if (array_key_exists($taxe->name, $taxesData)) {
-                                                                        $taxesData[$taxe->name] = $taxesData[$taxe->name] + $taxDataPrice;
-                                                                    } else {
-                                                                        $taxesData[$taxe->name] = $taxDataPrice;
-                                                                    }
-                                                                }
-                                                            @endphp
-                                                        @endif
                                                         <tr>
-                                                            <td>{{ $key + 1 }}</td>
-                                                            @if ($invoice->invoice_module == 'account')
-                                                                <td>{{ !empty($iteam->product_type) ? Str::ucfirst($iteam->product_type) : '--' }}
-                                                                </td>
-                                                                <td>{{ !empty($iteam->product()) ? $iteam->product()->name : '' }}</td>
-                                                            @elseif($invoice->invoice_module == 'taskly')
-                                                                <td>{{ !empty($iteam->product()) ? $iteam->product()->title : '' }}</td>
-                                                            @endif
-                                                            <td>{{ $iteam->quantity }}</td>
-                                                            <td>{{ currency_format_with_sym($iteam->price) }}</td>
-                                                            <td>
-                                                                {{ currency_format_with_sym($iteam->discount) }}
-                                                            </td>
-                                                            <td>
+                                                            <th class="text-dark" data-width="40">#</th>
+                                                            <th class="text-dark">{{__('Item Type')}}</th>
+                                                            <th class="text-dark">{{__('Chasis No')}}</th>
+                                                            <th class="text-dark">{{__('Item Name')}}</th>
+                                                            <th class="text-dark">{{__('Rate')}}</th>
+                                                            <th class="text-dark">{{__('Discount')}} </th>
+                                                            <th class="text-dark">{{ __('Tax') }}</th>
+                                                            <th class="text-dark">{{__('Description')}}</th>
+                                                            <th class="text-end text-dark" width="12%">{{__('Price')}}<br>
+                                                                <small class="text-danger font-weight-bold">{{__('After discount & tax')}}</small>
+                                                            </th>
 
-                                                                @if (!empty($iteam->tax))
-                                                                    <table>
-                                                                        @php
-                                                                            $totalTaxRate = 0;
-                                                                            $data = 0;
-                                                                        @endphp
-                                                                        @foreach ($taxes as $tax)
-                                                                            @php
-                                                                                $taxPrice = \App\Models\Invoice::taxRate($tax->rate, $iteam->price, $iteam->quantity, $iteam->discount);
-                                                                                $totalTaxPrice += $taxPrice;
-                                                                                $data += $taxPrice;
-                                                                            @endphp
-                                                                            <tr>
-                                                                                <td>{{ $tax->name . ' (' . $tax->rate . '%)' }}</td>
-                                                                                <td>{{ currency_format_with_sym($taxPrice) }}</td>
-                                                                            </tr>
-                                                                        @endforeach
-                                                                        @php
-                                                                            array_push($TaxPrice_array, $data);
-                                                                        @endphp
-                                                                    </table>
-                                                                @else
-                                                                    -
-                                                                @endif
-                                                            </td>
-
-                                                            <td style="white-space: break-spaces;">
-                                                                {{ !empty($iteam->description) ? $iteam->description : '-' }}</td>
-                                                            @php
-                                                                $tr_tex = array_key_exists($key, $TaxPrice_array) == true ? $TaxPrice_array[$key] : 0;
-                                                            @endphp
-                                                            <td class="">
-                                                                {{ currency_format_with_sym($iteam->price * $iteam->quantity - $iteam->discount + $tr_tex) }}
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                    <tfoot>
-                                                        <tr>
-                                                            <td></td>
-                                                            @if ($invoice->invoice_module == 'account')
-                                                                <td></td>
-                                                            @endif
-                                                            <td><b>{{ __('Total') }}</b></td>
-                                                            <td><b>{{ $totalQuantity }}</b></td>
-                                                            <td><b>{{ currency_format_with_sym($totalRate) }}</b></td>
-                                                            <td><b>{{ currency_format_with_sym($totalDiscount) }}</b></td>
-                                                            <td><b>{{ currency_format_with_sym($totalTaxPrice) }}</b></td>
-                                                            <td></td>
                                                         </tr>
                                                         @php
-                                                            $colspan = 6;
-                                                            if ($invoice->invoice_module == 'account') {
-                                                                $colspan = 7;
-                                                            }
+                                                            $totalQuantity = 0;
+                                                            $totalRate = 0;
+                                                            $totalTaxPrice = 0;
+                                                            $totalDiscount = 0;
+                                                            $taxesData = [];
+                                                            $TaxPrice_array = [];
                                                         @endphp
+
+                                                        @foreach($iteams as $key =>$iteam)
+                                                            @php
+                                                                $totalRate+=currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy'));
+                                                                $totalDiscount+=currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy'));
+                                                            @endphp
+                                                            @if (!empty($iteam->tax))
+                                                                @php
+                                                                    $taxes = \App\Models\Invoice::tax($iteam->tax);
+                                                                    foreach ($taxes as $taxe) {
+                                                                        $taxDataPrice = \App\Models\Invoice::taxRate($taxe->rate, currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy')), $iteam->quantity, currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy')));
+                                                                        if (array_key_exists($taxe->name, $taxesData)) {
+                                                                            $taxesData[$taxe->name] = $taxesData[$taxe->name] + $taxDataPrice;
+                                                                        } else {
+                                                                            $taxesData[$taxe->name] = $taxDataPrice;
+                                                                        }
+                                                                    }
+                                                                @endphp
+                                                            @endif
+                                                            <tr>
+                                                                <td>{{$key+1}}</td>
+                                                                <td>{{!empty($iteam->product_type) ? Str::ucfirst($iteam->product_type) : '--'}}</td>
+                                                                <td>{{!empty($iteam->product())?$iteam->product()->sku:''}}</td>
+                                                                <td>{{!empty($iteam->product())?$iteam->product()->name:''}}</td>
+                                                                <td>{{ number_format(currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>
+                                                                <td>{{ number_format(currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>
+                                                                <td>
+                                                                    @if (!empty($iteam->tax))
+                                                                        <table>
+                                                                            @php
+                                                                                $totalTaxRate = 0;
+                                                                                $data = 0;
+                                                                            @endphp
+                                                                            @foreach ($taxes as $tax)
+                                                                                @php
+                                                                                    $taxPrice = \App\Models\Invoice::taxRate($tax->rate, currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy')), $iteam->quantity, currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy')));
+                                                                                    $totalTaxPrice += $taxPrice;
+                                                                                    $data += $taxPrice;
+                                                                                @endphp
+                                                                                <tr>
+                                                                                    <td>{{ $tax->name . ' (' . $tax->rate . '%)' }}</td>
+                                                                                    <td>{{ number_format($taxPrice, 2) . ' ' . company_setting('defult_currancy') }}</td>
+                                                                                </tr>
+                                                                            @endforeach
+                                                                            @php
+                                                                                array_push($TaxPrice_array, $data);
+                                                                            @endphp
+                                                                        </table>
+                                                                    @else
+                                                                        -
+                                                                    @endif
+                                                                </td>
+                                                                <td style="white-space: break-spaces;">{{!empty($iteam->description)?$iteam->description:'-'}}</td>
+                                                                <td class="text-end">{{ number_format(currency_conversion(($iteam->price - $iteam->discount), $iteam->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>{{--text-right--}}
+                                                            </tr>
+                                                        @endforeach
+                                                        <tfoot>
                                                         <tr>
-                                                            <td colspan="{{ $colspan }}"></td>
-                                                            <td class="text-right"><b>{{ __('Sub Total') }}</b></td>
-                                                            <td class="text-right">
-                                                                {{ currency_format_with_sym($invoice->getSubTotal()) }}</td>
+                                                            <td></td>
+                                                            <td><b>{{__('Total')}}</b></td>
+                                                            <td></td>
+                                                            <td><b>{{ number_format($totalRate, 2) . ' ' . company_setting('defult_currancy') }}</b></td>
+                                                            <td><b>{{ number_format($totalDiscount, 2) . ' ' . company_setting('defult_currancy') }}</b></td>
+                                                            <td><b>{{ number_format($totalTaxPrice, 2) . ' ' . company_setting('defult_currancy') }}</b></td>
+
                                                         </tr>
                                                         <tr>
-                                                            <td colspan="{{ $colspan }}"></td>
-                                                            <td class="text-right"><b>{{ __('Discount') }}</b></td>
-                                                            <td class="text-right">
-                                                                {{ currency_format_with_sym($invoice->getTotalDiscount()) }}</td>
+                                                            <td colspan="7"></td>
+                                                            <td class="text-end"><b>{{__('Sub Total')}}</b></td>
+                                                            <td class="text-end">{{ number_format($invoice->getSubTotal(), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                         </tr>
+
+                                                        <tr>
+                                                            <td colspan="7"></td>
+                                                            <td class="text-end"><b>{{__('Discount')}}</b></td>
+                                                            <td class="text-end">{{ number_format($invoice->getTotalDiscount(), 2) . ' ' . company_setting('defult_currancy') }}</td>
+                                                        </tr>
+
                                                         @if (!empty($taxesData))
                                                             @foreach ($taxesData as $taxName => $taxPrice)
                                                                 <tr>
-                                                                    <td colspan="{{ $colspan }}"></td>
-                                                                    <td class="text-right"><b>{{ $taxName }}</b></td>
-                                                                    <td class="text-right">{{ currency_format_with_sym($taxPrice) }}
-                                                                    </td>
+                                                                    <td colspan="7"></td>
+                                                                    <td class="text-end"><b>{{ $taxName }}</b></td>
+                                                                    <td class="text-end">{{ number_format($taxPrice, 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                                 </tr>
                                                             @endforeach
                                                         @endif
+
                                                         <tr>
-                                                            <td colspan="{{ $colspan }}"></td>
-                                                            <td class="blue-text text-right"><b>{{ __('Total') }}</b></td>
-                                                            <td class="blue-text text-right">
-                                                                {{ currency_format_with_sym($invoice->getTotal()) }}</td>
+                                                            <td colspan="7"></td>
+                                                            <td class="blue-text text-end"><b>{{__('Total')}}</b></td>
+                                                            <td class="blue-text text-end">{{ number_format($invoice->getTotal(), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td colspan="{{ $colspan }}"></td>
-                                                            <td class="text-right"><b>{{ __('Paid') }}</b></td>
-                                                            <td class="text-right">
-                                                                {{ currency_format_with_sym($invoice->getTotal() - $invoice->getDue() - $invoice->invoiceTotalCreditNote()) }}
-                                                            </td>
+                                                            <td colspan="7"></td>
+                                                            <td class="text-end"><b>{{__('Paid')}}</b></td>
+                                                            <td class="text-end">{{ number_format(($invoice->getTotal() - $invoice->getDue() - $invoice->invoiceTotalCreditNote()), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td colspan="{{ $colspan }}"></td>
-                                                            <td class="text-right"><b>{{ __('Credit Note') }}</b></td>
-                                                            <td class="text-right">
-                                                                {{ currency_format_with_sym($invoice->invoiceTotalCreditNote()) }}
-                                                            </td>
+                                                            <td colspan="7"></td>
+                                                            <td class="text-end"><b>{{__('Debit Note')}}</b></td>
+                                                            <td class="text-end">{{ number_format($invoice->invoiceTotalCreditNote(), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                         </tr>
                                                         <tr>
-                                                            <td colspan="{{ $colspan }}"></td>
-                                                            <td class="text-right"><b>{{ __('Due') }}</b></td>
-                                                            <td class="text-right">{{ currency_format_with_sym($invoice->getDue()) }}
-                                                            </td>
+                                                            <td colspan="7"></td>
+                                                            <td class="text-end"><b>{{__('Due')}}</b></td>
+                                                            <td class="text-end">{{ number_format($invoice->getDue(), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                         </tr>
                                                     </tfoot>
                                                 </table>

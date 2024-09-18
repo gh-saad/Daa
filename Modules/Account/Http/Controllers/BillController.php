@@ -1672,10 +1672,6 @@ class BillController extends Controller
 
         $vendor_email = $vendor->email ? $vendor->email : 'no email provided.';
 
-        if ($vendor->user->is_enable_login == 0){
-            $vendor_email = 'Vendor is not enabled for login.';
-        }
-
         // general information
         $general = [
             'vendor_id' => Vender::vendorNumberFormat($vendor->vendor_id),

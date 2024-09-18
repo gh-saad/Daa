@@ -668,4 +668,41 @@ class CustomerController extends Controller
             return redirect()->back()->with('error', 'permission Denied');
         }
     }
+    
+    public function getCustomerDetails($id)
+    {
+        $customer = \Modules\Account\Entities\Customer::find($id);
+    
+        if (!$customer) {
+            return response()->json(['error' => 'Customer not found'], 404);
+        }
+
+        $customer_email = $customer->email ? $customer->email : 'no email provided.';
+
+        // general information
+        $general = [
+            'customer_id' => \Modules\Account\Entities\Customer::customerNumberFormat($customer->customer_id),
+            'name' => $customer->name ? $customer->name : 'no name provided.',
+            'email' => $customer_email,
+            'contact' => $customer->contact ? $customer->contact : 'no contact provided.',
+            'tax_number' => $customer->tax_number ? $customer->tax_number : 'no tax number provided.',
+        ];
+
+        // billing details
+        $billing = [
+            'billing_name' => $customer->billing_name ? $customer->billing_name : 'no name provided.',
+            'billing_country' => $customer->billing_country ? $customer->billing_country : 'no country provided.',
+            'billing_state' => $customer->billing_state ? $customer->billing_state : 'no state provided.',
+            'billing_city' => $customer->billing_city ? $customer->billing_city : 'no city provided.',
+            'billing_phone' => $customer->billing_phone ? $customer->billing_phone : 'no phone provided.',
+            'billing_zip' => $customer->billing_zip ? $customer->billing_zip : 'no zip provided.',
+            'billing_address' => $customer->billing_address ? $customer->billing_address : 'no address provided.',
+        ];
+    
+        return response()->json([
+            'customer_information' => $general,
+            'customer_billing_details' => $billing,
+        ]);
+    }
+    
 }

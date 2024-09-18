@@ -294,13 +294,22 @@ if (! function_exists('admin_setting')) {
     }
 }
 
+if (!function_exists('currency')) {
+    function currency($code = null)
+    {
+        $allowedCurrencies = ['KES', 'EUR', 'USD', 'AED'];
 
-if (! function_exists('currency')) {
-    function currency($code=null){
-        if($code==null){
-            $c = Currency::get();
-        }else{
-            $c = Currency::where('code',$code)->first();
+        if ($code == null) {
+            // Get only the currencies in the allowed list
+            $c = Currency::whereIn('code', $allowedCurrencies)->get();
+        } else {
+            // Check if the provided code is in the allowed list
+            if (in_array($code, $allowedCurrencies)) {
+                $c = Currency::where('code', $code)->first();
+            } else {
+                // Return null or handle the case where the currency is not allowed
+                $c = null;
+            }
         }
         return $c;
     }

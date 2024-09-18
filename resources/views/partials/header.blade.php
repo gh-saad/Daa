@@ -145,41 +145,70 @@
                     </li> --}}
                 @endcan
 
-             <li class="dropdown dash-h-item drp-language">
-                <a
-                   class="dash-head-link dropdown-toggle arrow-none me-0"
-                   data-bs-toggle="dropdown"
-                   href="#"
-                   role="button"
-                   aria-haspopup="false"
-                   aria-expanded="false"
-                   >
-                <i class="ti ti-world nocolor"></i>
-                <span class="drp-text hide-mob">{{Str::upper(getActiveLanguage())}}</span>
-                <i class="ti ti-chevron-down drp-arrow nocolor"></i>
-                </a>
-                <div class="dropdown-menu dash-h-dropdown dropdown-menu-end">
+                @can('setting manage')
+                <li class="dropdown dash-h-item drp-language">
+                    <a class="dash-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
+                        <i class="ti ti-wallet nocolor"></i>
+                        <span class="drp-text hide-mob">{{ company_setting('defult_currancy') }}</span>
+                        <i class="ti ti-chevron-down drp-arrow nocolor"></i>
+                    </a>
+                    <div class="dropdown-menu dash-h-dropdown dropdown-menu-end">
 
-                    @foreach(languages() as $key => $language)
-                        <a href="{{route('lang.change',$key)}}" class="dropdown-item @if($key == getActiveLanguage()) text-danger @endif">
-                            <span>{{Str::ucfirst($language)}}</span>
+                        <a href="{{ route('currency.header.change', 'KES')}}" class="dropdown-item @if(company_setting('defult_currancy') == 'KES') text-danger @endif">
+                            <span>{{ currency('KES')->name . ' - ' . currency('KES')->code }}</span>
                         </a>
-                    @endforeach
-                    @if (Auth::user()->type == "super admin")
-                        @can('language create')
-                            <a href="#" data-url="{{ route('create.language') }}" class="dropdown-item border-top pt-3 text-primary" data-ajax-popup="true" data-title="{{__('Create New Language')}}">
-                                <span>{{ __('Create Language') }}</span>
-                            </a>
 
-                        @endcan
-                        @can('language manage')
-                            <a href="{{route('lang.index',[Auth::user()->lang])}}" class="dropdown-item  pt-3 text-primary">
-                                <span>{{ __('Manage Languages') }}</span>
+                        <a href="{{ route('currency.header.change', 'USD')}}" class="dropdown-item @if(company_setting('defult_currancy') == 'USD') text-danger @endif">
+                            <span>{{ currency('USD')->name . ' - ' . currency('USD')->code  }}</span>
+                        </a>
+
+                        <a href="{{ route('currency.header.change', 'AED')}}" class="dropdown-item @if(company_setting('defult_currancy') == 'AED') text-danger @endif">
+                            <span>{{ currency('AED')->name . ' - ' . currency('AED')->code }}</span>
+                        </a>
+
+                        <a href="{{ route('currency.header.change', 'EUR')}}" class="dropdown-item @if(company_setting('defult_currancy') == 'EUR') text-danger @endif">
+                            <span>{{ currency('EUR')->name . ' - ' . currency('EUR')->code  }}</span>
+                        </a>
+
+                    </div>
+                </li>
+                @endcan
+
+                <li class="dropdown dash-h-item drp-language">
+                    <a
+                        class="dash-head-link dropdown-toggle arrow-none me-0"
+                        data-bs-toggle="dropdown"
+                        href="#"
+                        role="button"
+                        aria-haspopup="false"
+                        aria-expanded="false"
+                        >
+                        <i class="ti ti-world nocolor"></i>
+                        <span class="drp-text hide-mob">{{Str::upper(getActiveLanguage())}}</span>
+                        <i class="ti ti-chevron-down drp-arrow nocolor"></i>
+                    </a>
+                    <div class="dropdown-menu dash-h-dropdown dropdown-menu-end">
+
+                        @foreach(languages() as $key => $language)
+                            <a href="{{route('lang.change',$key)}}" class="dropdown-item @if($key == getActiveLanguage()) text-danger @endif">
+                                <span>{{Str::ucfirst($language)}}</span>
                             </a>
-                        @endcan
-                    @endif
-                </div>
-             </li>
+                        @endforeach
+                        @if (Auth::user()->type == "super admin")
+                            @can('language create')
+                                <a href="#" data-url="{{ route('create.language') }}" class="dropdown-item border-top pt-3 text-primary" data-ajax-popup="true" data-title="{{__('Create New Language')}}">
+                                    <span>{{ __('Create Language') }}</span>
+                                </a>
+
+                            @endcan
+                            @can('language manage')
+                                <a href="{{route('lang.index',[Auth::user()->lang])}}" class="dropdown-item  pt-3 text-primary">
+                                    <span>{{ __('Manage Languages') }}</span>
+                                </a>
+                            @endcan
+                        @endif
+                    </div>
+                </li>
           </ul>
        </div>
     </div>

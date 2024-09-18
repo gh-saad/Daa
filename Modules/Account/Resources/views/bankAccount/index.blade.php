@@ -38,7 +38,8 @@
                                 <th> {{__('Name')}}</th>
                                 <th> {{__('Bank')}}</th>
                                 <th> {{__('Account Number')}}</th>
-                                <th> {{__('Current Balance')}}</th>
+                                <th> {{__('Un-Adjusted Balance')}}</th>
+                                <th> {{__('Adjusted Balance')}}</th>
                                 <th> {{__('Contact Number')}}</th>
                                 <th> {{__('Bank Branch')}}</th>
                                 @if(Gate::check('bank account edit') || Gate::check('bank account delete'))
@@ -49,12 +50,19 @@
 
                             <tbody>
                             @foreach ($accounts as $account)
+                                @php
+                                    $chart_account = \Modules\Account\Entities\ChartOfAccount::find($account->chart_account_id);
+                                    $adjustments = $chart_account->balance($account->chart_account_id);
+                                    $converted_amount = currency_conversion($adjustments, company_setting('defult_currancy'), $account->currency);
+                                    $adjusted_balance = $account->opening_balance + $converted_amount;
+                                @endphp
                                 <tr class="font-style">
                                     <td>{{ (!empty($account->chartAccount)?$account->chartAccount->name :'-') }}</td>
                                     <td>{{  $account->holder_name}}</td>
                                     <td>{{  $account->bank_name}}</td>
                                     <td>{{  $account->account_number}}</td>
-                                    <td>{{  $account->opening_balance . ' ('.$account->currency.')'}}</td>
+                                    <td>{{ number_format($account->opening_balance, 2) . ' ' . $account->currency }}</td>
+                                    <td>{{ number_format($adjusted_balance, 2) . ' ' . $account->currency }}</td>
                                     <td>{{  $account->contact_number}}</td>
                                     <td>{{  $account->bank_address}}</td>
                                     @if(Gate::check('bank account edit') || Gate::check('bank account delete'))

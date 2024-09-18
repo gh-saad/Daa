@@ -125,7 +125,7 @@ class Purchase extends Model
         $due = 0;
         foreach($this->payments as $payment)
         {
-            $due += $payment->amount;
+            $due += currency_conversion($payment->amount, $payment->currency, company_setting('defult_currancy'));
         }
 
         return ($this->getTotal() - $due) - ($this->purchaseTotalDebitNote());

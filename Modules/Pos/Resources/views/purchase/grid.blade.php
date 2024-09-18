@@ -55,16 +55,18 @@
                                 <div class="dropdown">
                                     <a href="#" class="action-item" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
                                     <div class="dropdown-menu dropdown-menu-right">
-                                        @can('purchase edit')
-                                            <a href="{{ route('purchase.edit',\Crypt::encrypt($purchase->id)) }}" class="dropdown-item" data-bs-toggle="tooltip" data-title="{{__('Edit Quote')}}"><i class="ti ti-pencil"></i>{{__('Edit')}}</a>
-                                        @endcan
-                                        @can('purchase delete')
-                                            {!! Form::open(['method' => 'DELETE', 'route' =>['purchase.destroy', $purchase->id]]) !!}
-                                                <a href="#!" class="dropdown-item show_confirm" data-bs-toggle="tooltip">
-                                                    <i class="ti ti-trash"></i>{{ __('Delete') }}
-                                                </a>
-                                            {!! Form::close() !!}
-                                        @endcan
+                                        @if($purchase->status == 0)
+                                            @can('purchase edit')
+                                                <a href="{{ route('purchase.edit',\Crypt::encrypt($purchase->id)) }}" class="dropdown-item" data-bs-toggle="tooltip" data-title="{{__('Edit Quote')}}"><i class="ti ti-pencil"></i>{{__('Edit')}}</a>
+                                            @endcan
+                                            @can('purchase delete')
+                                                {!! Form::open(['method' => 'DELETE', 'route' =>['purchase.destroy', $purchase->id]]) !!}
+                                                    <a href="#!" class="dropdown-item show_confirm" data-bs-toggle="tooltip">
+                                                        <i class="ti ti-trash"></i>{{ __('Delete') }}
+                                                    </a>
+                                                {!! Form::close() !!}
+                                            @endcan
+                                        @endif
                                         @can('purchase show')
                                             <a href="{{ route('purchase.show',\Crypt::encrypt($purchase->id)) }}" data-size="md"class="dropdown-item" data-bs-toggle="tooltip"  data-title="{{__('Details')}}">
                                                 <i class="ti ti-eye"></i>{{__('View')}}
@@ -92,18 +94,18 @@
                         @endif
                         <div class="row align-items-center mt-3">
                             <div class="col-6">
-                                <h6 class="mb-0">{{currency_format_with_sym($purchase->getTotal())}}</h6>
+                                <h6 class="mb-0">{{ number_format($purchase->getTotal(), 2) . ' ' . company_setting('defult_currancy') }}</h6>
                                 <span class="text-sm text-muted">{{__('Total Amount')}}</span>
                             </div>
                             <div class="col-6">
-                                <h6 class="mb-0">{{currency_format_with_sym($purchase->getDue())}}</h6>
+                                <h6 class="mb-0">{{ number_format($purchase->getDue(), 2) . ' ' . company_setting('defult_currancy') }}</h6>
                                 <span class="text-sm text-muted">{{__('Due Amount')}}</span>
                             </div>
                         </div>
                         <div class="row align-items-center mt-3">
                             <div class="col-6">
-                                <h6 class="mb-0">{{currency_format_with_sym($purchase->getTotalTax())}}</h6>
-                                <span class="text-sm text-muted">{{__('Total Tax')}}</span>
+                                <h6 class="mb-0">{{ number_format($purchase->getTotalDiscount(), 2) . ' ' . company_setting('defult_currancy') }}</h6>
+                                <span class="text-sm text-muted">{{__('Total Discount')}}</span>
                             </div>
                             <div class="col-6">
                                 <h6 class="mb-0">{{company_date_formate($purchase->purchase_date)}}</h6>

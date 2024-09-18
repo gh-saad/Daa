@@ -113,10 +113,13 @@ class InvoiceController extends Controller
             if(Auth::user()->can('invoice create'))
             {
                 $invoice_number = Invoice::invoiceNumberFormat($this->invoiceNumber());
-                $customers = User::where('workspace_id','=',getActiveWorkSpace())->where('type','Client')->get()->pluck('name', 'id');
+                
                 $category = [];
                 $projects = [];
                 $taxs = [];
+                $customers_array = [];
+                $company_product_array = [];
+                $company_service_array = [];
                 if(module_is_active('Account'))
                 {
                     if ($customerId > 0) {
@@ -131,7 +134,46 @@ class InvoiceController extends Controller
                         }
                     }
                     $category = \Modules\ProductService\Entities\Category::where('created_by', '=', creatorId())->where('workspace_id', getActiveWorkSpace())->where('type', 1)->get()->pluck('name', 'id');
+                    
+                    // Fetch customers based on active workspace
+                    $customers = \Modules\Account\Entities\Customer::where('workspace', '=', getActiveWorkSpace())->get();
+                    
+                    foreach ($customers as $customer) {
+                        // combine both values
+                        $customer_detail =  \Modules\Account\Entities\Customer::customerNumberFormat($customer->customer_id) . ' ' . $customer->name;
+                    
+                        // Add customer detail to customers_array with customer's ID as key
+                        $customers_array[$customer->id] = $customer_detail;
+                    }
+
                 }
+
+                if(module_is_active('ProductService'))
+                {
+                    $company_products =  \Modules\ProductService\Entities\ProductService::where('workspace_id',getActiveWorkSpace())->where('type', '=', 'product')->where('purchased_status', '=', 'Paid')->where('vehicle_status', '=', 'Yard')->get();
+                    
+                    foreach ($company_products as $ps) {
+                        // combine both values
+                        $ps_detail = $ps->sku . ' - ' . $ps->name;
+                    
+                        // Add vendor detail to company_product_array with ps's ID as key
+                        $company_product_array[$ps->id] = $ps_detail;
+                    }   
+                    
+                    $product_type =\Modules\ProductService\Entities\ProductService::$product_type;
+                    
+                    $company_services =  \Modules\ProductService\Entities\ProductService::where('workspace_id',getActiveWorkSpace())->where('type', '=', 'service')->get();
+                    
+                    foreach ($company_services as $ss) {
+                        // combine both values
+                        $ss_detail = $ss->sku . ' - ' . $ss->name;
+                    
+                        // Add vendor detail to company_service_array with ss's ID as key
+                        $company_service_array[$ss->id] = $ss_detail;
+                    }   
+                    
+                }
+
                 if(module_is_active('Taskly'))
                 {
                     if(module_is_active('ProductService'))
@@ -145,7 +187,7 @@ class InvoiceController extends Controller
                 }else{
                     $customFields = null;
                 }
-                return view('invoice.create', compact('customers', 'invoice_number','projects','taxs','category','customerId','customFields'));
+                return view('invoice.create', compact('customers', 'customers_array', 'company_product_array', 'company_service_array', 'product_type', 'invoice_number','projects','taxs','category','customerId','customFields'));
             }
             else
             {
@@ -162,246 +204,117 @@ class InvoiceController extends Controller
     {
         if(Auth::user()->can('invoice create'))
         {
-            if($request->invoice_type == "product")
+            // important check required
+            foreach($request->items as $verify_item){
+                if($verify_item == "null"){
+                    return redirect()->back()->with('error', __('No product or service was selected for one of the items, kindly review your form and try again.'));
+                }
+            }
+        
+            $validator = \Validator::make(
+                $request->all(), [
+                                'customer_id' => 'required',
+                                'issue_date' => 'required',
+                                'due_date' => 'required',
+                                'category_id' => 'required',
+                                'items' => 'required',
+
+                            ]
+            );
+            if($validator->fails())
             {
+                $messages = $validator->getMessageBag();
 
-                // verify the requested quantity of item is available if not return error
-                $products = $request->items;
-                for($i = 0; $i < count($products); $i++)
-                {
-                    $product = \Modules\ProductService\Entities\ProductService::where('id', $products[$i]['item'])->first();
-                    if($product->quantity < 1){
-                        return redirect()->back()->with('error', __('Requested quantity of item is not available.'));
-                    }
-                }
+                return redirect()->back()->with('error', $messages->first());
+            }
 
-                $validator = \Validator::make(
-                    $request->all(), [
-                                    'customer_id' => 'required',
-                                    'issue_date' => 'required',
-                                    'due_date' => 'required',
-                                    'category_id' => 'required',
-                                    'items' => 'required',
+            if(!empty($request->customer_id)){
+                $customer = \Modules\Account\Entities\Customer::find($request->customer_id);
+            }
 
-                                ]
-                );
-                if($validator->fails())
-                {
-                    $messages = $validator->getMessageBag();
+            $invoice                 = new Invoice();
+            $invoice->invoice_id     = $this->invoiceNumber();
+            $invoice->user_id        = !empty($customer) ? $customer->user_id : null;
+            $invoice->customer_id    = $customer->id;
+            $invoice->status         = 0;
+            $invoice->invoice_module = 'account';
+            $invoice->issue_date     = $request->issue_date;
+            $invoice->due_date       = $request->due_date;
+            $invoice->category_id    = $request->category_id;
+            $invoice->workspace      = getActiveWorkSpace();
+            $invoice->created_by     = Auth::user()->id;
+            $invoice->save();
 
-                    return redirect()->back()->with('error', $messages->first());
-                }
-                $status = Invoice::$statues;
-                $invoice                 = new Invoice();
-                if(module_is_active('Account'))
-                {
-                    $customer = \Modules\Account\Entities\Customer::where('user_id', '=', $request->customer_id)->first();
-                    $invoice->customer_id    = !empty($customer) ?  $customer->id : null;
-                }else if(module_is_active('SalesAgent'))
-                {
-                    $customer = \Modules\SalesAgent\Entities\Customer::where('user_id', '=', $request->customer_id)->first();
-                    $invoice->customer_id    = !empty($customer) ?  $customer->id : null;
-                }
+            Invoice::starting_number( $invoice->invoice_id + 1, 'invoice');
+            if(module_is_active('CustomField'))
+            {
+                \Modules\CustomField\Entities\CustomField::saveData($invoice, $request->customField);
+            }
 
-                $invoice->invoice_id     = $this->invoiceNumber();
-                $invoice->user_id        = $request->customer_id;
-                $invoice->status         = 0;
-                $invoice->invoice_module = 'account';
-                $invoice->issue_date     = $request->issue_date;
-                $invoice->due_date       = $request->due_date;
-                $invoice->category_id    = $request->category_id;
-                $invoice->workspace      = getActiveWorkSpace();
-                $invoice->created_by     = Auth::user()->id;
+            event(new CreateInvoice($request,$invoice));
+            
+            $products = $request->items;
+            for($i = 0; $i < count($products); $i++)
+            {
+                $invoiceProduct                 = new InvoiceProduct();
+                $invoiceProduct->invoice_id     = $invoice->id;
+                $invoiceProduct->product_type   = $request->item_types[$i];
+                $invoiceProduct->product_id     = $products[$i];
+                $invoiceProduct->quantity       = 1;
+                $invoiceProduct->currency       = company_setting("defult_currancy");
+                $invoiceProduct->discount       = $request->item_discounts[$i];
+                $invoiceProduct->price          = $request->item_prices[$i];
+                $invoiceProduct->description    = $request->item_desc[$i];
 
-                $invoice->save();
-
-                Invoice::starting_number( $invoice->invoice_id + 1, 'invoice');
-                if(module_is_active('CustomField'))
-                {
-                    \Modules\CustomField\Entities\CustomField::saveData($invoice, $request->customField);
-                }
-
-                for($i = 0; $i < count($products); $i++)
-                {
-                    $invoiceProduct                 = new InvoiceProduct();
-                    $invoiceProduct->invoice_id     = $invoice->id;
-                    $invoiceProduct->product_type   = $products[$i]['product_type'];
-                    $invoiceProduct->product_id     = $products[$i]['item'];
-                    $invoiceProduct->quantity       = 1;
-                    $invoiceProduct->discount       = isset($products[$i]['discount']) ? $products[$i]['discount'] : 0;
-                    $invoiceProduct->price          = $products[$i]['price'];
-                    $invoiceProduct->description    = $products[$i]['description'];
-
-                    // create a new tax
-                    if (module_is_active('ProductService')) {
-                        // check to see if name was provided
-                        if ($products[$i]['tax'] && $products[$i]['itemTaxRate']){
-                            // locate the tax
-                            $locate_tax_id = \Modules\ProductService\Entities\Tax::where('name', $products[$i]['tax'])->get();
-                            // if tax is located successfully, update it
-                            if ($locate_tax_id->count() > 0) {
-                                // generate a random name for tax entry
-                                $random_tax_name = Str::random(5); // generates a random string of length 5
-                                $generated_tax_name = 'tax-' . $random_tax_name;
-                                // create a new tax entry with the generated name and provided rate
-                                $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
-                                $tax_object_to_create->name = $generated_tax_name;
-                                $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
-                                $tax_object_to_create->created_by = \Auth::user()->id;
-                                $tax_object_to_create->workspace_id = getActiveWorkSpace();
-                                $tax_object_to_create->save();
-
-                                // get id of this newly added entry
-                                $new_tax_id = $tax_object_to_create->id;
-                                
-                                // assign the id to purchase product tax entry
-                                $invoiceProduct->tax = $new_tax_id;
-                            } else {
-                                // if tax is not located, create a new tax
-                                $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
-                                $tax_object_to_create->name = $products[$i]['tax'];
-                                $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
-                                $tax_object_to_create->created_by = \Auth::user()->id;
-                                $tax_object_to_create->workspace_id = getActiveWorkSpace();
-                                $tax_object_to_create->save();
-
-                                // get id of this newly added entry
-                                $new_tax_id = $tax_object_to_create->id;
-                                
-                                // assign the id to purchase product tax entry
-                                $invoiceProduct->tax = $new_tax_id;
-                            }
-                        } else if (!$products[$i]['tax'] && $products[$i]['itemTaxRate']) {
-                            // generate a random name for tax entry
-                            $random_tax_name = Str::random(5); // generates a random string of length 5
-                            $generated_tax_name = 'tax-' . $random_tax_name;
-                            // create a new tax entry with the generated name and provided rate
-                            $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
-                            $tax_object_to_create->name = $generated_tax_name;
-                            $tax_object_to_create->rate = $products[$i]['itemTaxRate'];
-                            $tax_object_to_create->created_by = \Auth::user()->id;
-                            $tax_object_to_create->workspace_id = getActiveWorkSpace();
-                            $tax_object_to_create->save();
-
-                            // get id of this newly added entry
-                            $new_tax_id = $tax_object_to_create->id;
-                                
-                            // assign the id to purchase product tax entry
-                            $invoiceProduct->tax = $new_tax_id;
-                        } else {
-                            $new_tax_id = 1;
-                                
-                            // assign the id to purchase product tax entry
-                            $invoiceProduct->tax = $new_tax_id;
-                        }
-                    } else {
-                        $new_tax_id = 1;
-                                
-                        // assign the id to purchase product tax entry
+                // Tax handling logic
+                if (module_is_active('ProductService')) {
+                    if (isset($request->item_taxes[$i]) && !empty($request->item_taxes[$i])) {
+                        // Generate a random name for the tax entry
+                        $random_tax_name = 'tax-' . Str::random(5);
+                        
+                        // Create a new tax entry with the generated name and provided rate
+                        $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                        $tax_object_to_create->name = $random_tax_name;
+                        $tax_object_to_create->rate = $request->item_taxes[$i];
+                        $tax_object_to_create->created_by = \Auth::user()->id;
+                        $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                        $tax_object_to_create->save();
+            
+                        // Get the ID of this newly added tax entry
+                        $new_tax_id = $tax_object_to_create->id;
+            
+                        // Assign the tax ID to the invoice product tax entry
                         $invoiceProduct->tax = $new_tax_id;
+                    } else {
+                        // If no tax rate is provided, assign a default tax ID
+                        $invoiceProduct->tax = 1;
                     }
-
-                    $invoiceProduct->save();
-
-                    if(module_is_active('ProductService'))
-                    {
-                        Invoice::total_quantity('minus',$invoiceProduct->quantity,$invoiceProduct->product_id);
-                    }
-
-                    if(module_is_active('Account'))
-                    {
-                        //Product Stock Report
-                        $type='invoice';
-                        $type_id = $invoice->id;
-                        \Modules\Account\Entities\StockReport::where('type','=','invoice')->where('type_id' ,'=', $invoice->id)->delete();
-                        $description=$invoiceProduct->quantity.'  '.__(' quantity sold in invoice').' '. Invoice::invoiceNumberFormat($invoice->invoice_id);
-                        \Modules\Account\Entities\AccountUtility::addProductStock( $products[$i]['item'],$invoiceProduct->quantity,$type,$description,$type_id);
-                    }
-
+                } else {
+                    // If the ProductService module is not active, assign a default tax ID
+                    $invoiceProduct->tax = 1;
                 }
-                event(new CreateInvoice($request,$invoice));
+            
+                $invoiceProduct->save();
 
-
-                if(isset($request->agentPurchaseOrderId)){
-
-                    return redirect()->route('salesagents.purchase.order.show', \Crypt::encrypt($request->agentPurchaseOrderId)) ->with('success', __('Invoice successfully created.'));
-                }
-
-                return redirect()->route('invoice.index', $invoice->id)->with('success', __('Invoice successfully created.'));
-
-            }
-            else if($request->invoice_type == "project")
-            {
-                $validator = \Validator::make(
-                    $request->all(), [
-                                    'customer_id' => 'required',
-                                    'issue_date' => 'required',
-                                    'due_date' => 'required',
-                                    'project' => 'required',
-                                    'tax_project' => 'required',
-                                    'items' => 'required',
-
-                                ]
-                );
-                if($validator->fails())
+                if(module_is_active('ProductService'))
                 {
-                    $messages = $validator->getMessageBag();
-
-                    return redirect()->back()->with('error', $messages->first());
+                    Invoice::total_quantity('minus',$invoiceProduct->quantity,$invoiceProduct->product_id);
                 }
 
-                $invoice                 = new Invoice();
                 if(module_is_active('Account'))
                 {
-                    $customer = \Modules\Account\Entities\Customer::where('user_id', '=', $request->customer_id)->first();
-                    $invoice->customer_id    = !empty($customer) ?  $customer->id : null;
+                    //Product Stock Report
+                    $type='invoice';
+                    $type_id = $invoice->id;
+                    \Modules\Account\Entities\StockReport::where('type','=','invoice')->where('type_id' ,'=', $invoice->id)->delete();
+                    $description = $invoiceProduct->quantity.'  '.__(' quantity sold in invoice').' '. Invoice::invoiceNumberFormat($invoice->invoice_id);
+                    \Modules\Account\Entities\AccountUtility::addProductStock( $products[$i], $invoiceProduct->quantity, $type, $description, $type_id);
                 }
 
-                $status = Invoice::$statues;
-                $invoice->invoice_id     = $this->invoiceNumber();
-                $invoice->user_id        = $request->customer_id;
-                $invoice->status         = 0;
-                $invoice->invoice_module = 'taskly';
-                $invoice->issue_date     = $request->issue_date;
-                $invoice->due_date       = $request->due_date;
-                $invoice->category_id    = $request->project;
-                $invoice->workspace      = getActiveWorkSpace();
-                $invoice->created_by     = Auth::user()->id;
-
-                $invoice->save();
-
-                $products = $request->items;
-
-                Invoice::starting_number( $invoice->invoice_id + 1, 'invoice');
-
-                if(module_is_active('CustomField'))
-                {
-                    \Modules\CustomField\Entities\CustomField::saveData($invoice, $request->customField);
-                }
-                $project_tax = implode(',',$request->tax_project);
-
-                for($i = 0; $i < count($products); $i++)
-                {
-                    $invoiceProduct                 = new InvoiceProduct();
-                    $invoiceProduct->invoice_id     = $invoice->id;
-                    $invoiceProduct->product_id     = $products[$i]['item'];
-                    $invoiceProduct->quantity       = 1;
-                    $invoiceProduct->tax            = $project_tax;
-                    $invoiceProduct->discount       = isset($products[$i]['discount']) ? $products[$i]['discount'] : 0;
-                    $invoiceProduct->price          = $products[$i]['price'];
-                    $invoiceProduct->description    = $products[$i]['description'];
-                    $invoiceProduct->save();
-                }
-
-                 // first parameter request second parameter invoice
-                event(new CreateInvoice($request ,$invoice));
-
-                return redirect()->route('invoice.index', $invoice->id)->with('success', __('Invoice successfully created.'));
             }
-        }
-        else
-        {
-            return redirect()->back()->with('error', __('Permission denied.'));
+            
+            return redirect()->route('invoice.index', $invoice->id)->with('success', __('Invoice successfully created.'));
+
         }
     }
 
@@ -469,23 +382,78 @@ class InvoiceController extends Controller
                 }
                 $invoice = Invoice::find($id);
 
-                $invoice_number = Invoice::invoiceNumberFormat($invoice->invoice_id);
-
-                $customers = User::where('workspace_id', '=',getActiveWorkSpace())->where('type','Client')->get()->pluck('name', 'id');
-
+                $customers_array = [];
+                $company_product_array = [];
+                $company_products_selected_array = [];
+                $company_service_array = [];
                 $category = [];
                 $projects = [];
                 $taxs = [];
+
+                $invoice_number = Invoice::invoiceNumberFormat($invoice->invoice_id);
+
                 if(module_is_active('Account'))
                 {
                     $category = \Modules\ProductService\Entities\Category::where('created_by', '=', creatorId())->where('workspace_id', getActiveWorkSpace())->where('type', 1)->get()->pluck('name', 'id');
+                    
+                    // Fetch customers based on active workspace
+                    $customers = \Modules\Account\Entities\Customer::where('workspace', '=', getActiveWorkSpace())->get();
+                    
+                    foreach ($customers as $customer) {
+                        // combine both values
+                        $customer_detail =  \Modules\Account\Entities\Customer::customerNumberFormat($customer->customer_id) . ' ' . $customer->name;
+                    
+                        // Add customer detail to customers_array with customer's ID as key
+                        $customers_array[$customer->id] = $customer_detail;
+                    }
+
                 }
+                
+                if(module_is_active('ProductService'))
+                {
+                    $taxs = \Modules\ProductService\Entities\Tax::where('workspace_id', getActiveWorkSpace())->get()->pluck('name', 'id');
+                    
+                    $company_products =  \Modules\ProductService\Entities\ProductService::where('workspace_id',getActiveWorkSpace())->where('type', '=', 'product')->where('purchased_status', '=', 'Paid')->where('vehicle_status', '=', 'Yard')->get();
+                    
+                    foreach ($company_products as $ps) {
+                        // combine both values
+                        $ps_detail = $ps->sku . ' - ' . $ps->name;
+                    
+                        // Add vendor detail to company_product_array with ps's ID as key
+                        $company_product_array[$ps->id] = $ps_detail;
+                    }   
+
+                    $company_products_selected = InvoiceProduct::where('invoice_id', '=', $invoice->id)->get();
+                    foreach ($company_products_selected as $prs) {
+                        $prs_product = \Modules\ProductService\Entities\ProductService::find($prs->product_id);
+                        $tax = \Modules\ProductService\Entities\Tax::find($prs->tax);
+                        $company_products_selected_array[$prs->id] = [
+                            'product_id' => $prs_product->id,
+                            'type' => $prs->product_type,
+                            'name' => $prs_product->sku . ' - ' . $prs_product->name,
+                            'desc' => $prs->description,
+                            'price' => currency_conversion($prs->price, $prs->currency, company_setting('defult_currancy')),
+                            'discount' => currency_conversion($prs->discount, $prs->currency, company_setting('defult_currancy')),
+                            'tax' => $tax->rate,
+                        ];
+                    }
+
+                    $product_type =\Modules\ProductService\Entities\ProductService::$product_type;
+                    
+                    $company_services =  \Modules\ProductService\Entities\ProductService::where('workspace_id',getActiveWorkSpace())->where('type', '=', 'service')->get();
+                    
+                    foreach ($company_services as $ss) {
+                        // combine both values
+                        $ss_detail = $ss->sku . ' - ' . $ss->name;
+                    
+                        // Add vendor detail to company_service_array with ss's ID as key
+                        $company_service_array[$ss->id] = $ss_detail;
+                    }   
+                
+                }
+
                 if(module_is_active('Taskly'))
                 {
-                    if(module_is_active('ProductService'))
-                    {
-                        $taxs = \Modules\ProductService\Entities\Tax::where('workspace_id', getActiveWorkSpace())->get()->pluck('name', 'id');
-                    }
                     $projects = \Modules\Taskly\Entities\Project::where('workspace', getActiveWorkSpace())->projectonly()->get()->pluck('name', 'id');
                 }
 
@@ -496,7 +464,7 @@ class InvoiceController extends Controller
                     $customFields = null;
                 }
 
-                return view('invoice.edit', compact('customers','projects','taxs', 'invoice', 'invoice_number', 'category','customFields'));
+                return view('invoice.edit', compact('customers', 'customers_array', 'company_product_array', 'company_service_array', 'company_products_selected_array','projects','taxs', 'invoice', 'invoice_number', 'category','customFields'));
             }
             else
             {
@@ -515,172 +483,180 @@ class InvoiceController extends Controller
         {
             if($invoice->workspace == getActiveWorkSpace())
             {
-                if($request->invoice_type == "product")
-                {
-                    $validator = \Validator::make(
-                        $request->all(), [
-                                        'customer_id' => 'required',
-                                        'issue_date' => 'required',
-                                        'due_date' => 'required',
-                                        'category_id' => 'required',
-                                        'items' => 'required',
-                                    ]
-                    );
-                    if($validator->fails())
-                    {
-                        $messages = $validator->getMessageBag();
-
-                        return redirect()->route('invoice.index')->with('error', $messages->first());
+                // important check required
+                foreach($request->items as $verify_item){
+                    if($verify_item == "null"){
+                        return redirect()->back()->with('error', __('No product or service was selected for one of the items, kindly review your form and try again.'));
                     }
-                    if(module_is_active('Account'))
-                    {
-                        $customer = \Modules\Account\Entities\Customer::where('user_id', '=', $request->customer_id)->first();
-                        $invoice->customer_id    = !empty($customer) ?  $customer->id : null;
-                    }
-                    if($request->invoice_type == "product")
-                    {
-                        $request->invoice_type= 'account';
-                    }
-                    else if($request->invoice_type == "project")
-                    {
-                        $request->invoice_type= 'taskly';
-                    }
-                    if($request->invoice_type != $invoice->invoice_module)
-                    {
-                        InvoiceProduct::where('invoice_id', '=', $invoice->id)->delete();
-                    }
-                    $invoice->user_id        = $request->customer_id;
-                    $invoice->issue_date     = $request->issue_date;
-                    $invoice->due_date       = $request->due_date;
-                    $invoice->invoice_module = 'account';
-                    $invoice->category_id    = $request->category_id;
-                    $invoice->save();
-                    if(module_is_active('CustomField'))
-                    {
-                        \Modules\CustomField\Entities\CustomField::saveData($invoice, $request->customField);
-                    }
-                    $products = $request->items;
-                    for($i = 0; $i < count($products); $i++)
-                    {
-                        $invoiceProduct = InvoiceProduct::find($products[$i]['id']);
-
-                        if($invoiceProduct == null)
-                        {
-                            $invoiceProduct             = new InvoiceProduct();
-                            $invoiceProduct->invoice_id = $invoice->id;
-
-                            Invoice::total_quantity('minus',1,$products[$i]['item']);
-
-                            $updatePrice= ($products[$i]['price']*1)+($products[$i]['itemTaxPrice'])-($products[$i]['discount']);
-                            \Modules\Account\Entities\AccountUtility::updateUserBalance('customer', $invoice->customer_id, $updatePrice, 'credit');
-                        }
-                        else
-                        {
-                            Invoice::total_quantity('plus',$invoiceProduct->quantity,$invoiceProduct->product_id);
-                        }
-
-                        if(isset($products[$i]['item']))
-                        {
-                            $invoiceProduct->product_id = $products[$i]['item'];
-                        }
-                        $invoiceProduct->product_type   = $products[$i]['product_type'];
-                        $invoiceProduct->quantity       = 1;
-                        $invoiceProduct->tax            = $products[$i]['tax'];
-                        $invoiceProduct->discount       = isset($products[$i]['discount']) ? $products[$i]['discount'] : 0;
-                        $invoiceProduct->price          = $products[$i]['price'];
-                        $invoiceProduct->description    = $products[$i]['description'];
-                        $invoiceProduct->save();
-
-                        //inventory management (Quantity)
-                        if($products[$i]['id'] > 0)
-                        {
-                            Invoice::total_quantity('minus',1,$invoiceProduct->product_id);
-                        }
-                        //Product Stock Report
-                        if(module_is_active('Account'))
-                        {
-                            $type='invoice';
-                            $type_id = $invoice->id;
-                            \Modules\Account\Entities\StockReport::where('type','=','invoice')->where('type_id' ,'=', $invoice->id)->delete();
-                            $description='1  '.__(' quantity sold in invoice').' '. Invoice::invoiceNumberFormat($invoice->invoice_id);
-                            if(empty($products[$i]['id'])){
-                                Invoice::addProductStock( $products[$i]['item'],1,$type,$description,$type_id);
-                            }
-                        }
-
-                    }
-
-                     // first parameter request second parameter invoice
-                     event(new UpdateInvoice($request ,$invoice));
-
-                    return redirect()->route('invoice.index')->with('success', __('Invoice successfully updated.'));
                 }
-                else if($request->invoice_type == "project")
+            
+                $validator = \Validator::make(
+                    $request->all(), [
+                                    'customer_id' => 'required',
+                                    'issue_date' => 'required',
+                                    'due_date' => 'required',
+                                    'category_id' => 'required',
+                                    'items' => 'required',
+    
+                                ]
+                );
+                if($validator->fails())
                 {
-                    $validator = \Validator::make(
-                        $request->all(), [
-                                        'customer_id' => 'required',
-                                        'issue_date' => 'required',
-                                        'due_date' => 'required',
-                                        'project' => 'required',
-                                        'tax_project' => 'required',
-                                        'items' => 'required',
-
-                                    ]
-                    );
-                    if($validator->fails())
-                    {
-                        $messages = $validator->getMessageBag();
-
-                        return redirect()->back()->with('error', $messages->first());
-                    }
-
-                    if(module_is_active('Account'))
-                    {
-                        $customer = \Modules\Account\Entities\Customer::where('user_id', '=', $request->customer_id)->first();
-                        $invoice->customer_id    = !empty($customer) ?  $customer->id : null;
-                    }
-                    if($request->invoice_type != $invoice->invoice_module)
-                    {
-                        InvoiceProduct::where('invoice_id', '=', $invoice->id)->delete();
-                    }
-
-                    $status = Invoice::$statues;
-                    $invoice->invoice_id     = $invoice->invoice_id;
-                    $invoice->user_id        = $request->customer_id;
-                    $invoice->issue_date     = $request->issue_date;
-                    $invoice->due_date       = $request->due_date;
-                    $invoice->invoice_module = 'taskly';
-                    $invoice->category_id    = $request->project;
-                    $invoice->save();
-
-                    $products = $request->items;
-                    if(module_is_active('CustomField'))
-                    {
-                        \Modules\CustomField\Entities\CustomField::saveData($invoice, $request->customField);
-                    }
-
-                    $project_tax = implode(',',$request->tax_project);
-                    for($i = 0; $i < count($products); $i++)
-                    {
-                        $invoiceProduct = InvoiceProduct::find($products[$i]['id']);
-                        if($invoiceProduct == null)
-                        {
-                            $invoiceProduct             = new InvoiceProduct();
-                            $invoiceProduct->invoice_id = $invoice->id;
-                        }
-                        $invoiceProduct->product_id  = $products[$i]['item'];
-                        $invoiceProduct->quantity    = 1;
-                        $invoiceProduct->tax         = $project_tax;
-                        $invoiceProduct->discount    = isset($products[$i]['discount']) ? $products[$i]['discount'] : 0;
-                        $invoiceProduct->price       = $products[$i]['price'];
-                        $invoiceProduct->description = $products[$i]['description'];
-                        $invoiceProduct->save();
-                    }
-
+                    $messages = $validator->getMessageBag();
+    
+                    return redirect()->back()->with('error', $messages->first());
                 }
-                // first parameter request second parameter invoice
+    
+                if(!empty($request->customer_id)){
+                    $customer                  = \Modules\Account\Entities\Customer::find($request->customer_id);
+                    $invoice->customer_id      = !empty($customer) ?  $customer->id : null;
+                    $invoice->user_id          = !empty($customer)? $customer->user_id : null;
+                }
+    
+                $invoice->issue_date     = $request->issue_date;
+                $invoice->due_date       = $request->due_date;
+                $invoice->invoice_module = 'account';
+                $invoice->category_id    = $request->category_id;
+                $invoice->save();
+
+                if(module_is_active('CustomField'))
+                {
+                    \Modules\CustomField\Entities\CustomField::saveData($invoice, $request->customField);
+                }
+                
                 event(new UpdateInvoice($request ,$invoice));
+
+                // delete all products added by this invoice
+                InvoiceProduct::where('invoice_id', '=', $invoice->id)->delete();
+                \Modules\Account\Entities\StockReport::where('type','=','invoice')->where('type_id' ,'=', $invoice->id)->delete();
+
+                // add using provided data
+                $products = $request->items;
+                for($i = 0; $i < count($products); $i++)
+                {
+                    $invoiceProduct                 = new InvoiceProduct();
+                    $invoiceProduct->invoice_id     = $invoice->id;
+                    $invoiceProduct->product_type   = $request->item_types[$i];
+                    $invoiceProduct->product_id     = $products[$i];
+                    $invoiceProduct->quantity       = 1;
+                    $invoiceProduct->currency       = company_setting("defult_currancy");
+                    $invoiceProduct->discount       = $request->item_discounts[$i];
+                    $invoiceProduct->price          = $request->item_prices[$i];
+                    $invoiceProduct->description    = $request->item_desc[$i];
+    
+                    // Tax handling logic
+                    if (module_is_active('ProductService')) {
+                        if (isset($request->item_taxes[$i]) && !empty($request->item_taxes[$i])) {
+                            // Generate a random name for the tax entry
+                            $random_tax_name = 'tax-' . Str::random(5);
+                            
+                            // Create a new tax entry with the generated name and provided rate
+                            $tax_object_to_create = new \Modules\ProductService\Entities\Tax();
+                            $tax_object_to_create->name = $random_tax_name;
+                            $tax_object_to_create->rate = $request->item_taxes[$i];
+                            $tax_object_to_create->created_by = \Auth::user()->id;
+                            $tax_object_to_create->workspace_id = getActiveWorkSpace();
+                            $tax_object_to_create->save();
+                
+                            // Get the ID of this newly added tax entry
+                            $new_tax_id = $tax_object_to_create->id;
+                
+                            // Assign the tax ID to the invoice product tax entry
+                            $invoiceProduct->tax = $new_tax_id;
+                        } else {
+                            // If no tax rate is provided, assign a default tax ID
+                            $invoiceProduct->tax = 1;
+                        }
+                    } else {
+                        // If the ProductService module is not active, assign a default tax ID
+                        $invoiceProduct->tax = 1;
+                    }
+                
+                    $invoiceProduct->save();
+    
+                    if(module_is_active('ProductService'))
+                    {
+                        Invoice::total_quantity('minus',$invoiceProduct->quantity,$invoiceProduct->product_id);
+                    }
+    
+                    if(module_is_active('Account'))
+                    {
+                        //Product Stock Report
+                        $type='invoice';
+                        $type_id = $invoice->id;
+                        $description = $invoiceProduct->quantity.'  '.__(' quantity sold in invoice').' '. Invoice::invoiceNumberFormat($invoice->invoice_id);
+                        \Modules\Account\Entities\AccountUtility::addProductStock( $products[$i], $invoiceProduct->quantity, $type, $description, $type_id);
+                    }        
+
+                }
+
+                // **************** i dont know what all of this is
+                // else if($request->invoice_type == "project")
+                // {
+                //     $validator = \Validator::make(
+                //         $request->all(), [
+                //                         'customer_id' => 'required',
+                //                         'issue_date' => 'required',
+                //                         'due_date' => 'required',
+                //                         'project' => 'required',
+                //                         'tax_project' => 'required',
+                //                         'items' => 'required',
+
+                //                     ]
+                //     );
+                //     if($validator->fails())
+                //     {
+                //         $messages = $validator->getMessageBag();
+
+                //         return redirect()->back()->with('error', $messages->first());
+                //     }
+
+                //     if(module_is_active('Account'))
+                //     {
+                //         $customer = \Modules\Account\Entities\Customer::where('user_id', '=', $request->customer_id)->first();
+                //         $invoice->customer_id    = !empty($customer) ?  $customer->id : null;
+                //     }
+                //     if($request->invoice_type != $invoice->invoice_module)
+                //     {
+                //         InvoiceProduct::where('invoice_id', '=', $invoice->id)->delete();
+                //     }
+
+                //     $status = Invoice::$statues;
+                //     $invoice->invoice_id     = $invoice->invoice_id;
+                //     $invoice->user_id        = $request->customer_id;
+                //     $invoice->issue_date     = $request->issue_date;
+                //     $invoice->due_date       = $request->due_date;
+                //     $invoice->invoice_module = 'taskly';
+                //     $invoice->category_id    = $request->project;
+                //     $invoice->save();
+
+                //     $products = $request->items;
+                //     if(module_is_active('CustomField'))
+                //     {
+                //         \Modules\CustomField\Entities\CustomField::saveData($invoice, $request->customField);
+                //     }
+
+                //     $project_tax = implode(',',$request->tax_project);
+                //     for($i = 0; $i < count($products); $i++)
+                //     {
+                //         $invoiceProduct = InvoiceProduct::find($products[$i]['id']);
+                //         if($invoiceProduct == null)
+                //         {
+                //             $invoiceProduct             = new InvoiceProduct();
+                //             $invoiceProduct->invoice_id = $invoice->id;
+                //         }
+                //         $invoiceProduct->product_id  = $products[$i]['item'];
+                //         $invoiceProduct->quantity    = 1;
+                //         $invoiceProduct->tax         = $project_tax;
+                //         $invoiceProduct->discount    = isset($products[$i]['discount']) ? $products[$i]['discount'] : 0;
+                //         $invoiceProduct->price       = $products[$i]['price'];
+                //         $invoiceProduct->description = $products[$i]['description'];
+                //         $invoiceProduct->save();
+                //     }
+
+                // }
+                // **************** i dont know what all of this is
+
                 return redirect()->route('invoice.index')->with('success', __('Invoice successfully updated.'));
             }
             else
@@ -740,6 +716,7 @@ class InvoiceController extends Controller
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
+
     public function sent($id)
     {
         if(Auth::user()->can('invoice send'))
@@ -748,34 +725,213 @@ class InvoiceController extends Controller
             $invoice->send_date = date('Y-m-d');
             $invoice->status    = 1;
             $invoice->save();
+            
+            event(new SentInvoice($invoice));
             if(module_is_active('Account'))
             {
-                try{
-
-                    $customer         = \Modules\Account\Entities\Customer::where('user_id', $invoice->user_id)->first();
-                    if(empty($customer))
-                    {
-                        $customer         = User::where('id', $invoice->user_id)->first();
+                if(!empty($invoice->customer_id != 0))
+                {
+                    $customer = \Modules\Account\Entities\Customer::find($invoice->customer_id);
+                    if(empty($customer)){
+                        $customer = User::where('id', $invoice->user_id)->first();
                     }
                     \Modules\Account\Entities\AccountUtility::userBalance('customer', $customer->id, $invoice->getTotal(), 'credit');
-                }catch(Exception $e){
-
                 }
+            } else {
+                $customer = User::where('id', $invoice->user_id)->first();
             }
-            else
-            {
-                $customer         = User::where('id', $invoice->user_id)->first();
-            }
-            $invoice->name    = !empty($customer) ? $customer->name : '';
+            $invoice->name = !empty($customer) ? $customer->name : '';
             $invoice->invoice = Invoice::invoiceNumberFormat($invoice->invoice_id);
 
-            $invoiceId    = Crypt::encrypt($invoice->id);
+            $invoiceId = Crypt::encrypt($invoice->id);
             $invoice->url = route('invoice.pdf', $invoiceId);
 
-              // first parameter invoice
-              event(new SentInvoice($invoice));
+            // Get the items associated with the invoice
+            $items = $invoice->items;
 
-            //Email notification
+            foreach($items as $item){
+
+                // update product status
+                $product = \Modules\ProductService\Entities\ProductService::find($item->product_id);
+
+                if($item->product_type == 'product'){
+                    // if invoice was made on sale of a product to a customer
+
+                    // update product status
+                    $product->sold_status = 'Awaiting Payment';
+                    $product->sold_to = $customer->name;
+                    $product->save();
+                
+                    // adding Journal Entries
+                    // Inventory = Credit = Net price after discount before tax
+                    // Account Recievable = Debit = Net price after tax
+                    // Sales Income = Credit = Net price after discount before tax
+                    // VAT Pay / Refund = Credit = Tax amount
+                    // Cost of Sales - Purchases = Debit =  Net price after discount before tax
+                    
+                    // values
+                    $netPriceAfterDiscount = $item->price - $item->discount;
+                    $tax = \Modules\ProductService\Entities\Tax::find($item->tax);
+                    $taxAmount = ($netPriceAfterDiscount * $tax->rate) / 100;
+                    $netPriceAfterTax = $netPriceAfterDiscount + $taxAmount;
+
+                    // currency conversion
+                    $convertedAmountBeforeTax = currency_conversion($netPriceAfterDiscount, $item->currency, company_setting("defult_currancy"));
+                    $convertedTaxAmount = currency_conversion($taxAmount, $item->currency, company_setting("defult_currancy"));
+                    $convertedAmountAfterTax = currency_conversion($netPriceAfterTax, $item->currency, company_setting("defult_currancy")); 
+
+                    // new journal entry
+                    $new_journal_entry = new \Modules\DoubleEntry\Entities\JournalEntry();
+                    $new_journal_entry->date = now();
+                    $new_journal_entry->reference = Invoice::invoiceNumberFormat($invoice->invoice_id);
+                    $new_journal_entry->description = 'Invoice created for sale of product';
+                    $new_journal_entry->journal_id = $this->journalNumber();
+                    $new_journal_entry->currency = company_setting("defult_currancy");
+                    $new_journal_entry->workspace = getActiveWorkSpace();
+                    $new_journal_entry->created_by = \Auth::user()->id;
+                    $new_journal_entry->save();
+
+                    // for inventory
+                    $first_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+                    $first_journal_item->journal = $new_journal_entry->id;
+                    $first_journal_item->account = 5; // Inventory
+                    $first_journal_item->description = '-';
+                    $first_journal_item->debit = 0.00;
+                    $first_journal_item->credit = $convertedAmountBeforeTax;
+                    $first_journal_item->workspace = getActiveWorkSpace();
+                    $first_journal_item->created_by = \Auth::user()->id;
+                    $first_journal_item->save();
+
+                    $first_transaction = add_quick_transaction('Credit', 5, $convertedAmountBeforeTax);
+
+                    // for account recievable
+                    $second_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+                    $second_journal_item->journal = $new_journal_entry->id;
+                    $second_journal_item->account = 3; // Account Recievable
+                    $second_journal_item->description = '-';
+                    $second_journal_item->debit = $convertedAmountAfterTax;
+                    $second_journal_item->credit = 0.00;
+                    $second_journal_item->workspace = getActiveWorkSpace();
+                    $second_journal_item->created_by = \Auth::user()->id;
+                    $second_journal_item->save();
+
+                    $second_transaction = add_quick_transaction('Debit', 3, $convertedAmountAfterTax);
+
+                    // for sales income
+                    $third_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+                    $third_journal_item->journal = $new_journal_entry->id;
+                    $third_journal_item->account = 50; // Sales Income
+                    $third_journal_item->description = '-';
+                    $third_journal_item->debit = 0.00;
+                    $third_journal_item->credit = $convertedAmountBeforeTax;
+                    $third_journal_item->workspace = getActiveWorkSpace();
+                    $third_journal_item->created_by = \Auth::user()->id;
+                    $third_journal_item->save();
+
+                    $third_transaction = add_quick_transaction('Credit', 50, $convertedAmountBeforeTax);
+
+                    // for tax
+                    $fourth_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+                    $fourth_journal_item->journal = $new_journal_entry->id;
+                    $fourth_journal_item->account = 22; // VAT Pay / Refund
+                    $fourth_journal_item->description = '-';
+                    $fourth_journal_item->debit = 0.00;
+                    $fourth_journal_item->credit = $convertedTaxAmount;
+                    $fourth_journal_item->workspace = getActiveWorkSpace();
+                    $fourth_journal_item->created_by = \Auth::user()->id;
+                    $fourth_journal_item->save();
+
+                    $fourth_transaction = add_quick_transaction('Credit', 22, $convertedTaxAmount);
+
+                    // for cost of goods sold
+                    $fifth_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+                    $fifth_journal_item->journal = $new_journal_entry->id;
+                    $fifth_journal_item->account = 59; // Cost of Sales - Purchases
+                    $fifth_journal_item->description = '-';
+                    $fifth_journal_item->debit = $convertedAmountBeforeTax;
+                    $fifth_journal_item->credit = 0.00;
+                    $fifth_journal_item->workspace = getActiveWorkSpace();
+                    $fifth_journal_item->created_by = \Auth::user()->id;
+                    $fifth_journal_item->save();
+
+                    $fifth_transaction = add_quick_transaction('Debit', 59, $convertedAmountBeforeTax);
+
+                }else{
+                    // if invoice was made for a service performed on a product for a customer
+
+                    // no need to update status
+
+                    // adding Journal Entries
+                    // Account Recievable = Debit = Net price after tax
+                    // Service Income = Credit = Net price after discount before tax
+                    // VAT Pay / Refund = Credit = Tax amount
+
+                    // values
+                    $netPriceAfterDiscount = $item->price - $item->discount;
+                    $tax = \Modules\ProductService\Entities\Tax::find($item->tax);
+                    $taxAmount = ($netPriceAfterDiscount * $tax->rate) / 100;
+                    $netPriceAfterTax = $netPriceAfterDiscount + $taxAmount;
+
+                    // currency conversion
+                    $convertedAmountBeforeTax = currency_conversion($netPriceAfterDiscount, $item->currency, company_setting("defult_currancy"));
+                    $convertedTaxAmount = currency_conversion($taxAmount, $item->currency, company_setting("defult_currancy"));
+                    $convertedAmountAfterTax = currency_conversion($netPriceAfterTax, $item->currency, company_setting("defult_currancy")); 
+
+                    // new journal entry
+                    $new_journal_entry = new \Modules\DoubleEntry\Entities\JournalEntry();
+                    $new_journal_entry->date = now();
+                    $new_journal_entry->reference = Invoice::invoiceNumberFormat($invoice->invoice_id);
+                    $new_journal_entry->description = 'Invoice created for service performed on product';
+                    $new_journal_entry->journal_id = $this->journalNumber();
+                    $new_journal_entry->currency = company_setting("defult_currancy");
+                    $new_journal_entry->workspace = getActiveWorkSpace();
+                    $new_journal_entry->created_by = \Auth::user()->id;
+                    $new_journal_entry->save();
+
+                    // for account recievable
+                    $first_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+                    $first_journal_item->journal = $new_journal_entry->id;
+                    $first_journal_item->account = 3; // Account Recievable
+                    $first_journal_item->description = '-';
+                    $first_journal_item->debit = $convertedAmountAfterTax;
+                    $first_journal_item->credit = 0.00;
+                    $first_journal_item->workspace = getActiveWorkSpace();
+                    $first_journal_item->created_by = \Auth::user()->id;
+                    $first_journal_item->save();
+
+                    $first_transaction = add_quick_transaction('Debit', 3, $convertedAmountAfterTax);
+
+                    // for service income
+                    $second_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+                    $second_journal_item->journal = $new_journal_entry->id;
+                    $second_journal_item->account = 51; // Service Income
+                    $second_journal_item->description = '-';
+                    $second_journal_item->debit = 0.00;
+                    $second_journal_item->credit = $convertedAmountBeforeTax;
+                    $second_journal_item->workspace = getActiveWorkSpace();
+                    $second_journal_item->created_by = \Auth::user()->id;
+                    $second_journal_item->save();
+
+                    $second_transaction = add_quick_transaction('Credit', 51, $convertedAmountBeforeTax);
+
+                    // for tax
+                    $third_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+                    $third_journal_item->journal = $new_journal_entry->id;
+                    $third_journal_item->account = 22; // VAT Pay / Refund
+                    $third_journal_item->description = '-';
+                    $third_journal_item->debit = 0.00;
+                    $third_journal_item->credit = $convertedTaxAmount;
+                    $third_journal_item->workspace = getActiveWorkSpace();
+                    $third_journal_item->created_by = \Auth::user()->id;
+                    $third_journal_item->save();
+
+                    $third_transaction = add_quick_transaction('Credit', 22, $convertedTaxAmount);
+
+                }
+
+            }
+
+            // sending email
             if(!empty(company_setting('Customer Invoice Send')) && company_setting('Customer Invoice Send')  == true)
             {
                 $uArr = [
@@ -1413,6 +1569,12 @@ class InvoiceController extends Controller
                 return redirect()->back()->with('error', $messages->first());
             }
 
+            $amount = $request->amount;
+
+            if($request->currency != company_setting('defult_currancy')){
+                $amount = currency_conversion($amount, $request->currency, company_setting('defult_currancy'));
+            }
+
             $invoicePayment                 = new InvoicePayment();
 
             if(module_is_active('Account'))
@@ -1433,6 +1595,8 @@ class InvoiceController extends Controller
             $invoicePayment->invoice_id     = $invoice_id;
             $invoicePayment->date           = $request->date;
             $invoicePayment->amount         = $request->amount;
+            $invoicePayment->currency       = company_setting('defult_currancy');
+            $invoicePayment->account_id     = $request->account_id;
             $invoicePayment->payment_method = 0;
             $invoicePayment->reference      = $request->reference;
             $invoicePayment->description    = $request->description;
@@ -1469,7 +1633,7 @@ class InvoiceController extends Controller
                 $invoice->status = 3;
                 $invoice->save();
             }
-            $invoicePayment->user_id    = $invoice->user_id;
+            $invoicePayment->user_id    = $invoice->customer_id;
             $invoicePayment->user_type  = 'Customer';
             $invoicePayment->type       = 'Partial';
             $invoicePayment->created_by = Auth::user()->id;
@@ -1477,30 +1641,88 @@ class InvoiceController extends Controller
             $invoicePayment->category   = 'Invoice';
             $invoicePayment->account    = $request->account_id;
 
-            $customer = User::where('id',$invoice->user_id)->first();
+            $customer_acc =  \Modules\Account\Entities\Customer::where('id', $invoice->customer_id)->first();
+
             if(module_is_active('Account'))
             {
-                \Modules\Account\Entities\Transaction::addTransaction($invoicePayment);
-                $customer_acc =  \Modules\Account\Entities\Customer::where('id', $invoice->customer_id)->first();
+                // \Modules\Account\Entities\Transaction::addTransaction($invoicePayment);
                 if(!empty($customer_acc))
                 {
                     $customer = $customer_acc;
                 }
-                \Modules\Account\Entities\AccountUtility::updateUserBalance('customer', $invoice->customer_id, $request->amount, 'debit');
 
-                \Modules\Account\Entities\Transfer::bankAccountBalance($request->account_id, $request->amount, 'credit');
+                \Modules\Account\Entities\AccountUtility::updateUserBalance('customer', $invoice->customer_id, $request->amount, 'credit');
+
+                // \Modules\Account\Entities\Transfer::bankAccountBalance($request->account_id, $request->amount, 'credit');
             }
+
+            // Get the items associated with the invoice
+            $items = $invoice->items;
+
+            // Loop through each item and update sold status
+            foreach($items as $item) {
+                // update product status
+                $product = \Modules\ProductService\Entities\ProductService::find($item->product_id);
+                if($invoice->status == 3){
+                    $product->sold_status = 'Partially Paid';
+                }else if($invoice->status == 4){
+                    $product->sold_status = 'Paid';
+                }
+                if($customer_acc){
+                    $product->sold_to = $customer_acc->name;
+                }
+                $product->save();
+            }
+
             $payment            = new InvoicePayment();
-            $payment->name      = $customer['name'];
+            $payment->name      = !empty($customer['name']) ? $customer['name'] : '-';
+            $payment->method    = '-';
             $payment->date      = company_date_formate($request->date);
             $payment->amount    = currency_format_with_sym($request->amount);
             $payment->invoice   = 'invoice ' . Invoice::invoiceNumberFormat($invoice->invoice_id);
             $payment->dueAmount = currency_format_with_sym($invoice->getDue());
 
+            // adding Journal Entries
+            // Bank Account = Debit = Payment Amount
+            // Account Recievable = Credit = Payment Amount
 
-            // first parameter request second parameter invoice third parameter payment
-            event(new CreatePaymentInvoice($request ,$invoice));
-               //Email notification
+            $bank_account = \Modules\Account\Entities\BankAccount::find($request->account_id);
+
+            $new_journal_entry = new \Modules\DoubleEntry\Entities\JournalEntry();
+            $new_journal_entry->date = now();
+            $new_journal_entry->reference = Invoice::invoiceNumberFormat($invoice->invoice_id);
+            $new_journal_entry->description = 'Invoice Payment Made';
+            $new_journal_entry->journal_id = $this->journalNumber();
+            $new_journal_entry->currency = company_setting("defult_currancy");
+            $new_journal_entry->workspace = getActiveWorkSpace();
+            $new_journal_entry->created_by = \Auth::user()->id;
+            $new_journal_entry->save();
+
+            $first_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+            $first_journal_item->journal = $new_journal_entry->id;
+            $first_journal_item->account = $bank_account->chart_account_id;
+            $first_journal_item->description = '-';
+            $first_journal_item->debit = $amount;
+            $first_journal_item->credit = 0.00;
+            $first_journal_item->workspace = getActiveWorkSpace();
+            $first_journal_item->created_by = \Auth::user()->id;
+            $first_journal_item->save();
+
+            $first_transaction = add_quick_transaction('Debit', $bank_account->chart_account_id, $amount);
+
+            $second_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+            $second_journal_item->journal = $new_journal_entry->id;
+            $second_journal_item->account = 3;
+            $second_journal_item->description = '-';
+            $second_journal_item->debit = 0.00;
+            $second_journal_item->credit = $amount;
+            $second_journal_item->workspace = getActiveWorkSpace();
+            $second_journal_item->created_by = \Auth::user()->id;
+            $second_journal_item->save();
+
+            $second_transaction = add_quick_transaction('Credit', 3, $amount);
+
+            //Email notification
             if(!empty(company_setting('Invoice Payment Create')) && company_setting('Invoice Payment Create')  == true)
             {
                 $uArr = [
@@ -1520,6 +1742,8 @@ class InvoiceController extends Controller
                     $smtp_error = __('E-Mail has been not sent due to SMTP configuration');
                 }
             }
+
+            event(new CreatePaymentInvoice($request ,$invoice));
             return redirect()->back()->with('success', __('Payment successfully added.') . ((isset($smtp_error)) ? '<br> <span class="text-danger">' . $smtp_error . '</span>' : ''));
         }
 
@@ -1783,6 +2007,16 @@ class InvoiceController extends Controller
                 ], 401
             );
         }
+    }
+
+    function journalNumber()
+    {
+        $latest = \Modules\DoubleEntry\Entities\JournalEntry::where('created_by', '=', creatorId())->where('workspace', getActiveWorkSpace())->latest()->first();
+        if (!$latest) {
+            return 1;
+        }
+
+        return $latest->journal_id + 1;
     }
 
     public function invoiceAttechmentDestroy($id)

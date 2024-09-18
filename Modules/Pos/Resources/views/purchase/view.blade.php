@@ -59,10 +59,11 @@
                                     </div>
                                     <h6 class="text-primary my-3">{{__('Create Purchase')}}</h6>
                                     <p class="text-muted text-sm mb-3"><i class="ti ti-clock mr-2"></i>{{__('Created on ')}}{{company_date_formate($purchase->purchase_date)}}</p>
-                                    @can('purchase edit')
-                                        <a href="{{ route('purchase.edit',\Crypt::encrypt($purchase->id)) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-original-title="{{__('Edit')}}"><i class="ti ti-pencil mr-2"></i>{{__('Edit')}}</a>
-
-                                    @endcan
+                                    @if($purchase->status == 0)
+                                        @can('purchase edit')
+                                            <a href="{{ route('purchase.edit',\Crypt::encrypt($purchase->id)) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-original-title="{{__('Edit')}}"><i class="ti ti-pencil mr-2"></i>{{__('Edit')}}</a>
+                                        @endcan
+                                    @endif
                                 </div>
                                 <div class="col-md-6 col-lg-4 col-xl-4">
                                     <div class="timeline-icons"><span class="timeline-dots"></span>
@@ -199,19 +200,19 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                            <div class="col">
-                                                <small class="font-style">
-                                                    <strong>{{__('Billed To')}} :</strong><br>
-                                                    {{ !empty($vendor->billing_name) ? $vendor->billing_name : '' }}<br>
-                                                    {{ !empty($vendor->billing_address) ? $vendor->billing_address : '' }}<br>
-                                                    {{ !empty($vendor->billing_city) ? $vendor->billing_city . ' ,' : '' }}
-                                                    {{ !empty($vendor->billing_state) ? $vendor->billing_state . ' ,' : '' }}
-                                                    {{ !empty($vendor->billing_zip) ? $vendor->billing_zip : '' }}<br>
-                                                    {{ !empty($vendor->billing_country) ? $vendor->billing_country : '' }}<br>
-                                                    {{ !empty($vendor->billing_phone) ? $vendor->billing_phone : '' }}<br>
-                                                    <strong>{{__('Tax Number ')}} : </strong>{{!empty($vendor->tax_number)?$vendor->tax_number:''}}
-                                                </small>
-                                            </div>
+                                        <div class="col">
+                                            <small class="font-style">
+                                                <strong>{{__('Billed To')}} :</strong><br>
+                                                {{ !empty($vendor->billing_name) ? $vendor->billing_name : '' }}<br>
+                                                {{ !empty($vendor->billing_address) ? $vendor->billing_address : '' }}<br>
+                                                {{ !empty($vendor->billing_city) ? $vendor->billing_city . ' ,' : '' }}
+                                                {{ !empty($vendor->billing_state) ? $vendor->billing_state . ' ,' : '' }}
+                                                {{ !empty($vendor->billing_zip) ? $vendor->billing_zip : '' }}<br>
+                                                {{ !empty($vendor->billing_country) ? $vendor->billing_country : '' }}<br>
+                                                {{ !empty($vendor->billing_phone) ? $vendor->billing_phone : '' }}<br>
+                                                <strong>{{__('Tax Number ')}} : </strong>{{!empty($vendor->tax_number)?$vendor->tax_number:''}}
+                                            </small>
+                                        </div>
                                         @if( company_setting('shipping_display')=='on')
                                             <div class="col">
                                                 <small>

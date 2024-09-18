@@ -583,4 +583,16 @@ class SettingController extends Controller
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
+
+    public function currencyHeaderChange($code){
+        if(Auth::user()->can('setting manage')){
+            $userContext = new Context(['user_id' => \Auth::user()->id,'workspace_id'=>getActiveWorkSpace()]);
+            $currency = currency($code);
+            \Settings::context($userContext)->set('defult_currancy', $currency->code);
+            \Settings::context($userContext)->set('defult_currancy_symbol', $currency->symbol);
+            return redirect()->back()->with('success','Setting save sucessfully.');
+        }else{
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+    }
 }
