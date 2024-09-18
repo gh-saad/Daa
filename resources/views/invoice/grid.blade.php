@@ -5,6 +5,22 @@
 @section('page-breadcrumb')
     {{ __('Invoices') }}
 @endsection
+@push('css')
+    <!-- Add any custom CSS here if needed -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <style>
+        .select2-selection__rendered {
+            line-height: 36px !important;
+        }
+        .select2-container .select2-selection--single {
+            height: 40px !important;
+        }
+        .select2-selection__arrow {
+            height: 39px !important;
+        }
+    </style>
+@endpush
 @section('page-action')
     <div>
         @if (module_is_active('ProductService') && (module_is_active('Account') || module_is_active('Taskly')))
@@ -43,7 +59,7 @@
                             <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12 mr-2">
                                 <div class="btn-box">
                                     {{ Form::label('customer', __('Customer'), ['class' => 'form-label']) }}
-                                    {{ Form::select('customer', $customer, isset($_GET['customer']) ? $_GET['customer'] : '', ['class' => 'form-control select', 'placeholder' => 'Select Customer']) }}
+                                    {{ Form::select('customer', $customer, isset($_GET['customer']) ? $_GET['customer'] : '', ['class' => 'form-control select2', 'placeholder' => 'Select Customer']) }}
                                 </div>
                             </div>
                         @endif
@@ -104,20 +120,22 @@
                                                             </a>
                                                         {!! Form::close() !!}
                                                     @endcan
-                                                    @if (module_is_active('ProductService') && $invoice->invoice_module == 'taskly' ? module_is_active('Taskly') : module_is_active('Account'))
-                                                        @can('invoice edit')
-                                                            <a href="{{ route('invoice.edit', \Crypt::encrypt($invoice->id)) }}" class="dropdown-item" >
-                                                                <i class="ti ti-edit"></i> {{__('Edit')}}
-                                                            </a>
+                                                    @if($invoice->status == 0)
+                                                        @if (module_is_active('ProductService') && $invoice->invoice_module == 'taskly' ? module_is_active('Taskly') : module_is_active('Account'))
+                                                            @can('invoice edit')
+                                                                <a href="{{ route('invoice.edit', \Crypt::encrypt($invoice->id)) }}" class="dropdown-item" >
+                                                                    <i class="ti ti-edit"></i> {{__('Edit')}}
+                                                                </a>
+                                                            @endcan
+                                                        @endif
+                                                        @can('invoice delete')
+                                                            {!! Form::open(['method' => 'DELETE', 'route' => ['invoice.destroy', $invoice->id]]) !!}
+                                                                <a href="#!" class="show_confirm dropdown-item">
+                                                                    <i class="ti ti-trash"></i> {{ __('Delete') }}
+                                                                </a>
+                                                            {!! Form::close() !!}
                                                         @endcan
                                                     @endif
-                                                    @can('invoice delete')
-                                                        {!! Form::open(['method' => 'DELETE', 'route' => ['invoice.destroy', $invoice->id]]) !!}
-                                                            <a href="#!" class="show_confirm dropdown-item">
-                                                                <i class="ti ti-trash"></i> {{ __('Delete') }}
-                                                            </a>
-                                                        {!! Form::close() !!}
-                                                    @endcan
                                                     @can('invoice show')
                                                         <a href="{{route('invoice.show',\Crypt::encrypt($invoice->id))}}" class="dropdown-item" data-toggle="tooltip" data-original-title="{{__('View')}}">
                                                             <i class="ti ti-eye"></i> {{__('View')}}
@@ -153,11 +171,11 @@
 
                                     <div class="row align-items-center mt-3">
                                         <div class="col-6">
-                                            <h6 class="mb-0">{{currency_format_with_sym($invoice->getTotal())}}</h6>
+                                            <h6 class="mb-0">{{ number_format($invoice->getTotal(), 2) . ' ' . company_setting('defult_currancy') }}</h6>
                                             <span class="text-sm text-muted">{{__('Total Amount')}}</span>
                                         </div>
                                         <div class="col-6">
-                                            <h6 class="mb-0">{{currency_format_with_sym($invoice->getDue())}}</h6>
+                                            <h6 class="mb-0">{{ number_format($invoice->getDue(), 2) . ' ' . company_setting('defult_currancy') }}</h6>
                                             <span class="text-sm text-muted">{{__('Due Amount')}}</span>
                                         </div>
                                     </div>
@@ -191,6 +209,10 @@
     </div>
 @endsection
 @push('scripts')
+@push('scripts')
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script>
         $(document).on("click",".cp_link",function() {
             var value = $(this).attr('data-link');

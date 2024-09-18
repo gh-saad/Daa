@@ -14,15 +14,15 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <style>
-            .select2-selection__rendered {
-                line-height: 31px !important;
-            }
-            .select2-container .select2-selection--single {
-                height: 35px !important;
-            }
-            .select2-selection__arrow {
-                height: 34px !important;
-            }
+        .select2-selection__rendered {
+            line-height: 36px !important;
+        }
+        .select2-container .select2-selection--single {
+            height: 40px !important;
+        }
+        .select2-selection__arrow {
+            height: 39px !important;
+        }
     </style>
 @endpush
 

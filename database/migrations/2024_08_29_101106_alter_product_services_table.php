@@ -14,7 +14,15 @@ return new class extends Migration
     public function up()
     {
         Schema::table('product_services', function (Blueprint $table) {
-            $table->string('purchased_from')->nullable()->after('purchased_by');
+            if (!Schema::hasColumn('product_services', 'purchased_from')) {
+                $table->string('purchased_from')->nullable()->after('purchased_by');
+            }
+            if (!Schema::hasColumn('product_services', 'sold_to')) {
+                $table->string('sold_to')->nullable()->after('purchased_status');
+            }
+            if (!Schema::hasColumn('product_services', 'sold_status')) {
+                $table->string('sold_status')->nullable()->after('sold_to');
+            }
         });
     }
 
@@ -27,6 +35,8 @@ return new class extends Migration
     {
         Schema::table('product_services', function (Blueprint $table) {
             $table->dropColumn('purchased_from');
+            $table->dropColumn('sold_to');
+            $table->dropColumn('sold_status');
         });
     }
 };

@@ -59,7 +59,7 @@
                                 <th> {{__('Purchase Date')}}</th>
                                 <th>{{__('Status')}}</th>
                                 @if(Gate::check('purchase edit') || Gate::check('purchase delete') || Gate::check('purchase show'))
-                                    <th > {{__('Action')}}</th>
+                                    <th class="text-center"> {{__('Action')}}</th>
                                 @endif
                             </tr>
                             </thead>
@@ -110,7 +110,7 @@
 
 
                                     @if(Gate::check('purchase edit') || Gate::check('purchase delete') || Gate::check('purchase show'))
-                                        <td class="Action">
+                                        <td class="Action text-center">
                                             <span>
                                                 @can('purchase show')
                                                     <div class="action-btn bg-warning ms-2">
@@ -119,22 +119,24 @@
                                                         </a>
                                                     </div>
                                                 @endcan
-                                                @can('purchase edit')
-                                                    <div class="action-btn bg-info ms-2">
-                                                        <a href="{{ route('purchase.edit',\Crypt::encrypt($purchase->id)) }}" class="mx-3 btn btn-sm align-items-center" data-bs-toggle="tooltip" title="Edit" data-original-title="{{__('Edit')}}">
-                                                            <i class="ti ti-pencil text-white"></i>
-                                                        </a>
-                                                    </div>
-                                                @endcan
-                                                @can('purchase delete')
-                                                    <div class="action-btn bg-danger ms-2">
-                                                        {!! Form::open(['method' => 'DELETE', 'route' => ['purchase.destroy', $purchase->id],'class'=>'delete-form-btn','id'=>'delete-form-'.$purchase->id]) !!}
-                                                            <a href="#" class="mx-3 btn btn-sm align-items-center show_confirm" data-bs-toggle="tooltip" title="{{__('Delete')}}" data-original-title="{{__('Delete')}}" data-confirm="{{__('Are You Sure?')}}" data-confirm-yes="document.getElementById('delete-form-{{$purchase->id}}').submit();">
-                                                                <i class="ti ti-trash text-white"></i>
+                                                @if($purchase->status == 0)
+                                                    @can('purchase edit')
+                                                        <div class="action-btn bg-info ms-2">
+                                                            <a href="{{ route('purchase.edit',\Crypt::encrypt($purchase->id)) }}" class="mx-3 btn btn-sm align-items-center" data-bs-toggle="tooltip" title="Edit" data-original-title="{{__('Edit')}}">
+                                                                <i class="ti ti-pencil text-white"></i>
                                                             </a>
-                                                        {!! Form::close() !!}
-                                                    </div>
-                                                @endcan
+                                                        </div>
+                                                    @endcan
+                                                    @can('purchase delete')
+                                                        <div class="action-btn bg-danger ms-2">
+                                                            {!! Form::open(['method' => 'DELETE', 'route' => ['purchase.destroy', $purchase->id],'class'=>'delete-form-btn','id'=>'delete-form-'.$purchase->id]) !!}
+                                                                <a href="#" class="mx-3 btn btn-sm align-items-center show_confirm" data-bs-toggle="tooltip" title="{{__('Delete')}}" data-original-title="{{__('Delete')}}" data-confirm="{{__('Are You Sure?')}}" data-confirm-yes="document.getElementById('delete-form-{{$purchase->id}}').submit();">
+                                                                    <i class="ti ti-trash text-white"></i>
+                                                                </a>
+                                                            {!! Form::close() !!}
+                                                        </div>
+                                                    @endcan
+                                                @endif
                                             </span>
                                         </td>
                                     @endif

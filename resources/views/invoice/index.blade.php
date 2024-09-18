@@ -6,6 +6,20 @@
     {{ __('Invoices') }}
 @endsection
 @push('css')
+    <!-- Add any custom CSS here if needed -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <style>
+        .select2-selection__rendered {
+            line-height: 36px !important;
+        }
+        .select2-container .select2-selection--single {
+            height: 40px !important;
+        }
+        .select2-selection__arrow {
+            height: 39px !important;
+        }
+    </style>
 @endpush
 @section('page-action')
     <div>
@@ -47,7 +61,7 @@
                             <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12 mr-2">
                                 <div class="btn-box">
                                     {{ Form::label('customer', __('Customer'), ['class' => 'form-label']) }}
-                                    {{ Form::select('customer', $customer, isset($_GET['customer']) ? $_GET['customer'] : '', ['class' => 'form-control select', 'placeholder' => 'Select Customer']) }}
+                                    {{ Form::select('customer', $customer, isset($_GET['customer']) ? $_GET['customer'] : '', ['class' => 'form-control select2', 'placeholder' => 'Select Customer']) }}
                                 </div>
                             </div>
                         @endif
@@ -91,7 +105,7 @@
                                     <th>{{ __('Due Amount') }}</th>
                                     <th>{{ __('Status') }}</th>
                                     @if (Gate::check('invoice edit') ||
-                                    Gate::check('invoice delete') ||
+                                        Gate::check('invoice delete') ||
                                         Gate::check('invoice show') ||
                                         Gate::check('invoice duplicate'))
                                         <th>{{ __('Action') }}</th>
@@ -122,7 +136,7 @@
                                                 {{ company_date_formate($invoice->due_date) }}
                                             @endif
                                         </td>
-                                        <td>{{ currency_format_with_sym($invoice->getDue()) }}</td>
+                                        <td>{{ number_format($invoice->getDue(), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                         <td>
                                             @if ($invoice->status == 0)
                                                 <span
@@ -191,34 +205,36 @@
                                                             </a>
                                                         </div>
                                                     @endcan
-                                                    @if (module_is_active('ProductService') && $invoice->invoice_module == 'taskly' ? module_is_active('Taskly') : module_is_active('Account'))
-                                                        @can('invoice edit')
-                                                            <div class="action-btn bg-info ms-2">
-                                                                <a href="{{ route('invoice.edit', \Crypt::encrypt($invoice->id)) }}"
-                                                                    class="mx-3 btn btn-sm  align-items-center"
-                                                                    data-bs-toggle="tooltip"
-                                                                    data-bs-original-title="{{ __('Edit') }}">
-                                                                    <i class="ti ti-pencil text-white"></i>
+                                                    @if ($invoice->status == 0)
+                                                        @if (module_is_active('ProductService') && $invoice->invoice_module == 'taskly' ? module_is_active('Taskly') : module_is_active('Account'))
+                                                            @can('invoice edit')
+                                                                <div class="action-btn bg-info ms-2">
+                                                                    <a href="{{ route('invoice.edit', \Crypt::encrypt($invoice->id)) }}"
+                                                                        class="mx-3 btn btn-sm  align-items-center"
+                                                                        data-bs-toggle="tooltip"
+                                                                        data-bs-original-title="{{ __('Edit') }}">
+                                                                        <i class="ti ti-pencil text-white"></i>
+                                                                    </a>
+                                                                </div>
+                                                            @endcan
+                                                        @endif
+                                                        @can('invoice delete')
+                                                            <div class="action-btn bg-danger ms-2">
+                                                                {{ Form::open(['route' => ['invoice.destroy', $invoice->id], 'class' => 'm-0']) }}
+                                                                @method('DELETE')
+                                                                <a href="#"
+                                                                    class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
+                                                                    data-bs-toggle="tooltip" title=""
+                                                                    data-bs-original-title="Delete" aria-label="Delete"
+                                                                    data-confirm="{{ __('Are You Sure?') }}"
+                                                                    data-text="{{ __('This action can not be undone. Do you want to continue?') }}"
+                                                                    data-confirm-yes="delete-form-{{ $invoice->id }}">
+                                                                    <i class="ti ti-trash text-white text-white"></i>
                                                                 </a>
+                                                                {{ Form::close() }}
                                                             </div>
                                                         @endcan
                                                     @endif
-                                                    @can('invoice delete')
-                                                        <div class="action-btn bg-danger ms-2">
-                                                            {{ Form::open(['route' => ['invoice.destroy', $invoice->id], 'class' => 'm-0']) }}
-                                                            @method('DELETE')
-                                                            <a href="#"
-                                                                class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
-                                                                data-bs-toggle="tooltip" title=""
-                                                                data-bs-original-title="Delete" aria-label="Delete"
-                                                                data-confirm="{{ __('Are You Sure?') }}"
-                                                                data-text="{{ __('This action can not be undone. Do you want to continue?') }}"
-                                                                data-confirm-yes="delete-form-{{ $invoice->id }}">
-                                                                <i class="ti ti-trash text-white text-white"></i>
-                                                            </a>
-                                                            {{ Form::close() }}
-                                                        </div>
-                                                    @endcan
                                                 </span>
                                             </td>
                                         @endif
@@ -233,6 +249,9 @@
     </div>
 @endsection
 @push('scripts')
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script>
         $(document).on("click",".cp_link",function() {
             var value = $(this).attr('data-link');

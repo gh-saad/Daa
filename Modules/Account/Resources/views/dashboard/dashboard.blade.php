@@ -84,15 +84,23 @@
                                         <tr>
                                             <th>{{ __('Bank') }}</th>
                                             <th>{{ __('Holder Name') }}</th>
-                                            <th>{{ __('Balance') }}</th>
+                                            <th>{{ __('Un-Adjusted Balance') }}</th>
+                                            <th>{{ __('Adjusted Balance') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @forelse($bankAccountDetail as $bankAccount)
+                                            @php
+                                                $chart_account = \Modules\Account\Entities\ChartOfAccount::find($bankAccount->chart_account_id);
+                                                $adjustments = $chart_account->balance($bankAccount->chart_account_id);
+                                                $converted_amount = currency_conversion($adjustments, company_setting('defult_currancy'), $bankAccount->currency);
+                                                $adjusted_balance = $bankAccount->opening_balance + $converted_amount;
+                                            @endphp
                                             <tr class="font-style">
                                                 <td>{{ $bankAccount->bank_name }}</td>
                                                 <td>{{ $bankAccount->holder_name }}</td>
-                                                <td>{{ currency_format_with_sym($bankAccount->opening_balance) }}</td>
+                                                <td>{{ number_format($bankAccount->opening_balance, 2) . ' ' . $bankAccount->currency }}</td>
+                                                <td>{{ number_format($adjusted_balance, 2) . ' ' . $bankAccount->currency }}</td>
                                             </tr>
                                         @empty
                                             <tr>

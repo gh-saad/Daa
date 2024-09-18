@@ -65,6 +65,11 @@ class Install extends Command
             '--path' => 'database/migrations/2024_09_10_112656_alter_purchase_payments_table.php',
         ]);
 
+        // added currency column in invoice_products table
+        $this->call('migrate', [
+            '--path' => 'database/migrations/2024_09_16_053911_alter_invoice_products_table.php',
+        ]);
+
         $this->info('# updating chart of accounts.');
 
         try {

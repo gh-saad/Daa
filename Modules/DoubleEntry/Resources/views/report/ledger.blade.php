@@ -5,8 +5,23 @@
 @section('page-breadcrumb')
     {{ __('Ledger Summary') }}
 @endsection
-
+@push('css')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-selection__rendered {
+            line-height: 36px !important;
+        }
+        .select2-container .select2-selection--single {
+            height: 40px !important;
+        }
+        .select2-selection__arrow {
+            height: 39px !important;
+        }
+    </style>
+@endpush
 @push('scripts')
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script type="text/javascript" src="{{ asset('js/html2pdf.bundle.min.js') }}"></script>
     <script>
         var filename = $('#filename').val();

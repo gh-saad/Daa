@@ -101,7 +101,7 @@ class Invoice extends Model
     {
         $subTotal = 0;
         foreach ($this->items as $product) {
-            $subTotal += ($product->price * $product->quantity);
+            $subTotal += currency_conversion(($product->price * $product->quantity), $product->currency, company_setting('defult_currancy'));
         }
         return $subTotal;
     }
@@ -110,11 +110,11 @@ class Invoice extends Model
         $totalDiscount = 0;
         foreach($this->items as $product)
         {
-            $totalDiscount += $product->discount;
+            $totalDiscount += currency_conversion($product->discount, $product->currency, company_setting('defult_currancy'));
         }
         return $totalDiscount;
     }
-    public static function taxRate($taxRate, $price, $quantity,$discount = 0)
+    public static function taxRate($taxRate, $price, $quantity, $discount = 0)
     {
         return ($taxRate / 100) * (($price * $quantity) - $discount);
     }
@@ -168,9 +168,10 @@ class Invoice extends Model
                 $taxes = 0;
             }
             $totalTax += ($taxes / 100) * (($product->price * $product->quantity) - $product->discount);
+            $convertedTax = currency_conversion($totalTax, $product->currency, company_setting('defult_currancy'));
         }
 
-        return $totalTax;
+        return $convertedTax;
     }
     public function getTotal()
     {
@@ -181,7 +182,7 @@ class Invoice extends Model
         $due = 0;
         foreach ($this->payments as $payment)
         {
-            $due += $payment->amount;
+            $due += currency_conversion($payment->amount, $payment->currency, company_setting('defult_currancy'));
         }
 
         return ($this->getTotal() - $due) - $this->invoiceTotalCreditNote();
