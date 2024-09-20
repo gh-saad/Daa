@@ -700,7 +700,7 @@ class VenderController extends Controller
             }
 
             $generated_password = Str::random(8); // randomly generated password
-            $generated_email = $request->input('name').time().'@'.Str::random(8).'.com'; // randomly generated email needs to be unique so use timestamp and the provided request name
+            $generated_email = 'no_reply@'.Str::random(4).time().'.com'; // randomly generated email needs to be unique so use timestamp and the provided request name
 
             $user['email']      = $generated_email;
             $user['name']       = $request->input('vendor_name');
