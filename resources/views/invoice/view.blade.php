@@ -403,6 +403,7 @@
                                                             @php
                                                                 $totalRate+=currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy'));
                                                                 $totalDiscount+=currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy'));
+                                                                $thisTax=0;
                                                             @endphp
                                                             @if (!empty($iteam->tax))
                                                                 @php
@@ -435,6 +436,7 @@
                                                                                 @php
                                                                                     $taxPrice = \App\Models\Invoice::taxRate($tax->rate, currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy')), $iteam->quantity, currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy')));
                                                                                     $totalTaxPrice += $taxPrice;
+                                                                                    $thisTax += $taxPrice;
                                                                                     $data += $taxPrice;
                                                                                 @endphp
                                                                                 <tr>
@@ -451,11 +453,12 @@
                                                                     @endif
                                                                 </td>
                                                                 <td style="white-space: break-spaces;">{{!empty($iteam->description)?$iteam->description:'-'}}</td>
-                                                                <td class="text-end">{{ number_format(currency_conversion(($iteam->price - $iteam->discount), $iteam->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>{{--text-right--}}
+                                                                <td class="text-end">{{ number_format(currency_conversion(($iteam->price - $iteam->discount) + $thisTax, $iteam->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>{{--text-right--}}
                                                             </tr>
                                                         @endforeach
                                                         <tfoot>
                                                         <tr>
+                                                            <td></td>
                                                             <td></td>
                                                             <td><b>{{__('Total')}}</b></td>
                                                             <td></td>
@@ -544,7 +547,7 @@
                                         @foreach ($bank_transfer_payments as $bank_transfer_payment)
                                             <tr>
                                                 <td>{{ company_datetime_formate($bank_transfer_payment->created_at) }}</td>
-                                                <td class="text-right">{{ currency_format_with_sym($bank_transfer_payment->price) }}
+                                                <td class="text-right">{{ number_format($bank_transfer_payment->price, 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                 </td>
                                                 <td>{{ 'Bank transfer' }}</td>
                                                 <td>-</td>

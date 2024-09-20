@@ -150,8 +150,12 @@ class InvoiceController extends Controller
 
                 if(module_is_active('ProductService'))
                 {
-                    $company_products =  \Modules\ProductService\Entities\ProductService::where('workspace_id',getActiveWorkSpace())->where('type', '=', 'product')->where('purchased_status', '=', 'Paid')->where('vehicle_status', '=', 'Yard')->get();
-                    
+                    $company_products = \Modules\ProductService\Entities\ProductService::where('workspace_id', getActiveWorkSpace())
+                        ->where('type', '=', 'product')
+                        ->whereIn('purchased_status', ['Paid', 'Partially Paid', 'Awaiting Payment'])
+                        ->where('vehicle_status', '=', 'Yard')
+                        ->get();
+                
                     foreach ($company_products as $ps) {
                         // combine both values
                         $ps_detail = $ps->sku . ' - ' . $ps->name;
@@ -413,8 +417,12 @@ class InvoiceController extends Controller
                 {
                     $taxs = \Modules\ProductService\Entities\Tax::where('workspace_id', getActiveWorkSpace())->get()->pluck('name', 'id');
                     
-                    $company_products =  \Modules\ProductService\Entities\ProductService::where('workspace_id',getActiveWorkSpace())->where('type', '=', 'product')->where('purchased_status', '=', 'Paid')->where('vehicle_status', '=', 'Yard')->get();
-                    
+                    $company_products = \Modules\ProductService\Entities\ProductService::where('workspace_id', getActiveWorkSpace())
+                        ->where('type', '=', 'product')
+                        ->whereIn('purchased_status', ['Paid', 'Partially Paid', 'Awaiting Payment'])
+                        ->where('vehicle_status', '=', 'Yard')
+                        ->get();
+                
                     foreach ($company_products as $ps) {
                         // combine both values
                         $ps_detail = $ps->sku . ' - ' . $ps->name;
