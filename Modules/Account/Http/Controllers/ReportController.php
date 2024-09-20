@@ -1501,7 +1501,7 @@ class ReportController extends Controller
         return view('account::report.supplier_report', compact('venders', 'vehicles'));
     }
   
-    public function cashSummary(){
+    public function cashSummary(Request $request){
         if(Auth::user()->can('report loss & profit  manage'))
             {
                 $data['month']     = [
@@ -1855,7 +1855,7 @@ class ReportController extends Controller
                 $filter['startDateRange'] = 'Jan-' . $year;
                 $filter['endDateRange']   = 'Dec-' . $year;
 
-                $date = "2024-05-02";
+                $date = $request->date ?? date('Y-m-d');
                 // Opening Balance
                 $openingCash = 0;
                 $openingEquity = 0;
@@ -1892,10 +1892,10 @@ class ReportController extends Controller
 
                 // Registration
                 // SELECT * FROM `revenues` where category_id = 12 and workspace = 1;
-                $category_id = \Modules\ProductService\Entities\Category::where(['name' => 'Subscription', 'type' => '1', 'workspace_id' => getActiveWorkspace()])->first();
-                $subscriptionCashTotal = Revenue::where(['category_id' => $category_id->id, 'account_id' => $cash_account->id,'workspace' => getActiveWorkspace()])->sum('amount');
-                $subscriptionEquityKesTotal = Revenue::where(['category_id' => $category_id->id, 'account_id' => $equity_kes_account->id, 'workspace' => getActiveWorkspace()])->sum('amount');
-                $subscriptionPrimeKesTotal = Revenue::where(['category_id' => $category_id->id, 'account_id' => $prime_kes_account->id, 'workspace' => getActiveWorkspace()])->sum('amount');
+                $category_id = \Modules\ProductService\Entities\Category::where(['name' => 'Subscription','type' => '1', 'workspace_id' => getActiveWorkspace()])->first();
+                $subscriptionCashTotal = Revenue::where(["date"=> $date, 'category_id' => $category_id->id, 'account_id' => $cash_account->id,'workspace' => getActiveWorkspace()])->sum('amount');
+                $subscriptionEquityKesTotal = Revenue::where(["date"=> $date, 'category_id' => $category_id->id, 'account_id' => $equity_kes_account->id, 'workspace' => getActiveWorkspace()])->sum('amount');
+                $subscriptionPrimeKesTotal = Revenue::where(["date"=> $date, 'category_id' => $category_id->id, 'account_id' => $prime_kes_account->id, 'workspace' => getActiveWorkspace()])->sum('amount');
                 $subscriptionTotal = $subscriptionCashTotal + $subscriptionEquityKesTotal + $subscriptionPrimeKesTotal;
                 // Registration end
 

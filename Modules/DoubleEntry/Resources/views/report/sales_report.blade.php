@@ -187,18 +187,22 @@
                                         <thead>
                                         <tr>
                                             <th width="33%"> {{__('Invoice Item')}}</th>
-                                            <th width="33%"> {{__('Quantity Sold')}}</th>
-                                            <th width="33%"> {{__('Amount')}}</th>
+                                            {{-- <th width="16%"> {{__('Quantity Sold')}}</th> --}}
+                                            @foreach ($services as $service)
+                                                <th width="16%"> {{ $service->name}}</th>
+                                            @endforeach
+                                            
+                                            <th width="16%"> {{__('Amount')}}</th>
                                             <th class="text-end"> {{__('Average Price')}}</th>
                                         </tr>
                                         </thead>
                                         <tbody>
                                             @foreach($invoiceItems as $invoiceItem)
                                                 <tr>
-                                                    <td>{{ $invoiceItem['name']}}</td>
-                                                    <td>{{ $invoiceItem['quantity']}}</td>
+                                                    <td>{{ $invoiceItem['sku']}} {{ $invoiceItem['name']}}</td>
+                                                    {{-- <td>{{ $invoiceItem['quantity']}}</td> --}}
                                                     <td>{{ currency_format_with_sym($invoiceItem['price']) }}</td>
-                                                    <td>{{ currency_format_with_sym($invoiceItem['avg_price']) }}</td>
+                                                    <td class="text-end">{{ currency_format_with_sym($invoiceItem['avg_price']) }}</td>
                                                 </tr>
                                             @endforeach
                                         </tbody>

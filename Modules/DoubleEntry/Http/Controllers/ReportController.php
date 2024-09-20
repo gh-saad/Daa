@@ -263,7 +263,12 @@ class ReportController extends Controller
             $end = date('Y-m-d', strtotime('+1 day'));
         }
 
-        $invoiceItems = InvoiceProduct::select('product_services.name', \DB::raw('sum(invoice_products.quantity) as quantity'), \DB::raw('sum(invoice_products.price) as price'), \DB::raw('sum(invoice_products.price)/sum(invoice_products.quantity) as avg_price'));
+        if(module_is_active('ProductService'))
+        {
+            $services = \Modules\ProductService\Entities\ProductService::select('name')->where('type', 'service')->get();
+        }
+
+        $invoiceItems = InvoiceProduct::select('product_services.*', \DB::raw('sum(invoice_products.quantity) as quantity'), \DB::raw('sum(invoice_products.price) as price'), \DB::raw('sum(invoice_products.price)/sum(invoice_products.quantity) as avg_price'));
         $invoiceItems->leftjoin('product_services', 'product_services.id', 'invoice_products.product_id');
         $invoiceItems->where('product_services.created_by', creatorId());
         $invoiceItems->where('product_services.workspace_id', getActiveWorkSpace());
@@ -271,7 +276,6 @@ class ReportController extends Controller
         $invoiceItems->where('invoice_products.created_at', '<=', $end);
         $invoiceItems->groupBy('invoice_products.product_id');
         $invoiceItems = $invoiceItems->get()->toArray();
-
         $invoiceCustomers = Invoice::select('customers.name',
             \DB::raw('count(invoices.customer_id) as invoice_count'),
             \DB::raw('sum(invoice_products.price) as price'),
@@ -291,7 +295,7 @@ class ReportController extends Controller
         $filter['startDateRange'] = $start;
         $filter['endDateRange'] = $end;
 
-        return view('doubleentry::report.sales_report', compact('filter', 'invoiceItems', 'invoiceCustomers'));
+        return view('doubleentry::report.sales_report', compact('filter', 'services','invoiceItems', 'invoiceCustomers'));
     }
 
     public function salesReportPrint(Request $request)
