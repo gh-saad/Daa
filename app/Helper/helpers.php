@@ -1693,14 +1693,10 @@ if (!function_exists('currency_conversion'))
     {
         
         // locate currencies
-        if ($from_code == null){
-            $from_code = 'KES';
-        }
-
-        $from_currency = currency($from_code);
-        $to_currency = currency($to_code);
-
-        // multiply amount to from_currency rate
+        $from_currency = !empty($from_code) ? currency($from_code) : currency('KES');
+        $to_currency = !empty($to_code) ? currency($to_code) : currency('KES');
+      
+        // divide amount to from_currency rate
         $usd_amount = $amount / $from_currency->rate;
         
         // multiply amount to to_currency rate

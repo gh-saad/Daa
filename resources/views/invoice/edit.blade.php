@@ -490,7 +490,8 @@
 
                 let convertedDiscount;
                 if (itemDiscountType === 'percent') {
-                    convertedDiscount = (itemPrice * itemDiscount) / 100; // Calculate percentage discount
+                    calculatedDiscount = (itemPrice * itemDiscount) / 100; // Calculate percentage discount
+                    convertedDiscount = ( calculatedDiscount / conversionRate ) * defaultRate;
                 } else {
                     convertedDiscount = ( itemDiscount / conversionRate ) * defaultRate; // Fixed amount
                 }
