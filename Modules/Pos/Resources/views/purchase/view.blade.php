@@ -410,7 +410,7 @@
                                                         @endif
                                                     </td>
                                                     <td>{{ company_date_formate($payment->date)}}</td>
-                                                    <td>{{ currency_format_with_sym($payment->amount)}}</td>
+                                                    <td>{{ number_format($payment->amount, 2) . ' ' . $payment->currency }}</td>
                                                     <td>{{!empty($payment->bankAccount)?$payment->bankAccount->bank_name.' '.$payment->bankAccount->holder_name:''}}</td>
                                                     <td>{{$payment->reference}}</td>
                                                     <td style="white-space: break-spaces;">{{$payment->description}}</td>
@@ -464,7 +464,7 @@
                                             @forelse($purchase->debitNote as $key =>$debitNote)
                                                 <tr>
                                                     <td>{{ company_date_formate($debitNote->date)}}</td>
-                                                    <td>{{ currency_format_with_sym($debitNote->amount)}}</td>
+                                                    <td>{{ number_format($debitNote->amount, 2) . ' ' . company_setting('defult_currancy') }}</td></td>
                                                     <td>{{$debitNote->description}}</td>
                                                     <td>
                                                         @can('purchase debitnote edit')

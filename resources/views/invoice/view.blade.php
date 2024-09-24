@@ -415,7 +415,7 @@
                                                                         if (empty($taxe)) {
                                                                             $taxe = $default_tax;
                                                                             // Store the message in the messages array
-                                                                            $messages[] = "Could not locate Tax entry for " . $iteam->product()->name . ", using default tax entry as 0%";
+                                                                            $messages[] = "Could not locate Tax entry for " . $iteam->product()->name . ", Using default tax entry as 0%";
                                                                         }
                                                                         $taxDataPrice = \App\Models\Invoice::taxRate($taxe->rate, currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy')), $iteam->quantity, currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy')));
                                                                         if (array_key_exists($taxe->name, $taxesData)) {
@@ -446,7 +446,7 @@
                                                                                     if (empty($tax)) {
                                                                                         $tax = $default_tax;
                                                                                         // Store the message in the messages array
-                                                                                        $messages[] = "Could not locate Tax entry for " . $iteam->product()->name . ", now using default tax entry as 0%";
+                                                                                        $messages[] = "Could not locate Tax entry for " . $iteam->product()->name . ", Using default tax entry as 0%";
                                                                                     }
                                                                                     $taxPrice = \App\Models\Invoice::taxRate($tax->rate, currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy')), $iteam->quantity, currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy')));
                                                                                     $totalTaxPrice += $taxPrice;
@@ -603,7 +603,16 @@
                                         @foreach ($invoice->payments as $key => $payment)
                                             <tr>
                                                 <td>{{ company_date_formate($payment->date) }}</td>
-                                                <td>{{ currency_format_with_sym($payment->amount) }}</td>
+                                                @php
+                                                    $currency_for_this = company_setting('defult_currancy');
+                                                    if(empty($payment->currency)){
+                                                        // Store the message in the messages array
+                                                        $messages[] = "No currency was recorded when payments were made for this, Currency conversion will not correctly apply here.";
+                                                    }else{
+                                                        $currency_for_this = $payment->currency;
+                                                    }
+                                                @endphp
+                                                <td>{{ number_format($payment->amount, 2) . ' ' . $currency_for_this }}</td>
                                                 <td>{{ $payment->payment_type }}</td>
                                                 @if (module_is_active('Account'))
                                                     <td>{{ !empty($payment->bankAccount) ? $payment->bankAccount->bank_name . ' ' . $payment->bankAccount->holder_name : '--' }}
@@ -745,15 +754,28 @@
         $(document).ready(function () {
             // Display toastr messages if there are any
             @if (!empty($messages))
-                @foreach ($messages as $message)
-                    toastr.options = {
-                        "closeButton": true,
-                        "progressBar": true,
-                        "positionClass": "toast-top-right",
-                        "timeOut": "6000",
-                    };
-                    toastr.error('{{ $message }}');
-                @endforeach
+                // Store all messages in an array
+                var messagesArray = [
+                    @foreach ($messages as $message)
+                        '{{ $message }}',
+                    @endforeach
+                ];
+
+                // Remove duplicate messages
+                var uniqueMessages = [...new Set(messagesArray)];
+
+                // Toastr options
+                toastr.options = {
+                    "closeButton": true,
+                    "progressBar": true,
+                    "positionClass": "toast-top-right",
+                    "timeOut": "6000",
+                };
+
+                // Display unique messages with Toastr
+                uniqueMessages.forEach(function(message) {
+                    toastr.error(message);
+                });
             @endif
         });
     </script>
