@@ -1027,10 +1027,9 @@ class PurchaseController extends Controller
             $purchasePayment->date           = $request->date;
             $purchasePayment->amount         = $amount;
             $purchasePayment->currency       = company_setting('defult_currancy');
-            $purchasePayment->account_id     = $request->account_id;
             $purchasePayment->payment_method = 0;
-            $purchasePayment->reference      = $request->reference;
-            $purchasePayment->description    = $request->description;
+            $purchasePayment->reference      = !empty($request->reference) ? $request->reference : '-';
+            $purchasePayment->description    = !empty($request->description) ? $request->description : '-';
 
             if(!empty($request->add_receipt))
             {
