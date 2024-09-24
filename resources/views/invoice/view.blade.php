@@ -6,6 +6,7 @@
     {{ __('Invoice Detail') }}
 @endsection
 @push('css')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
     <style>
         #card-element {
             border: 1px solid #a3afbb !important;
@@ -399,19 +400,26 @@
                                                             $TaxPrice_array = [];
                                                         @endphp
 
-                                                        @foreach($iteams as $key =>$iteam)
+                                                        @foreach($iteams as $key => $iteam)
                                                             @php
-                                                                $totalRate+=currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy'));
-                                                                $totalDiscount+=currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy'));
-                                                                $thisTax=0;
+                                                                $totalRate += currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy'));
+                                                                $totalDiscount += currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy'));
+                                                                $thisTax = 0;
+                                                                $messages = []; // Initialize an array to hold messages
                                                             @endphp
                                                             @if (!empty($iteam->tax))
                                                                 @php
+                                                                    $default_tax = \Modules\ProductService\Entities\Tax::find(1);
                                                                     $taxes = \App\Models\Invoice::tax($iteam->tax);
                                                                     foreach ($taxes as $taxe) {
+                                                                        if (empty($taxe)) {
+                                                                            $taxe = $default_tax;
+                                                                            // Store the message in the messages array
+                                                                            $messages[] = "Could not locate Tax entry for " . $iteam->product()->name . ", using default tax entry as 0%";
+                                                                        }
                                                                         $taxDataPrice = \App\Models\Invoice::taxRate($taxe->rate, currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy')), $iteam->quantity, currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy')));
                                                                         if (array_key_exists($taxe->name, $taxesData)) {
-                                                                            $taxesData[$taxe->name] = $taxesData[$taxe->name] + $taxDataPrice;
+                                                                            $taxesData[$taxe->name] += $taxDataPrice;
                                                                         } else {
                                                                             $taxesData[$taxe->name] = $taxDataPrice;
                                                                         }
@@ -419,21 +427,27 @@
                                                                 @endphp
                                                             @endif
                                                             <tr>
-                                                                <td>{{$key+1}}</td>
-                                                                <td>{{!empty($iteam->product_type) ? Str::ucfirst($iteam->product_type) : '--'}}</td>
-                                                                <td>{{!empty($iteam->product())?$iteam->product()->sku:''}}</td>
-                                                                <td>{{!empty($iteam->product())?$iteam->product()->name:''}}</td>
+                                                                <td>{{ $key + 1 }}</td>
+                                                                <td>{{ !empty($iteam->product_type) ? Str::ucfirst($iteam->product_type) : '--' }}</td>
+                                                                <td>{{ !empty($iteam->product()) ? $iteam->product()->sku : '' }}</td>
+                                                                <td>{{ !empty($iteam->product()) ? $iteam->product()->name : '' }}</td>
                                                                 <td>{{ number_format(currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                                 <td>{{ number_format(currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                                 <td>
                                                                     @if (!empty($iteam->tax))
                                                                         <table>
                                                                             @php
+                                                                                $default_tax = \Modules\ProductService\Entities\Tax::find(1);
                                                                                 $totalTaxRate = 0;
                                                                                 $data = 0;
                                                                             @endphp
                                                                             @foreach ($taxes as $tax)
                                                                                 @php
+                                                                                    if (empty($tax)) {
+                                                                                        $tax = $default_tax;
+                                                                                        // Store the message in the messages array
+                                                                                        $messages[] = "Could not locate Tax entry for " . $iteam->product()->name . ", now using default tax entry as 0%";
+                                                                                    }
                                                                                     $taxPrice = \App\Models\Invoice::taxRate($tax->rate, currency_conversion($iteam->price, $iteam->currency, company_setting('defult_currancy')), $iteam->quantity, currency_conversion($iteam->discount, $iteam->currency, company_setting('defult_currancy')));
                                                                                     $totalTaxPrice += $taxPrice;
                                                                                     $thisTax += $taxPrice;
@@ -723,3 +737,24 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Display toastr messages if there are any
+            @if (!empty($messages))
+                @foreach ($messages as $message)
+                    toastr.options = {
+                        "closeButton": true,
+                        "progressBar": true,
+                        "positionClass": "toast-top-right",
+                        "timeOut": "6000",
+                    };
+                    toastr.error('{{ $message }}');
+                @endforeach
+            @endif
+        });
+    </script>
+@endpush

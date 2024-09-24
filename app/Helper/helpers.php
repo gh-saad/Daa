@@ -1688,10 +1688,10 @@ if (!function_exists('currency_conversion'))
     function currency_conversion($amount, $from_code, $to_code)
     {
         // locate currencies
-        $from_currency = currency($from_code);
-        $to_currency = currency($to_code);
+        $from_currency = !empty($from_code) ? currency($from_code) : currency('KES');
+        $to_currency = !empty($to_code) ? currency($to_code) : currency('KES');
 
-        // multiply amount to from_currency rate
+        // divide amount to from_currency rate
         $usd_amount = $amount / $from_currency->rate;
         
         // multiply amount to to_currency rate
