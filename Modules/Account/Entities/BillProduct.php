@@ -51,4 +51,18 @@ class BillProduct extends Model
         }
 
     }
+
+    public function bill_account(){
+        $bill_account = BillAccount::where('ref_id', '=', $this->id)->first();
+        if(!empty($bill_account) && $bill_account->chart_account_id != null){
+            $chart_account = \Modules\Account\Entities\ChartOfAccount::find($bill_account->chart_account_id);
+            return $chart_account;
+        }else{
+            return [];
+        }
+    }
+
+    public function account(){
+        return $this->belongsTo(BillAccount::class, 'ref_id', 'id');
+    }
 }

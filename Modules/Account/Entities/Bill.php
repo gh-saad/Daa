@@ -80,7 +80,7 @@ class Bill extends Model
     {
         $subTotal = 0;
         foreach ($this->items as $product) {
-            $subTotal += ($product->price * $product->quantity);
+            $subTotal += currency_conversion(($product->price * $product->quantity), $product->currency, company_setting('defult_currancy'));
         }
 
         return $subTotal;
@@ -89,7 +89,7 @@ class Bill extends Model
     {
         $totalDiscount = 0;
         foreach ($this->items as $product) {
-            $totalDiscount += $product->discount;
+            $totalDiscount += currency_conversion($product->discount, $product->currency, company_setting('defult_currancy'));
         }
 
         return $totalDiscount;
@@ -110,21 +110,48 @@ class Bill extends Model
     {
         return ($this->getSubTotal() + $this->getTotalTax()) - $this->getTotalDiscount();
     }
+    public static function totalTaxRate($taxes)
+    {
+        if(module_is_active('ProductService'))
+        {
+            $taxArr  = explode(',', $taxes);
+            $taxRate = 0;
+            foreach($taxArr as $tax)
+            {
+                $tax     = \Modules\ProductService\Entities\Tax::find($tax);
+                $taxRate += !empty($tax->rate) ? $tax->rate : 0;
+            }
+            return $taxRate;
+        }
+        else
+        {
+            return 0;
+        }
+    }
     public function getTotalTax()
     {
         $totalTax = 0;
-        foreach ($this->items as $product) {
-            $taxes = AccountUtility::totalTaxRate($product->tax);
-            $totalTax += ($taxes / 100) * ($product->price * $product->quantity - $product->discount) ;
+        foreach ($this->items as $product)
+        {
+            if(module_is_active('ProductService'))
+            {
+                $taxes = $this->totalTaxRate($product->tax);
+            }
+            else
+            {
+                $taxes = 0;
+            }
+            $totalTax += ($taxes / 100) * (($product->price * $product->quantity) - $product->discount);
+            $convertedTax = currency_conversion($totalTax, $product->currency, company_setting('defult_currancy'));
         }
 
-        return $totalTax;
+        return $convertedTax;
     }
     public function getDue()
     {
         $due = 0;
         foreach ($this->payments as $payment) {
-            $due += $payment->amount;
+            $due += currency_conversion($payment->amount, $payment->currency, company_setting('defult_currancy'));
         }
         return ($this->getTotal() - $due) - ($this->billTotalDebitNote());
     }

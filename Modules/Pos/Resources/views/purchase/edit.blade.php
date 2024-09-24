@@ -308,7 +308,15 @@
                             <div class="col-4">
                                 <div class="form-group">
                                     <label for="item_discount">{{ __('Item Discount') }}</label>
-                                    <input type="number" name="item_discount" id="itemDiscount" class="form-control mt-2" placeholder="{{ __('Discount Amount') }}" value="0">
+                                    <div class="input-group mt-2">
+                                        <input type="number" name="item_discount" id="itemDiscount" class="form-control" placeholder="{{ __('Discount Amount') }}" value="0" style="width: 70%;">
+                                        <div class="input-group-prepend" style="width: 30%;">
+                                            <select class="form-select" id="itemDiscountType" aria-label="Discount Type">
+                                                <option value="fixed">Fixed</option>
+                                                <option value="percent">%</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <!-- Removing tax related stuff because tax is not recorded by the buyer
@@ -517,6 +525,7 @@
                 const itemName = $('#itemSelect option:selected').text();
                 const itemPrice = parseFloat($('#itemPrice').val());
                 const itemDiscount = parseFloat($('#itemDiscount').val());
+                const itemDiscountType = $('#itemDiscountType').val();
                 const itemDesc = $('#itemDesc').val();
 
                 // Get selected currency and conversion rate
@@ -526,8 +535,13 @@
 
                 // Convert item price and discount to default currency
                 const convertedPrice = ( itemPrice / conversionRate ) * defaultRate;
-                const convertedDiscount = ( itemDiscount / conversionRate ) * defaultRate;
-                
+                let convertedDiscount;
+                if (itemDiscountType === 'percent') {
+                    convertedDiscount = (itemPrice * itemDiscount) / 100; // Calculate percentage discount
+                } else {
+                    convertedDiscount = ( itemDiscount / conversionRate ) * defaultRate; // Fixed amount
+                }
+
                 // Calculate net amount
                 const discountedPrice = convertedPrice - convertedDiscount;
 
@@ -562,6 +576,7 @@
                 $('#itemSelect').val(null).trigger('change');
                 $('#itemPrice').val(null);
                 $('#itemDiscount').val('0');
+                $('#itemDiscountType').val('fixed');
                 $('#itemDesc').val(null);
 
                 // Hide modal
