@@ -259,6 +259,7 @@ if (! function_exists('getSideMenu')) {
 
 if (! function_exists('company_setting')) {
     function company_setting($key,$user_id= null,$workspace= null){
+        
         if(empty($user_id)){
             $user_id =  \Auth::user()->id;
         }
@@ -268,7 +269,10 @@ if (! function_exists('company_setting')) {
         {
             return admin_setting($key);
         }
-
+           
+        // if($key == 'defult_currancy'){
+        //     return 'KES';
+        // }
         $workspace_id = $user->active_workspace;
 
         if(!in_array($user->type,['company','super admin'])){
@@ -1687,17 +1691,18 @@ if (!function_exists('currency_conversion'))
 {
     function currency_conversion($amount, $from_code, $to_code)
     {
+        
         // locate currencies
         $from_currency = !empty($from_code) ? currency($from_code) : currency('KES');
         $to_currency = !empty($to_code) ? currency($to_code) : currency('KES');
-
+      
         // divide amount to from_currency rate
         $usd_amount = $amount / $from_currency->rate;
         
         // multiply amount to to_currency rate
-        $converted_amount = $usd_amount * $to_currency->rate;
+        $amount = $usd_amount * $to_currency->rate;
 
-        return $converted_amount;
+        return $amount;
     }
 }
 

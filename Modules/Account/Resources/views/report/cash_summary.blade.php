@@ -38,7 +38,7 @@
             <div class=" multi-collapse mt-2 " id="multiCollapseExample1">
                 <div class="card">
                     <div class="card-body">
-                    {{ Form::open(array('route' => array('report.profit.loss.summary'),'method' => 'GET','id'=>'report_profit_loss_summary')) }}
+                    {{ Form::open(array('route' => array('report.cash.summary'), 'method' => 'GET','id'=>'report_profit_loss_summary')) }}
                         <div class="row align-items-center justify-content-end">
                             <div class="col-xl-10">
                                 <div class="row">
