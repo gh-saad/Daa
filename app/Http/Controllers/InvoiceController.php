@@ -1604,10 +1604,9 @@ class InvoiceController extends Controller
             $invoicePayment->date           = $request->date;
             $invoicePayment->amount         = $request->amount;
             $invoicePayment->currency       = company_setting('defult_currancy');
-            $invoicePayment->account_id     = $request->account_id;
             $invoicePayment->payment_method = 0;
-            $invoicePayment->reference      = $request->reference;
-            $invoicePayment->description    = $request->description;
+            $invoicePayment->reference      = !empty($request->reference) ? $request->reference : '-';
+            $invoicePayment->description    = !empty($request->description) ? $request->description : '-';
             if(!empty($request->add_receipt))
             {
                 $fileName = time() . "_" . $request->add_receipt->getClientOriginalName();
@@ -1641,6 +1640,7 @@ class InvoiceController extends Controller
                 $invoice->status = 3;
                 $invoice->save();
             }
+
             $invoicePayment->user_id    = $invoice->customer_id;
             $invoicePayment->user_type  = 'Customer';
             $invoicePayment->type       = 'Partial';

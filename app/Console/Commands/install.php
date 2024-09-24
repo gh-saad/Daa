@@ -70,6 +70,16 @@ class Install extends Command
             '--path' => 'database/migrations/2024_09_16_053911_alter_invoice_products_table.php',
         ]);
 
+        // added currency column in bill_payments table
+        $this->call('migrate', [
+            '--path' => 'database/migrations/2024_09_20_064237_alter_bill_payments_table.php',
+        ]);
+
+        // added currency column in bill_products table
+        $this->call('migrate', [
+            '--path' => 'database/migrations/2024_09_20_064200_alter_bill_products_table.php',
+        ]);
+
         $this->info('# updating chart of accounts.');
 
         try {
@@ -198,6 +208,24 @@ class Install extends Command
                 ->where('id', $usd_equity_bank_account->id)
                 ->update(['chart_account_id' => $usd_equity_account->id]);
             }
+
+            // create Expense Account if it does not already exist
+            $expense_account = DB::table('chart_of_accounts')->where('name', '=', 'Expense Account')->first();
+            if ($expense_account == null) {
+                DB::table('chart_of_accounts')->insert([
+                    'name' => 'Expense Account',
+                    'code' => 1064,
+                    'type' => 6, // Expense
+                    'sub_type' => 13,
+                    'is_enabled' =>  1,
+                    'description' => null,
+                    'workspace' => 1,
+                    'created_by' => 2,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
             
 
         } catch (\Exception $e) {

@@ -32,7 +32,7 @@ use Modules\Account\Events\ResentBill;
 use Modules\Account\Events\SentBill;
 use Modules\Account\Events\UpdateBill;
 use Rawilk\Settings\Support\Context;
-
+use Illuminate\Support\Str;
 
 class BillController extends Controller
 {
@@ -101,27 +101,62 @@ class BillController extends Controller
                 $bill_number = Bill::billNumberFormat($this->billNumber());
 
                 $vendors_array = [];
+                $company_product_array = [];
+                $company_service_array = [];
+                
+                if(module_is_active('Account'))
+                {
+                    // Fetch vendors based on active workspace
+                    $vendors = \Modules\Account\Entities\Vender::where('workspace', '=', getActiveWorkSpace())->get();
+                    
+                    foreach ($vendors as $vendor) {
+                        // combine both values
+                        $vendor_detail = \Modules\Account\Entities\Vender::vendorNumberFormat($vendor->vendor_id) . ' ' . $vendor->name;
+                    
+                        // Add vendor detail to vendors_array with vendor's ID as key
+                        $vendors_array[$vendor->id] = $vendor_detail;
+                    }
+                    
+                    $chart_accounts = \Modules\Account\Entities\ChartOfAccount::where('created_by', '=', creatorId())->where('workspace', getActiveWorkSpace())->get()->pluck('name', 'id');
 
-                // Fetch vendors based on active workspace
-                $vendors = Vender::where('workspace', '=', getActiveWorkSpace())->get();
-                
-                foreach ($vendors as $vendor) {
-                    // combine both values
-                    $vendor_detail = Vender::vendorNumberFormat($vendor->vendor_id) . ' ' . $vendor->name;
-                
-                    // Add vendor detail to vendors_array with vendor's ID as key
-                    $vendors_array[$vendor->id] = $vendor_detail;
                 }
 
-                $product_services = \Modules\ProductService\Entities\ProductService::where('workspace_id', getActiveWorkSpace())->get()->pluck('name', 'id');
-                $product_services->prepend('--', '');
+                if(module_is_active('ProductService'))
+                {
+                    $company_products = \Modules\ProductService\Entities\ProductService::where('workspace_id', getActiveWorkSpace())
+                        ->where('type', '=', 'product')
+                        ->whereIn('purchased_status', ['Paid', 'Partially Paid', 'Awaiting Payment'])
+                        ->where('vehicle_status', '=', 'Yard')
+                        ->get();
+                
+                    foreach ($company_products as $ps) {
+                        // combine both values
+                        $ps_detail = $ps->sku . ' - ' . $ps->name;
+                    
+                        // Add vendor detail to company_product_array with ps's ID as key
+                        $company_product_array[$ps->id] = $ps_detail;
+                    }   
+                    
+                    $product_type =\Modules\ProductService\Entities\ProductService::$product_type;
+                    
+                    $company_services =  \Modules\ProductService\Entities\ProductService::where('workspace_id',getActiveWorkSpace())->where('type', '=', 'service')->get();
+                    
+                    foreach ($company_services as $ss) {
+                        // combine both values
+                        $ss_detail = $ss->sku . ' - ' . $ss->name;
+                    
+                        // Add vendor detail to company_service_array with ss's ID as key
+                        $company_service_array[$ss->id] = $ss_detail;
+                    }   
+                    
+                }
 
                 if(module_is_active('CustomField')){
                     $customFields =  \Modules\CustomField\Entities\CustomField::where('workspace_id',getActiveWorkSpace())->where('module', '=', 'Account')->where('sub_module','Bill')->get();
                 }else{
                     $customFields = null;
                 }
-                $product_type =\Modules\ProductService\Entities\ProductService::$product_type;
+
                 if(module_is_active('Taskly'))
                 {
                     if(module_is_active('ProductService'))
@@ -132,7 +167,7 @@ class BillController extends Controller
                     $projects = \Modules\Taskly\Entities\Project::select('projects.*')->join('user_projects', 'projects.id', '=', 'user_projects.project_id')->where('user_projects.user_id', '=', Auth::user()->id)->where('workspace', getActiveWorkSpace())->projectonly()->get()->pluck('name', 'id');
                 }
 
-                return view('account::bill.create', compact('vendors', 'bill_number', 'vendors_array', 'product_services', 'category', 'vendorId','customFields','product_type','projects','taxs'));
+                return view('account::bill.create', compact('vendors', 'vendors_array', 'company_product_array', 'company_service_array', 'chart_accounts', 'bill_number', 'vendors_array', 'category', 'vendorId','customFields','product_type','projects','taxs'));
             }
             else
             {
@@ -154,161 +189,101 @@ class BillController extends Controller
     {
         if (Auth::user()->can('bill create'))
         {
-            if($request->bill_type == "product")
-            {
-
-                    $validator = \Validator::make(
-                        $request->all(),
-                        [
-                            'vendor_id' => 'required',
-                            'bill_date' => 'required',
-                            'due_date' => 'required',
-                            'category_id' => 'required',
-
-                        ]
-                    );
-                    if($validator->fails())
-                    {
-                        $messages = $validator->getMessageBag();
-
-                        return redirect()->back()->with('error', $messages->first());
-                    }
-                    $vendor = Vender::find($request->vendor_id);
-                    $bill                 = new Bill();
-                    $bill->bill_id        = $this->billNumber();
-                    $bill->vendor_id      = $request->vendor_id;
-                    $bill->user_id        = !empty($vendor)? $vendor->user_id : null;
-                    $bill->bill_date      = $request->bill_date;
-                    $bill->status         = 0;
-                    $bill->bill_module    = 'account';
-                    $bill->due_date       = $request->due_date;
-                    $bill->category_id    = $request->category_id;
-                    $bill->order_number   = !empty($request->order_number) ? $request->order_number : 0;
-                    $bill->created_by     = Auth::user()->id;
-                    $bill->workspace      = getActiveWorkSpace();
-
-                    $bill->save();
-
-                    Bill::starting_number(  $bill->bill_id + 1, 'bill');
-
-                    $products = $request->items;
-
-                    for ($i = 0; $i < count($products); $i++)
-                    {
-                        if(!empty($products[$i]['item'])) {
-                            $billProduct = new BillProduct();
-                            $billProduct->bill_id = $bill->id;
-                            $billProduct->product_type = $products[$i]['product_type'];
-                            $billProduct->product_id = $products[$i]['item'];
-                            $billProduct->quantity = $products[$i]['quantity'];
-                            $billProduct->tax = $products[$i]['tax'];
-                            $billProduct->discount = $products[$i]['discount'];
-                            $billProduct->price = $products[$i]['price'];
-                            $billProduct->description = str_replace("'", "", $products[$i]['description'] ?? "");
-                            $billProduct->save();
-                        }
-
-                        if(!empty($products[$i]['chart_account_id'])){
-                            $billAccount                    = new BillAccount();
-                            $billAccount->chart_account_id  = $products[$i]['chart_account_id'];
-                            $billAccount->price             = $products[$i]['amount'];
-                            $billAccount->description       = $products[$i]['description'];
-                            $billAccount->type              = 'Bill';
-                            $billAccount->ref_id            = $bill->id;
-                            $billAccount->created_by     = \Auth::user()->id;
-                            $billAccount->workspace      = getActiveWorkSpace();
-                            $billAccount->save();
-                        }
-
-                        if(!empty($billProduct)) {
-                            Invoice::total_quantity('plus', $billProduct->quantity, $billProduct->product_id);
-                        }
-
-                        //Product Stock Report
-                        if(!empty($products[$i]['item'])) {
-                            $type = 'bill';
-                            $type_id = $bill->id;
-                            $description = $products[$i]['quantity'] . '  ' . __(' quantity purchase in bill') . ' ' . Bill::billNumberFormat($bill->bill_id);
-                            Bill::addProductStock($products[$i]['item'], $products[$i]['quantity'], $type, $description, $type_id);
-                        }
-                    }
-
-                    if(module_is_active('CustomField'))
-                    {
-                        \Modules\CustomField\Entities\CustomField::saveData($bill, $request->customField);
-                    }
-
-                    event(new CreateBill($request,$bill));
-                    return redirect()->route('bill.index', $bill->id)->with('success', __('Bill successfully created.'));
-
+            // important check required
+            foreach($request->items as $verify_item){
+                if($verify_item == "null"){
+                    return redirect()->back()->with('error', __('No product or service was selected for one of the items, kindly review your form and try again.'));
+                }
             }
-            else if($request->bill_type == "project")
+
+            $validator = \Validator::make(
+                $request->all(),
+                [
+                    'vendor_id' => 'required',
+                    'bill_date' => 'required',
+                    'due_date' => 'required',
+                    'category_id' => 'required',
+                    'items' => 'required',
+
+                ]
+            );
+            if($validator->fails())
             {
-                $validator = \Validator::make(
-                    $request->all(),
-                    [
-                        'vendor_id' => 'required',
-                        'bill_date' => 'required',
-                        'due_date' => 'required',
-                        'project' => 'required',
-                        'tax_project' => 'required',
-                        'items' => 'required',
+                $messages = $validator->getMessageBag();
 
-                    ]
-                );
-                if($validator->fails())
+                return redirect()->back()->with('error', $messages->first());
+            }
+    
+            if(!empty($request->vendor_id)){
+                $vendor = \Modules\Account\Entities\Vender::find($request->vendor_id);
+            }
+
+            $bill                 = new Bill();
+            $bill->bill_id        = $this->billNumber();
+            $bill->vendor_id      = $vendor->id;
+            $bill->user_id        = !empty($vendor)? $vendor->user_id : null;
+            $bill->bill_date      = $request->bill_date;
+            $bill->status         = 0;
+            $bill->bill_module    = 'account';
+            $bill->due_date       = $request->due_date;
+            $bill->category_id    = $request->category_id;
+            $bill->order_number   = !empty($request->order_number) ? $request->order_number : 0;
+            $bill->created_by     = Auth::user()->id;
+            $bill->workspace      = getActiveWorkSpace();
+            $bill->save();
+
+            Bill::starting_number(  $bill->bill_id + 1, 'bill');
+            if(module_is_active('CustomField'))
+            {
+                \Modules\CustomField\Entities\CustomField::saveData($bill, $request->customField);
+            }
+
+            event(new CreateBill($request,$bill));
+
+            $products = $request->items;
+            for($i = 0; $i < count($products); $i++)
+            {
+                $billProduct                 = new BillProduct();
+                $billProduct->bill_id        = $bill->id;
+                $billProduct->product_type   = $request->item_types[$i];
+                $billProduct->product_id     = $products[$i];
+                $billProduct->quantity       = 1;
+                $billProduct->currency       = company_setting("defult_currancy");
+                $billProduct->discount       = $request->item_discounts[$i];
+                $billProduct->price          = $request->item_prices[$i];
+                $billProduct->description    = $request->item_desc[$i];
+                $billProduct->tax            = 1;
+                $billProduct->save();
+
+                $bill_account = \Modules\Account\Entities\ChartOfAccount::find($request->item_accounts[$i]);
+
+                $billAccount                         = new BillAccount();
+                $billAccount->chart_account_id       = $bill_account->id;
+                $billAccount->price                  = $request->item_prices[$i];
+                $billAccount->description            = $request->item_desc[$i];
+                $billAccount->type                   = $bill_account->types->name;
+                $billAccount->ref_id                 = $billProduct->id;
+                $billAccount->workspace              = getActiveWorkSpace();
+                $billAccount->created_by             = Auth::user()->id;
+                $billAccount->save();
+
+                if(module_is_active('ProductService'))
                 {
-                    $messages = $validator->getMessageBag();
-
-                    return redirect()->back()->with('error', $messages->first());
+                    Invoice::total_quantity('plus', $billProduct->quantity, $billProduct->product_id);
                 }
 
-                $vendor = Vender::find($request->vendor_id);
-                $bill                 = new Bill();
-                $bill->bill_id        = $this->billNumber();
-                $bill->vendor_id      = $request->vendor_id;
-                $bill->user_id        = !empty($vendor)? $vendor->user_id : null;
-                $bill->bill_date      = $request->bill_date;
-                $bill->status         = 0;
-                $bill->bill_module    = 'taskly';
-                $bill->due_date       = $request->due_date;
-                $bill->category_id    = $request->project;
-                $bill->order_number   = !empty($request->order_number) ? $request->order_number : 0;
-                $bill->created_by     = Auth::user()->id;
-                $bill->workspace      = getActiveWorkSpace();
-                $bill->save();
-
-                $products = $request->items;
-
-                Bill::starting_number(  $bill->bill_id + 1, 'bill');
-
-                if(module_is_active('CustomField'))
+                if(module_is_active('Account'))
                 {
-                    \Modules\CustomField\Entities\CustomField::saveData($bill, $request->customField);
+                    //Product Stock Report
+                    $type = 'bill';
+                    $type_id = $bill->id;
+                    $description = $billProduct->quantity . '  ' . __(' quantity purchase in bill') . ' ' . Bill::billNumberFormat($bill->bill_id);
+                    Bill::addProductStock($products[$i], $billProduct->quantity, $type, $description, $type_id);
                 }
-                $project_tax = implode(',',$request->tax_project);
-
-                for($i = 0; $i < count($products); $i++)
-                {
-                    $billProduct                = new BillProduct();
-                    $billProduct->bill_id       = $bill->id;
-                    $billProduct->product_id    = $products[$i]['item'];
-                    $billProduct->quantity      = 1;
-                    $billProduct->tax           = $project_tax;
-                    $billProduct->discount      = isset($products[$i]['discount']) ? $products[$i]['discount'] : 0;
-                    $billProduct->price         = $products[$i]['price'];
-                    $billProduct->description   = str_replace("'", "", $products[$i]['description']);
-                    $billProduct->save();
-                }
-
-                 // first parameter request second parameter invoice
-                event(new CreateBill($request,$bill));
-                return redirect()->route('bill.index', $bill->id)->with('success', __('Bill successfully created.'));
             }
-            else
-            {
-                return redirect()->back()->with('error', __('Permission denied.'));
-            }
+
+            return redirect()->route('bill.index', $bill->id)->with('success', __('Bill successfully created.'));
+
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
@@ -329,50 +304,56 @@ class BillController extends Controller
                 return redirect()->back()->with('error', __('Bill Not Found.'));
             }
             $bill = Bill::find($id);
-
-            if ($bill->workspace == getActiveWorkSpace())
+            if($bill)
             {
-                $bill_attachment = BillAttechment::where('bill_id', $bill->id)->get();
-                $billPayment = BillPayment::where('bill_id', $bill->id)->first();
-                $vendor      = $bill->vendor;
-
-                $item      = $bill->items;
-                $accounts  = $bill->accounts;
-                $iteams     = [];
-                if(!empty($item) && count($item) > 0)
+                if($bill->workspace == getActiveWorkSpace())
                 {
-                    foreach ($item as $k=>$val)
+                    $bill_attachment = BillAttechment::where('bill_id', $bill->id)->get();
+                    $billPayment = BillPayment::where('bill_id', $bill->id)->first();
+                    $vendor      = $bill->vendor;
+
+                    $item      = $bill->items;
+                    $accounts  = $bill->accounts;
+                    $iteams     = [];
+                    if(!empty($item) && count($item) > 0)
                     {
-                        if(!empty($accounts[$k]))
+                        foreach ($item as $k=>$val)
                         {
-                            $val['chart_account_id']=$accounts[$k]['chart_account_id'];
-                            $val['account_id']=$accounts[$k]['id'];
-                            $val['amount']=$accounts[$k]['price'];
+                            if(!empty($accounts[$k]))
+                            {
+                                $val['chart_account_id']=$accounts[$k]['chart_account_id'];
+                                $val['account_id']=$accounts[$k]['id'];
+                                $val['amount']=$accounts[$k]['price'];
+                            }
+                            $iteams[]=$val;
                         }
-                        $iteams[]=$val;
                     }
-                }
-                else{
+                    else{
 
-                    foreach ($accounts as $k=>$val){
-                        $val1['chart_account_id']=$accounts[$k]['chart_account_id'];
-                        $val1['account_id']=$accounts[$k]['id'];
-                        $val1['amount']=$accounts[$k]['price'];
-                        $iteams[]=$val1;
+                        foreach ($accounts as $k=>$val){
+                            $val1['chart_account_id']=$accounts[$k]['chart_account_id'];
+                            $val1['account_id']=$accounts[$k]['id'];
+                            $val1['amount']=$accounts[$k]['price'];
+                            $iteams[]=$val1;
 
+                        }
                     }
-                }
 
-                if(module_is_active('CustomField')){
-                    $bill->customField = \Modules\CustomField\Entities\CustomField::getData($bill, 'Account','Bill');
-                    $customFields      = \Modules\CustomField\Entities\CustomField::where('workspace_id', '=', getActiveWorkSpace())->where('module', '=', 'Account')->where('sub_module','Bill')->get();
-                }else{
-                    $customFields = null;
-                }
+                    if(module_is_active('CustomField')){
+                        $bill->customField = \Modules\CustomField\Entities\CustomField::getData($bill, 'Account','Bill');
+                        $customFields      = \Modules\CustomField\Entities\CustomField::where('workspace_id', '=', getActiveWorkSpace())->where('module', '=', 'Account')->where('sub_module','Bill')->get();
+                    }else{
+                        $customFields = null;
+                    }
 
-                return view('account::bill.view', compact('bill', 'vendor', 'iteams', 'billPayment','customFields','bill_attachment'));
+                    return view('account::bill.view', compact('bill', 'vendor', 'iteams', 'billPayment','customFields','bill_attachment'));
+                }
+                else
+                {
+                    return redirect()->back()->with('error', __('Permission denied.'));
+                }
             } else {
-                return redirect()->back()->with('error', __('Permission denied.'));
+                return redirect()->back()->with('error', __('This bill is deleted.'));
             }
         } else {
             return redirect()->back()->with('error', __('Permission denied.'));
@@ -396,44 +377,97 @@ class BillController extends Controller
                     return redirect()->back()->with('error', __('Bill Not Found.'));
                 }
                 $bill     = Bill::find($id);
+
+                $projects = [];
+                $taxs = [];
+                $vendors_array = [];
+                $company_product_array = [];
+                $company_products_selected_array = [];
+                $company_service_array = [];
                 $category = [];
-                if ($bill->workspace == getActiveWorkSpace())
+
+                $bill_number = Bill::billNumberFormat($bill->bill_id);
+
+                if(module_is_active('Account'))
                 {
                     $category = \Modules\ProductService\Entities\Category::where('created_by', '=', creatorId())->where('workspace_id', getActiveWorkSpace())->where('type', 2)->get()->pluck('name', 'id');
 
-                    $bill_number = Bill::billNumberFormat($bill->bill_id);
-
-                    $vendors = Vender::where('workspace', '=',getActiveWorkSpace())->get()->pluck('name', 'id');
-
-                    $product_services = \Modules\ProductService\Entities\ProductService::where('workspace_id', getActiveWorkSpace())->get()->pluck('name', 'id');
-
-                    if(module_is_active('CustomField')){
-                        $bill->customField = \Modules\CustomField\Entities\CustomField::getData($bill, 'Account','Bill');
-                        $customFields             = \Modules\CustomField\Entities\CustomField::where('workspace_id', '=', getActiveWorkSpace())->where('module', '=', 'Account')->where('sub_module','Bill')->get();
-                    }else{
-                        $customFields = null;
+                    // Fetch vendors based on active workspace
+                    $vendors = \Modules\Account\Entities\Vender::where('workspace', '=', getActiveWorkSpace())->get();
+                    
+                    foreach ($vendors as $vendor) {
+                        // combine both values
+                        $vendor_detail = \Modules\Account\Entities\Vender::vendorNumberFormat($vendor->vendor_id) . ' ' . $vendor->name;
+                    
+                        // Add vendor detail to vendors_array with vendor's ID as key
+                        $vendors_array[$vendor->id] = $vendor_detail;
                     }
-                    $projects = [];
-                    $taxs = [];
-                    if(module_is_active('Taskly'))
-                    {
-                        if(module_is_active('ProductService'))
-                        {
-                            $taxs = \Modules\ProductService\Entities\Tax::where('workspace_id', getActiveWorkSpace())->get()->pluck('name', 'id');
-                        }
-                        $projects = \Modules\Taskly\Entities\Project::where('workspace', getActiveWorkSpace())->projectonly()->get()->pluck('name', 'id');
-                    }
-                    $product_type =\Modules\ProductService\Entities\ProductService::$product_type;
 
-
-
-
-                    return view('account::bill.edit', compact('vendors', 'product_services', 'bill', 'bill_number', 'category','customFields','product_type','projects','taxs'));
-                    }
-                else
-                {
-                    return redirect()->back()->with('error', __('Permission Denied.'));
+                    $chart_accounts = \Modules\Account\Entities\ChartOfAccount::where('created_by', '=', creatorId())->where('workspace', getActiveWorkSpace())->get()->pluck('name', 'id');
                 }
+
+                if(module_is_active('ProductService'))
+                {
+                    $taxs = \Modules\ProductService\Entities\Tax::where('workspace_id', getActiveWorkSpace())->get()->pluck('name', 'id');
+                    
+                    $company_products = \Modules\ProductService\Entities\ProductService::where('workspace_id', getActiveWorkSpace())
+                        ->where('type', '=', 'product')
+                        ->whereIn('purchased_status', ['Paid', 'Partially Paid', 'Awaiting Payment'])
+                        ->where('vehicle_status', '=', 'Yard')
+                        ->get();
+                
+                    foreach ($company_products as $ps) {
+                        // combine both values
+                        $ps_detail = $ps->sku . ' - ' . $ps->name;
+                    
+                        // Add vendor detail to company_product_array with ps's ID as key
+                        $company_product_array[$ps->id] = $ps_detail;
+                    }   
+
+                    $company_products_selected = BillProduct::where('bill_id', '=', $bill->id)->get();
+                    foreach ($company_products_selected as $prs) {
+                        $prs_product = \Modules\ProductService\Entities\ProductService::find($prs->product_id);
+                        $tax = \Modules\ProductService\Entities\Tax::find($prs->tax);
+                        $company_products_selected_array[$prs->id] = [
+                            'product_id' => $prs_product->id,
+                            'type' => $prs->product_type,
+                            'name' => $prs_product->sku . ' - ' . $prs_product->name,
+                            'account_name' => !empty($prs->bill_account()) ? $prs->bill_account()->name : '',
+                            'account_id' => !empty($prs->bill_account()) ? $prs->bill_account()->id : null,
+                            'desc' => $prs->description,
+                            'price' => currency_conversion($prs->price, $prs->currency, company_setting('defult_currancy')),
+                            'discount' => currency_conversion($prs->discount, $prs->currency, company_setting('defult_currancy')),
+                        ];
+                    }
+
+                    $product_type =\Modules\ProductService\Entities\ProductService::$product_type;
+                    
+                    $company_services =  \Modules\ProductService\Entities\ProductService::where('workspace_id',getActiveWorkSpace())->where('type', '=', 'service')->get();
+                    
+                    foreach ($company_services as $ss) {
+                        // combine both values
+                        $ss_detail = $ss->sku . ' - ' . $ss->name;
+                    
+                        // Add vendor detail to company_service_array with ss's ID as key
+                        $company_service_array[$ss->id] = $ss_detail;
+                    }   
+                
+                }
+
+                if(module_is_active('Taskly'))
+                {
+                    $projects = \Modules\Taskly\Entities\Project::where('workspace', getActiveWorkSpace())->projectonly()->get()->pluck('name', 'id');
+                }
+
+                if(module_is_active('CustomField')){
+                    $bill->customField = \Modules\CustomField\Entities\CustomField::getData($bill, 'Account','Bill');
+                    $customFields             = \Modules\CustomField\Entities\CustomField::where('workspace_id', '=', getActiveWorkSpace())->where('module', '=', 'Account')->where('sub_module','Bill')->get();
+                }else{
+                    $customFields = null;
+                }
+
+
+                return view('account::bill.edit', compact('vendors', 'vendors_array', 'company_product_array', 'company_service_array', 'company_products_selected_array', 'chart_accounts', 'bill', 'bill_number', 'category','customFields','product_type','projects','taxs'));
             }
             else
             {
@@ -459,180 +493,118 @@ class BillController extends Controller
             if ($bill->workspace == getActiveWorkSpace())
             {
 
+                // important check required
+                if($request->items != null){
+                    foreach($request->items as $verify_item){
+                        if($verify_item == "null"){
+                            return redirect()->back()->with('error', __('No product or service was selected for one of the items, kindly review your form and try again.'));
+                        }
+                    }
+                }else{
+                    return redirect()->back()->with('error', __('No item added please select an item'));
+                }
+            
+                $validator = \Validator::make(
+                    $request->all(),
+                    [
+                        'vendor_id' => 'required',
+                        'bill_date' => 'required',
+                        'due_date' => 'required',
+                        'category_id' => 'required',
+
+                    ]
+                );
+                if($validator->fails())
+                {
+                    $messages = $validator->getMessageBag();
+
+                    return redirect()->route('invoice.index')->with('error', $messages->first());
+                }
+
                 if($request->bill_type == "product")
                 {
-
-                    $validator = \Validator::make(
-                        $request->all(),
-                        [
-                            'vendor_id' => 'required',
-                            'bill_date' => 'required',
-                            'due_date' => 'required',
-                            'category_id' => 'required',
-
-                        ]
-                    );
-                    if($validator->fails())
-                    {
-                        $messages = $validator->getMessageBag();
-
-                        return redirect()->route('invoice.index')->with('error', $messages->first());
-                    }
-                    if($request->bill_type == "product")
-                    {
-                        $request->bill_type= 'account';
-                    }
-                    else if($request->bill_type == "project")
-                    {
-                        $request->bill_type= 'taskly';
-                    }
-                    if($request->bill_type != $bill->bill_module)
-                    {
-                        BillProduct::where('bill_id', '=', $bill->id)->delete();
-                    }
-
-                    $vendor  = Vender::find($request->vendor_id);
-
-                    $bill->vendor_id      = $request->vendor_id;
-                    $bill->user_id        = !empty($vendor)? $vendor->user_id : null;
-                    $bill->bill_date      = $request->bill_date;
-                    $bill->due_date       = $request->due_date;
-                    $bill->bill_module    = 'account';
-                    $bill->order_number   = $request->order_number;
-                    $bill->category_id    = $request->category_id;
-                    $bill->save();
-
-                    if(module_is_active('CustomField'))
-                    {
-                        \Modules\CustomField\Entities\CustomField::saveData($bill, $request->customField);
-                    }
-                    $products = $request->items;
-                    for ($i = 0; $i < count($products); $i++)
-                    {
-                        $billProduct = BillProduct::find($products[$i]['id']);
-                        if ($billProduct == null)
-                        {
-                            $billProduct             = new BillProduct();
-                            $billProduct->bill_id    = $bill->id;
-                            Invoice::total_quantity('plus',$products[$i]['quantity'],$products[$i]['item']);
-                            $updatePrice= ($products[$i]['price']*$products[$i]['quantity'])+($products[$i]['itemTaxPrice'])-($products[$i]['discount']);
-                            AccountUtility::updateUserBalance('vendor', $request->vendor_id, $updatePrice, 'debit');
-                        }
-                        else
-                        {
-                            Invoice::total_quantity('minus',$billProduct->quantity,$billProduct->product_id);
-                        }
-
-                        if (isset($products[$i]['item'])) {
-                            $billProduct->product_id = $products[$i]['item'];
-                        }
-                        $billProduct->product_type  = $products[$i]['product_type'];
-                        $billProduct->quantity      = $products[$i]['quantity'];
-                        $billProduct->tax           = $products[$i]['tax'];
-                        $billProduct->discount      = $products[$i]['discount'];
-                        $billProduct->price         = $products[$i]['price'];
-                        $billProduct->description   = str_replace("'", "", $products[$i]['description']);
-                        $billProduct->save();
-
-                        if(!empty($products[$i]['chart_account_id'])){
-                            $billAccount = BillAccount::find($products[$i]['id']);
-
-                            if ($billAccount == null) {
-                                $billAccount                    = new BillAccount();
-                                $billAccount->chart_account_id  = $products[$i]['chart_account_id'];
-                            }
-                            else{
-                                $billAccount->chart_account_id  = $products[$i]['chart_account_id'];
-                            }
-                            $billAccount->price                 = $products[$i]['amount'];
-                            $billAccount->description           = $products[$i]['description'];
-                            $billAccount->type                  = 'Bill';
-                            $billAccount->ref_id                = $bill->id;
-                            $billAccount->created_by     =      \Auth::user()->id;
-                            $billAccount->workspace      =      getActiveWorkSpace();
-                            $billAccount->save();
-                        }
-
-                        if($products[$i]['id'] > 0)
-                        {
-                            Invoice::total_quantity('plus',$products[$i]['quantity'],$billProduct->product_id);
-                        }
-                            //Product Stock Report.
-                            $type='bill';
-                            $type_id = $bill->id;
-                            StockReport::where('type','=','bill')->where('type_id','=',$bill->id)->delete();
-                            $description=$products[$i]['quantity'].'  '.__(' quantity purchase in bill').' '. Bill::billNumberFormat($bill->bill_id);
-
-                            if(empty($products[$i]['id'])){
-                                Bill::addProductStock( $products[$i]['item'],$products[$i]['quantity'],$type,$description,$type_id);
-                            }
-                    }
-
-
-
+                    $request->bill_type= 'account';
                 }
                 else if($request->bill_type == "project")
                 {
+                    $request->bill_type= 'taskly';
+                }
 
-                    $validator = \Validator::make(
-                        $request->all(),
-                        [
-                            'vendor_id' => 'required',
-                            'bill_date' => 'required',
-                            'due_date' => 'required',
-                            'project' => 'required',
-                            'tax_project' => 'required',
-                            'items' => 'required',
+                if($request->bill_type != $bill->bill_module)
+                {
+                    BillProduct::where('bill_id', '=', $bill->id)->delete();
+                }
+    
+                if(!empty($request->vendor_id)){
+                    $vendor = \Modules\Account\Entities\Vender::find($request->vendor_id);
+                }
 
-                        ]
-                    );
-                    if($validator->fails())
-                    {
-                        $messages = $validator->getMessageBag();
+                $bill->vendor_id      = $vendor->id;
+                $bill->user_id        = !empty($vendor)? $vendor->user_id : null;
+                $bill->bill_date      = $request->bill_date;
+                $bill->bill_module    = 'account';
+                $bill->due_date       = $request->due_date;
+                $bill->category_id    = $request->category_id;
+                $bill->order_number   = !empty($request->order_number) ? $request->order_number : 0;
+                $bill->save();
 
-                        return redirect()->back()->with('error', $messages->first());
-                    }
-
-
-                    $vendor = Vender::find($request->vendor_id);
-                    if($request->bill_type != $bill->bill_module)
-                    {
-                        BillProduct::where('bill_id', '=', $bill->id)->delete();
-                    }
-                    $bill->vendor_id      = $request->vendor_id;
-                    $bill->user_id        = !empty($vendor)? $vendor->user_id : null;
-                    $bill->bill_date      = $request->bill_date;
-                    $bill->due_date       = $request->due_date;
-                    $bill->bill_module    = 'taskly';
-                    $bill->order_number   = $request->order_number;
-                    $bill->category_id    = $request->category_id;
-                    $bill->save();
-
-                    $products = $request->items;
-                    if(module_is_active('CustomField'))
-                    {
-                        \Modules\CustomField\Entities\CustomField::saveData($bill, $request->customField);
-                    }
-                    $project_tax = implode(',',$request->tax_project);
-                    for($i = 0; $i < count($products); $i++)
-                    {
-                        $billProduct = BillProduct::find($products[$i]['id']);
-                        if($billProduct == null)
-                        {
-                            $billProduct             = new BillProduct();
-                            $billProduct->bill_id = $bill->id;
-                        }
-                        $billProduct->product_id  = $products[$i]['item'];
-                        $billProduct->quantity    = 1;
-                        $billProduct->tax         = $project_tax;
-                        $billProduct->discount    = isset($products[$i]['discount']) ? $products[$i]['discount'] : 0;
-                        $billProduct->price       = $products[$i]['price'];
-                        $billProduct->description = str_replace("'", "", $products[$i]['description']);
-                        $billProduct->save();
-                    }
+                if(module_is_active('CustomField'))
+                {
+                    \Modules\CustomField\Entities\CustomField::saveData($bill, $request->customField);
                 }
 
                 event(new UpdateBill($request,$bill));
+
+                // delete all products added by this bill
+                \Modules\Account\Entities\BillProduct::where('bill_id', '=', $bill->id)->delete();
+                \Modules\Account\Entities\BillAccount::where('ref_id', '=', $bill->id)->delete();
+                \Modules\Account\Entities\StockReport::where('type','=','bill')->where('type_id','=',$bill->id)->delete();
+
+                // add using provided data
+                $products = $request->items;
+                for($i = 0; $i < count($products); $i++)
+                {
+                    $billProduct                 = new BillProduct();
+                    $billProduct->bill_id        = $bill->id;
+                    $billProduct->product_type   = $request->item_types[$i];
+                    $billProduct->product_id     = $products[$i];
+                    $billProduct->quantity       = 1;
+                    $billProduct->currency       = company_setting("defult_currancy");
+                    $billProduct->discount       = $request->item_discounts[$i];
+                    $billProduct->price          = $request->item_prices[$i];
+                    $billProduct->description    = $request->item_desc[$i];
+                    $billProduct->tax            = 1;
+                    $billProduct->save();
+    
+                    $bill_account = \Modules\Account\Entities\ChartOfAccount::find($request->item_accounts[$i]);
+    
+                    $billAccount                         = new BillAccount();
+                    $billAccount->chart_account_id       = $bill_account->id;
+                    $billAccount->price                  = $request->item_prices[$i];
+                    $billAccount->description            = $request->item_desc[$i];
+                    $billAccount->type                   = $bill_account->types->name;
+                    $billAccount->ref_id                 = $billProduct->id;
+                    $billAccount->workspace              = getActiveWorkSpace();
+                    $billAccount->created_by             = Auth::user()->id;
+                    $billAccount->save();
+    
+    
+                    if(module_is_active('ProductService'))
+                    {
+                        Invoice::total_quantity('plus', $billProduct->quantity, $billProduct->product_id);
+                    }
+    
+                    if(module_is_active('Account'))
+                    {
+                        //Product Stock Report
+                        $type = 'bill';
+                        $type_id = $bill->id;
+                        $description = $billProduct->quantity . '  ' . __(' quantity purchase in bill') . ' ' . Bill::billNumberFormat($bill->bill_id);
+                        Bill::addProductStock($products[$i], $billProduct->quantity, $type, $description, $type_id);
+                    }
+                    
+                }
+
                 return redirect()->route('bill.index')->with('success', __('Bill successfully updated.'));
             }
             else
@@ -791,11 +763,24 @@ class BillController extends Controller
     {
         if (Auth::user()->can('bill send'))
         {
+
             $bill            = Bill::where('id', $id)->first();
+
+            // Get the items associated with the bill
+            $items = $bill->items;
+
+            // Important check required if an attempt is made to send/publish old or invalid bill records which do not have their bill accounts added
+            foreach($items as $item){
+                if (empty($item->bill_account())){
+                    return redirect()->back()->with('error', __('No bill account found for one or more items in this bill, please double check your bill draft and try again.'));
+                }
+            }
+
             $bill->send_date = date('Y-m-d');
             $bill->status    = 1;
             $bill->save();
 
+            event(new SentBill($bill));
             $vendor = Vender::where('id', $bill->vendor_id)->first();
 
             $bill->name = !empty($vendor) ? $vendor->name : '';
@@ -806,7 +791,58 @@ class BillController extends Controller
 
             AccountUtility::updateUserBalance('vendor', $vendor->id, $bill->getTotal(), 'debit');
 
-            event(new SentBill($bill));
+            foreach($items as $item){
+                // Adding Journal Entries for product expense
+                // Expense Account = Debit = Net price after discount
+                // Account Payable = Credit = Net price after discount
+
+                // Values
+                $netPriceAfterDiscount = $item->price - $item->discount;
+                $expense_account_id = $item->bill_account()->id;
+
+                // Currency conversion
+                $convertedAmountAfterDiscount = currency_conversion($netPriceAfterDiscount, $item->currency, company_setting("defult_currancy"));
+
+                // New Journal Entry for the bill
+                $new_journal_entry = new \Modules\DoubleEntry\Entities\JournalEntry();
+                $new_journal_entry->date = now();
+                $new_journal_entry->reference = $bill->billNumberFormat($bill->bill_id);
+                $new_journal_entry->description = 'Bill created for product expense';
+                $new_journal_entry->journal_id = $this->journalNumber();
+                $new_journal_entry->currency = company_setting("defult_currancy");
+                $new_journal_entry->workspace = getActiveWorkSpace();
+                $new_journal_entry->created_by = \Auth::user()->id;
+                $new_journal_entry->save();
+
+                // For Expense Account (Debit)
+                $first_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+                $first_journal_item->journal = $new_journal_entry->id;
+                $first_journal_item->account = $expense_account_id; // Expense Account
+                $first_journal_item->description = '-';
+                $first_journal_item->debit = $convertedAmountAfterDiscount;
+                $first_journal_item->credit = 0.00;
+                $first_journal_item->workspace = getActiveWorkSpace();
+                $first_journal_item->created_by = \Auth::user()->id;
+                $first_journal_item->save();
+
+                $first_transaction = add_quick_transaction('Debit', $expense_account_id, $convertedAmountAfterDiscount);
+
+                // For Accounts Payable (Credit)
+                $second_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+                $second_journal_item->journal = $new_journal_entry->id;
+                $second_journal_item->account = 15; // Account Payable
+                $second_journal_item->description = '-';
+                $second_journal_item->debit = 0.00;
+                $second_journal_item->credit = $convertedAmountAfterDiscount;
+                $second_journal_item->workspace = getActiveWorkSpace();
+                $second_journal_item->created_by = \Auth::user()->id;
+                $second_journal_item->save();
+
+                $second_transaction = add_quick_transaction('Credit', 15, $convertedAmountAfterDiscount);
+
+            }
+
+            // sending email
             if(!empty(company_setting('Bill Send')) && company_setting('Bill Send')  == true)
             {
                 $uArr = [
@@ -828,6 +864,7 @@ class BillController extends Controller
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
+
     public function resent($id)
     {
         if (Auth::user()->can('bill send'))
@@ -887,28 +924,50 @@ class BillController extends Controller
         if (Auth::user()->can('bill payment create'))
         {
             $validator = \Validator::make(
-                $request->all(),
-                [
+                $request->all(), [
                     'date' => 'required',
                     'amount' => 'required',
-                    'account_id' => 'required',
-                    'reference' => 'required',
-                    'description' => 'required',
                 ]
             );
-            if ($validator->fails()) {
+            if($validator->fails())
+            {
                 $messages = $validator->getMessageBag();
 
                 return redirect()->back()->with('error', $messages->first());
             }
+
+            $amount = $request->amount;
+
+            if($request->currency != company_setting('defult_currancy')){
+                $amount = currency_conversion($amount, $request->currency, company_setting('defult_currancy'));
+            }
+
             $billPayment                 = new BillPayment();
+            
+            if(module_is_active('Account'))
+            {
+                $validator = \Validator::make(
+                    $request->all(), [
+                                       'account_id' => 'required',
+                                   ]
+                );
+                if($validator->fails())
+                {
+                    $messages = $validator->getMessageBag();
+
+                    return redirect()->back()->with('error', $messages->first());
+                }
+                $billPayment->account_id     = $request->account_id;
+            }
+
             $billPayment->bill_id        = $bill_id;
             $billPayment->date           = $request->date;
             $billPayment->amount         = $request->amount;
-            $billPayment->account_id     = $request->account_id;
+            $billPayment->currency       = company_setting('defult_currancy');
             $billPayment->payment_method = 0;
-            $billPayment->reference      = $request->reference;
-            $billPayment->description    = $request->description;
+            $billPayment->reference      = !empty($request->reference) ? $request->reference : '-';
+            $billPayment->description    = !empty($request->description) ? $request->description : '-';
+
             if(!empty($request->add_receipt))
             {
                 $fileName = time() . "_" . $request->add_receipt->getClientOriginalName();
@@ -941,6 +1000,7 @@ class BillController extends Controller
                 $bill->status = 3;
                 $bill->save();
             }
+
             $billPayment->user_id    = $bill->vendor_id;
             $billPayment->user_type  = 'Vendor';
             $billPayment->type       = 'Partial';
@@ -948,21 +1008,63 @@ class BillController extends Controller
             $billPayment->payment_id = $billPayment->id;
             $billPayment->category   = 'Bill';
             $billPayment->account    = $request->account_id;
-            Transaction::addTransaction($billPayment);
 
-            $vendor = Vender::where('id', $bill->vendor_id)->first();
+            if(module_is_active('Account')){
+                if(!empty($vender_acc)){
+                    $vender_acc = \Modules\Account\Entities\Vender::where('user_id', $bill->vendor_id)->first();
+                    AccountUtility::updateUserBalance('vendor', $bill->vendor_id, $request->amount, 'credit');
+                }
+            }
 
-            $payment         = new BillPayment();
-            $payment->name   = $vendor['name'];
-            $payment->method = '-';
-            $payment->date   = company_date_formate($request->date);
-            $payment->amount = currency_format_with_sym($request->amount);
-            $payment->bill   = 'bill ' . Bill::billNumberFormat($billPayment->bill_id);
+            $payment            = new \Modules\Account\Entities\BillPayment();
+            $payment->name      = !empty($vender_acc) ? $vender_acc->name : '-';
+            $payment->method    = '-';
+            $payment->date      = company_date_formate($request->date);
+            $payment->amount    = currency_format_with_sym($request->amount);
+            $payment->bill   = 'bill ' . Bill::billNumberFormat($bill->bill_id);
+            $payment->dueAmount = currency_format_with_sym($bill->getDue());
 
-            AccountUtility::updateUserBalance('vendor', $bill->vendor_id, $request->amount, 'credit');
+            // adding Journal Entries
+            // Bank Account = Credit = Payment Amount
+            // Account Payable = Debit = Payment Amount
 
-            Transfer::bankAccountBalance($request->account_id, $request->amount, 'debit');
-            event(new CreatePaymentBill($request ,$bill));
+            $bank_account = \Modules\Account\Entities\BankAccount::find($request->account_id);
+
+            $new_journal_entry = new \Modules\DoubleEntry\Entities\JournalEntry();
+            $new_journal_entry->date = now();
+            $new_journal_entry->reference = Bill::billNumberFormat($bill->bill_id);
+            $new_journal_entry->description = 'Bill Payment Made';
+            $new_journal_entry->journal_id = $this->journalNumber();
+            $new_journal_entry->currency = company_setting("defult_currancy");
+            $new_journal_entry->workspace = getActiveWorkSpace();
+            $new_journal_entry->created_by = \Auth::user()->id;
+            $new_journal_entry->save();
+
+            $first_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+            $first_journal_item->journal = $new_journal_entry->id;
+            $first_journal_item->account = $bank_account->chart_account_id;
+            $first_journal_item->description = '-';
+            $first_journal_item->debit = 0.00;
+            $first_journal_item->credit = $amount;
+            $first_journal_item->workspace = getActiveWorkSpace();
+            $first_journal_item->created_by = \Auth::user()->id;
+            $first_journal_item->save();
+
+            $first_transaction = add_quick_transaction('Credit', $bank_account->chart_account_id, $amount);
+
+            $second_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+            $second_journal_item->journal = $new_journal_entry->id;
+            $second_journal_item->account = 15;
+            $second_journal_item->description = '-';
+            $second_journal_item->debit = $amount;
+            $second_journal_item->credit = 0.00;
+            $second_journal_item->workspace = getActiveWorkSpace();
+            $second_journal_item->created_by = \Auth::user()->id;
+            $second_journal_item->save();
+
+            $second_transaction = add_quick_transaction('Debit', 15, $amount);
+
+            //Email notification
             if(!empty(company_setting('Bill Payment Create')) && company_setting('Bill Payment Create')  == true)
             {
                 $uArr = [
@@ -982,6 +1084,8 @@ class BillController extends Controller
                     $resp['error'] = $e->getMessage();
                 }
             }
+            
+            event(new CreatePaymentBill($request ,$bill));
             return redirect()->back()->with('success', __('Payment successfully added.') . ((isset($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
         }
     }
@@ -1676,7 +1780,7 @@ class BillController extends Controller
         $general = [
             'vendor_id' => Vender::vendorNumberFormat($vendor->vendor_id),
             'name' => $vendor->name ? $vendor->name : 'no name provided.',
-            'email' => $vendor_email,
+            'email' => (strpos($vendor_email, 'no_reply@') === 0) ? 'no email provided' : $vendor_email,
             'contact' => $vendor->contact ? $vendor->contact : 'no contact provided.',
             'tax_number' => $vendor->tax_number ? $vendor->tax_number : 'no tax number provided.',
         ];
@@ -1698,6 +1802,16 @@ class BillController extends Controller
         ]);
     }
     
+    function journalNumber()
+    {
+        $latest = \Modules\DoubleEntry\Entities\JournalEntry::where('created_by', '=', creatorId())->where('workspace', getActiveWorkSpace())->latest()->first();
+        if (!$latest) {
+            return 1;
+        }
+
+        return $latest->journal_id + 1;
+    }
+
     public function billAttechmentDestroy($id)
     {
 
