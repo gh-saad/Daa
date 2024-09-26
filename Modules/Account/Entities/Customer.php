@@ -35,6 +35,7 @@ class Customer extends Model
         'shipping_address',
         'lang',
         'balance',
+        'currency',
         'workspace',
         'created_by',
         'remember_token'

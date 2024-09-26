@@ -1009,12 +1009,12 @@ class BillController extends Controller
             $billPayment->category   = 'Bill';
             $billPayment->account    = $request->account_id;
 
-            if(module_is_active('Account')){
-                if(!empty($vender_acc)){
-                    $vender_acc = \Modules\Account\Entities\Vender::where('user_id', $bill->vendor_id)->first();
-                    AccountUtility::updateUserBalance('vendor', $bill->vendor_id, $request->amount, 'credit');
-                }
-            }
+            // if(module_is_active('Account')){
+            //     if(!empty($vender_acc)){
+            //         $vender_acc = \Modules\Account\Entities\Vender::where('user_id', $bill->vendor_id)->first();
+            //         AccountUtility::updateUserBalance('vendor', $bill->vendor_id, $request->amount, 'credit');
+            //     }
+            // }
 
             $payment            = new \Modules\Account\Entities\BillPayment();
             $payment->name      = !empty($vender_acc) ? $vender_acc->name : '-';

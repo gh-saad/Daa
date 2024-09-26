@@ -157,6 +157,7 @@ class Invoice extends Model
     public function getTotalTax()
     {
         $totalTax = 0;
+        $convertedTax = 0;
         foreach ($this->items as $product)
         {
             if(module_is_active('ProductService'))

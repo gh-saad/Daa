@@ -18,17 +18,17 @@
                                 </tr>
                             </thead>
                             <tbody>
-                            @forelse (\Modules\Pos\Entities\Purchase::vendorPurchase($vendor->user_id) as $purchase)
+                            @forelse (\Modules\Pos\Entities\Purchase::vendorPurchase($vendor->vendor_id) as $purchase)
                                 <tr class="font-style">
                                     <td class="Id">
                                         @can('purchase show')
-                                            <a href="{{ route('purchase.show',\Crypt::encrypt($purchase->id)) }}" class="btn btn-outline-primary">{{ \Modules\Pos\Entities\Purchase::purchaseNumberFormat($purchase->purchase_id) }}</a>
+                                            <a href="{{ route('purchase.show',\Crypt::encrypt($purchase->id)) }}" class="btn btn-outline-primary">#{{ $purchase->lot_number ? $purchase->lot_number : 'LOT00#'; }}</a>
                                         @else
-                                            <a  class="btn btn-outline-primary">{{ \Modules\Pos\Entities\Purchase::purchaseNumberFormat($purchase->purchase_id) }}</a>
+                                            <a  class="btn btn-outline-primary">#{{ $purchase->lot_number ? $purchase->lot_number : 'LOT00#'; }}</a>
                                         @endcan
                                     </td>
                                     <td>{{ company_date_formate($purchase->purchase_date) }}</td>
-                                    <td>{{ currency_format_with_sym($purchase->getDue())  }}</td>
+                                    <td>{{ number_format($purchase->getDue(), 2) . ' ' .  company_setting('defult_currancy') }}</td>
                                     <td>
                                         @if($purchase->status == 0)
                                             <span class="badge bg-primary p-2 px-3 rounded">{{ __(\Modules\Pos\Entities\Purchase::$statues[$purchase->status]) }}</span>
@@ -52,22 +52,24 @@
                                                     </a>
                                                 </div>
                                             @endcan
-                                            @can('purchase edit')
-                                                <div class="action-btn bg-info ms-2">
-                                                    <a href="{{ route('purchase.edit',\Crypt::encrypt($purchase->id)) }}" class="mx-3 btn btn-sm align-items-center" data-bs-toggle="tooltip" title="Edit" data-original-title="{{__('Edit')}}">
-                                                        <i class="ti ti-pencil text-white"></i>
-                                                    </a>
-                                                </div>
-                                            @endcan
-                                            @can('purchase delete')
-                                                <div class="action-btn bg-danger ms-2">
-                                                    {!! Form::open(['method' => 'DELETE', 'route' => ['purchase.destroy', $purchase->id],'class'=>'delete-form-btn','id'=>'delete-form-'.$purchase->id]) !!}
-                                                        <a href="#" class="mx-3 btn btn-sm align-items-center show_confirm" data-bs-toggle="tooltip" title="{{__('Delete')}}" data-original-title="{{__('Delete')}}" data-confirm="{{__('Are You Sure?')}}" data-confirm-yes="document.getElementById('delete-form-{{$purchase->id}}').submit();">
-                                                            <i class="ti ti-trash text-white"></i>
+                                            @if($purchase->status == 0)
+                                                @can('purchase edit')
+                                                    <div class="action-btn bg-info ms-2">
+                                                        <a href="{{ route('purchase.edit',\Crypt::encrypt($purchase->id)) }}" class="mx-3 btn btn-sm align-items-center" data-bs-toggle="tooltip" title="Edit" data-original-title="{{__('Edit')}}">
+                                                            <i class="ti ti-pencil text-white"></i>
                                                         </a>
-                                                    {!! Form::close() !!}
-                                                </div>
-                                            @endcan
+                                                    </div>
+                                                @endcan
+                                                @can('purchase delete')
+                                                    <div class="action-btn bg-danger ms-2">
+                                                        {!! Form::open(['method' => 'DELETE', 'route' => ['purchase.destroy', $purchase->id],'class'=>'delete-form-btn','id'=>'delete-form-'.$purchase->id]) !!}
+                                                            <a href="#" class="mx-3 btn btn-sm align-items-center show_confirm" data-bs-toggle="tooltip" title="{{__('Delete')}}" data-original-title="{{__('Delete')}}" data-confirm="{{__('Are You Sure?')}}" data-confirm-yes="document.getElementById('delete-form-{{$purchase->id}}').submit();">
+                                                                <i class="ti ti-trash text-white"></i>
+                                                            </a>
+                                                        {!! Form::close() !!}
+                                                    </div>
+                                                @endcan
+                                            @endif
                                         </span>
                                     </td>
                                 @endif

@@ -162,6 +162,7 @@ class CustomerController extends Controller
                 $customer->shipping_zip     = !empty($request->shipping_zip) ? $request->shipping_zip : null;
                 $customer->shipping_address = !empty($request->shipping_address) ? $request->shipping_address : null;
                 $customer->lang             = !empty($user->lang) ? $user->lang : '';
+                $customer->currency         = company_setting('defult_currancy');
 
                 $customer->workspace        = getActiveWorkSpace();
                 $customer->created_by      = \Auth::user()->id;
@@ -584,6 +585,7 @@ class CustomerController extends Controller
                             'shipping_phone' => $row[$request->shipping_phone],
                             'shipping_zip' => $row[$request->shipping_zip],
                             'shipping_address' => $row[$request->shipping_address],
+                            'currency' => company_setting('defult_currancy'),
 
                             'created_by' => creatorId(),
                             'workspace' => getActiveWorkSpace(),

@@ -233,7 +233,7 @@
                                                             {{ Modules\Account\Entities\Customer::customerNumberFormat($customer['customer_id']) }}
                                                         </h6>
                                                         <p class="card-text mb-0">{{ __('Total Sum of Invoices') }}</p>
-                                                        <h6 class="report-text mb-0">{{ currency_format_with_sym($totalInvoiceSum) }}</h6>
+                                                        <h6 class="report-text mb-0">{{ number_format($totalInvoiceSum, 2) . ' ' .  company_setting('defult_currancy') }}</h6>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 col-sm-6">
@@ -247,16 +247,16 @@
                                                 <div class="col-md-3 col-sm-6">
                                                     <div class="p-4">
                                                         <p class="card-text mb-0">{{ __('Balance') }}</p>
-                                                        <h6 class="report-text mb-3">{{ currency_format_with_sym($customer['balance']) }}</h6>
+                                                        <h6 class="report-text mb-3">{{ number_format($customer['balance'], 2) . ' ' .  company_setting('defult_currancy') }}</h6>
                                                         <p class="card-text mb-0">{{ __('Average Sales') }}</p>
-                                                        <h6 class="report-text mb-0">{{ currency_format_with_sym($averageSale) }}</h6>
+                                                        <h6 class="report-text mb-0">{{ number_format($averageSale, 2) . ' ' .  company_setting('defult_currancy') }}</h6>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-3 col-sm-6">
                                                     <div class="p-4">
                                                         <p class="card-text mb-0">{{ __('Overdue') }}</p>
                                                         <h6 class="report-text mb-3">
-                                                            {{ currency_format_with_sym($customer->customerOverdue($customer['id'])) }}</h6>
+                                                        {{ number_format($customer->customerOverdue($customer['id']), 2) . ' ' .  company_setting('defult_currancy') }}</h6>
                                                     </div>
                                                 </div>
                                             </div>
@@ -301,7 +301,7 @@
                                                                     @endcan
                                                                 </td>
                                                                 <td>{{ company_date_formate($proposal->issue_date) }}</td>
-                                                                <td>{{ currency_format_with_sym($proposal->getTotal()) }}</td>
+                                                                <td>{{ number_format($proposal->getTotal(), 2) . ' ' .  company_setting('defult_currancy') }}</td>
                                                                 <td>
                                                                     @if ($proposal->status == 0)
                                                                         <span
@@ -395,32 +395,34 @@
                                                                                     </div>
                                                                                 @endif
                                                                             @endcan
-                                                                            @can('proposal edit')
-                                                                                <div class="action-btn bg-info ms-2">
-                                                                                    <a href="{{ route('proposal.edit', \Crypt::encrypt($proposal->id)) }}"
-                                                                                        class="mx-3 btn btn-sm  align-items-center"
-                                                                                        data-bs-toggle="tooltip"
-                                                                                        data-bs-original-title="{{ __('Edit') }}">
-                                                                                        <i class="ti ti-pencil text-white"></i>
-                                                                                    </a>
-                                                                                </div>
-                                                                            @endcan
+                                                                            @if ($proposal->status == 0)
+                                                                                @can('proposal edit')
+                                                                                    <div class="action-btn bg-info ms-2">
+                                                                                        <a href="{{ route('proposal.edit', \Crypt::encrypt($proposal->id)) }}"
+                                                                                            class="mx-3 btn btn-sm  align-items-center"
+                                                                                            data-bs-toggle="tooltip"
+                                                                                            data-bs-original-title="{{ __('Edit') }}">
+                                                                                            <i class="ti ti-pencil text-white"></i>
+                                                                                        </a>
+                                                                                    </div>
+                                                                                @endcan
 
-                                                                            @can('proposal delete')
-                                                                                <div class="action-btn bg-danger ms-2">
-                                                                                    {{ Form::open(['route' => ['proposal.destroy', $proposal->id], 'class' => 'm-0']) }}
-                                                                                    @method('DELETE')
-                                                                                    <a
-                                                                                        class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
-                                                                                        data-bs-toggle="tooltip" title=""
-                                                                                        data-bs-original-title="Delete" aria-label="Delete"
-                                                                                        data-confirm="{{ __('Are You Sure?') }}"
-                                                                                        data-text="{{ __('This action can not be undone. Do you want to continue?') }}"
-                                                                                        data-confirm-yes="delete-form-{{ $proposal->id }}"><i
-                                                                                            class="ti ti-trash text-white text-white"></i></a>
-                                                                                    {{ Form::close() }}
-                                                                                </div>
-                                                                            @endcan
+                                                                                @can('proposal delete')
+                                                                                    <div class="action-btn bg-danger ms-2">
+                                                                                        {{ Form::open(['route' => ['proposal.destroy', $proposal->id], 'class' => 'm-0']) }}
+                                                                                        @method('DELETE')
+                                                                                        <a
+                                                                                            class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
+                                                                                            data-bs-toggle="tooltip" title=""
+                                                                                            data-bs-original-title="Delete" aria-label="Delete"
+                                                                                            data-confirm="{{ __('Are You Sure?') }}"
+                                                                                            data-text="{{ __('This action can not be undone. Do you want to continue?') }}"
+                                                                                            data-confirm-yes="delete-form-{{ $proposal->id }}"><i
+                                                                                                class="ti ti-trash text-white text-white"></i></a>
+                                                                                        {{ Form::close() }}
+                                                                                    </div>
+                                                                                @endcan
+                                                                            @endif
                                                                         </span>
                                                                     </td>
                                                                 @endif
@@ -480,7 +482,7 @@
                                                                         {{ company_date_formate($invoice->due_date) }}
                                                                     @endif
                                                                 </td>
-                                                                <td>{{ currency_format_with_sym($invoice->getDue()) }}</td>
+                                                                <td>{{ number_format($invoice->getDue(), 2) . ' ' .  company_setting('defult_currancy') }}</td>
                                                                 <td>
                                                                     @if ($invoice->status == 0)
                                                                         <span
@@ -544,32 +546,34 @@
                                                                                     </div>
                                                                                 @endif
                                                                             @endcan
-                                                                            @can('invoice edit')
-                                                                                <div class="action-btn bg-info ms-2">
-                                                                                    <a href="{{ route('invoice.edit', \Crypt::encrypt($invoice->id)) }}"
-                                                                                        class="mx-3 btn btn-sm  align-items-center"
-                                                                                        data-bs-toggle="tooltip"
-                                                                                        data-bs-original-title="{{ __('Edit') }}">
-                                                                                        <i class="ti ti-pencil text-white"></i>
-                                                                                    </a>
-                                                                                </div>
-                                                                            @endcan
-                                                                            @can('invoice delete')
-                                                                                <div class="action-btn bg-danger ms-2">
-                                                                                    {{ Form::open(['route' => ['invoice.destroy', $invoice->id], 'class' => 'm-0']) }}
-                                                                                    @method('DELETE')
-                                                                                    <a
-                                                                                        class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
-                                                                                        data-bs-toggle="tooltip" title=""
-                                                                                        data-bs-original-title="Delete" aria-label="Delete"
-                                                                                        data-confirm="{{ __('Are You Sure?') }}"
-                                                                                        data-text="{{ __('This action can not be undone. Do you want to continue?') }}"
-                                                                                        data-confirm-yes="delete-form-{{ $invoice->id }}">
-                                                                                        <i class="ti ti-trash text-white text-white"></i>
-                                                                                    </a>
-                                                                                    {{ Form::close() }}
-                                                                                </div>
-                                                                            @endcan
+                                                                            @if ($invoice->status == 0)
+                                                                                @can('invoice edit')
+                                                                                    <div class="action-btn bg-info ms-2">
+                                                                                        <a href="{{ route('invoice.edit', \Crypt::encrypt($invoice->id)) }}"
+                                                                                            class="mx-3 btn btn-sm  align-items-center"
+                                                                                            data-bs-toggle="tooltip"
+                                                                                            data-bs-original-title="{{ __('Edit') }}">
+                                                                                            <i class="ti ti-pencil text-white"></i>
+                                                                                        </a>
+                                                                                    </div>
+                                                                                @endcan
+                                                                                @can('invoice delete')
+                                                                                    <div class="action-btn bg-danger ms-2">
+                                                                                        {{ Form::open(['route' => ['invoice.destroy', $invoice->id], 'class' => 'm-0']) }}
+                                                                                        @method('DELETE')
+                                                                                        <a
+                                                                                            class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
+                                                                                            data-bs-toggle="tooltip" title=""
+                                                                                            data-bs-original-title="Delete" aria-label="Delete"
+                                                                                            data-confirm="{{ __('Are You Sure?') }}"
+                                                                                            data-text="{{ __('This action can not be undone. Do you want to continue?') }}"
+                                                                                            data-confirm-yes="delete-form-{{ $invoice->id }}">
+                                                                                            <i class="ti ti-trash text-white text-white"></i>
+                                                                                        </a>
+                                                                                        {{ Form::close() }}
+                                                                                    </div>
+                                                                                @endcan
+                                                                            @endif
                                                                         </span>
                                                                     </td>
                                                                 @endif
@@ -604,16 +608,13 @@
                                                             <th>{{ __('Reference') }}</th>
                                                             <th>{{ __('Description') }}</th>
                                                             <th>{{ __('Payment Receipt') }}</th>
-                                                            @if (Gate::check('revenue edit') || Gate::check('revenue delete'))
-                                                                <th width="10%"> {{ __('Action') }}</th>
-                                                            @endif
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         @forelse ($customer->customerRevenue($customer->id) as $revenue)
                                                         <tr class="font-style">
                                                             <td>{{ company_date_formate($revenue->date) }}</td>
-                                                            <td>{{ currency_format_with_sym($revenue->amount) }}</td>
+                                                            <td>{{ number_format($revenue->amount, 2) . ' ' .  company_setting('defult_currancy') }}</td>
                                                             <td>{{ !empty($revenue->bankAccount) ? $revenue->bankAccount->bank_name . ' ' . $revenue->bankAccount->holder_name : '' }}
                                                             </td>
                                                             @if (module_is_active('ProductService'))
@@ -649,38 +650,6 @@
                                                                     -
                                                                 @endif
                                                             </td>
-                                                            @if (Gate::check('revenue edit') || Gate::check('revenue delete'))
-                                                                <td class="Action">
-                                                                    <span>
-                                                                        @can('revenue edit')
-                                                                            <div class="action-btn bg-info ms-2">
-                                                                                <a  class="mx-3 btn btn-sm align-items-center"
-                                                                                    data-url="{{ route('revenue.edit', $revenue->id) }}"
-                                                                                    data-ajax-popup="true" data-size="lg" data-bs-toggle="tooltip" t
-                                                                                    title="{{ __('Edit') }}"
-                                                                                    data-title="{{ __('Edit Revenue') }}">
-                                                                                    <i class="ti ti-pencil text-white"></i>
-                                                                                </a>
-                                                                            </div>
-                                                                        @endcan
-                                                                        @can('revenue delete')
-                                                                            <div class="action-btn bg-danger ms-2">
-                                                                                {{ Form::open(['route' => ['revenue.destroy', $revenue->id], 'class' => 'm-0']) }}
-                                                                                @method('DELETE')
-                                                                                <a
-                                                                                    class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
-                                                                                    data-bs-toggle="tooltip" title=""
-                                                                                    data-bs-original-title="Delete" aria-label="Delete"
-                                                                                    data-confirm="{{ __('Are You Sure?') }}"
-                                                                                    data-text="{{ __('This action can not be undone. Do you want to continue?') }}"
-                                                                                    data-confirm-yes="delete-form-{{ $revenue->id }}"><i
-                                                                                        class="ti ti-trash text-white text-white"></i></a>
-                                                                                {{ Form::close() }}
-                                                                            </div>
-                                                                        @endcan
-                                                                    </span>
-                                                                </td>
-                                                            @endif
                                                         </tr>
                                                             @empty
                                                             @include('layouts.nodatafound')

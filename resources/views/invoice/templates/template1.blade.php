@@ -364,9 +364,9 @@
                                 @endif
                                 <td>{{ $item->name }}</td>
                                 <td>{{ $item->quantity }}</td>
-                                <td>{{ currency_format_with_sym($item->price, $invoice->created_by, $invoice->workspace) }}
+                                <td>{{ number_format($item->price, 2) . ' ' . company_setting('defult_currancy') }}
                                 </td>
-                                <td>{{ $item->discount != 0 ? currency_format_with_sym($item->discount, $invoice->created_by, $invoice->workspace) : '-' }}
+                                <td>{{ $item->discount != 0 ? number_format($item->discount, 2) . ' ' . company_setting('defult_currancy') : '-' }}
                                 </td>
                                 <td>
                                     @if (!empty($item->itemTax))
@@ -378,7 +378,7 @@
                                         <p>-</p>
                                     @endif
                                 </td>
-                                <td>{{ currency_format_with_sym($item->price * $item->quantity - $item->discount + (isset($item->tax_price) ? $item->tax_price : 0), $invoice->created_by, $invoice->workspace) }}
+                                <td>{{ number_format($item->price * $item->quantity - $item->discount + (isset($item->tax_price) ? $item->tax_price : 0), 2) . ' ' . company_setting('defult_currancy') }}
                                 </td>
                                 @if ($item->description != null)
                             <tr class="border-0 itm-description ">
@@ -410,14 +410,13 @@
                         @endif
                         <td>{{ __('Total') }}</td>
                         <td>{{ $invoice->totalQuantity }}</td>
-                        <td>{{ currency_format_with_sym($invoice->totalRate, $invoice->created_by, $invoice->workspace) }}
+                        <td>{{ number_format($invoice->totalRate, 2) . ' ' . company_setting('defult_currancy') }}
                         </td>
-                        <td>{{ currency_format_with_sym($invoice->totalDiscount, $invoice->created_by, $invoice->workspace) }}
+                        <td>{{ number_format($invoice->totalDiscount, 2) . ' ' . company_setting('defult_currancy') }}
                         </td>
-                        <td>{{ currency_format_with_sym($invoice->totalTaxPrice, $invoice->created_by, $invoice->workspace) }}
+                        <td>{{ number_format($invoice->totalTaxPrice, 2) . ' ' . company_setting('defult_currancy') }}
                         </td>
-                        <td>{{ currency_format_with_sym($invoice->getSubTotal(), $invoice->created_by, $invoice->workspace) }}
-                        </td>
+                        <td></td>
                     </tr>
                     <tr>
                         @php
@@ -431,13 +430,13 @@
                             <table class="total-table">
                                 <tr>
                                     <td>{{ __('Subtotal') }}:</td>
-                                    <td>{{ currency_format_with_sym($invoice->getSubTotal(), $invoice->created_by, $invoice->workspace) }}
+                                    <td>{{ number_format($invoice->getSubTotal(), 2) . ' ' . company_setting('defult_currancy') }}
                                     </td>
                                 </tr>
                                 @if ($invoice->getTotalDiscount())
                                     <tr>
                                         <td>{{ __('Discount') }}:</td>
-                                        <td>{{ currency_format_with_sym($invoice->getTotalDiscount(), $invoice->created_by, $invoice->workspace) }}
+                                        <td>{{ number_format($invoice->getTotalDiscount(), 2) . ' ' . company_setting('defult_currancy') }}
                                         </td>
                                     </tr>
                                 @endif
@@ -445,29 +444,29 @@
                                     @foreach ($invoice->taxesData as $taxName => $taxPrice)
                                         <tr>
                                             <td>{{ $taxName }} :</td>
-                                            <td>{{ currency_format_with_sym($taxPrice, $invoice->created_by, $invoice->workspace) }}
+                                            <td>{{ number_format($taxPrice, 2) . ' ' . company_setting('defult_currancy') }}
                                             </td>
                                         </tr>
                                     @endforeach
                                 @endif
                                 <tr>
                                     <td>{{ __('Total') }}:</td>
-                                    <td>{{ currency_format_with_sym($invoice->getSubTotal() - $invoice->getTotalDiscount() + $invoice->getTotalTax(), $invoice->created_by, $invoice->workspace) }}
+                                    <td>{{ number_format($invoice->getSubTotal() - $invoice->getTotalDiscount() + $invoice->getTotalTax(), 2) . ' ' . company_setting('defult_currancy') }}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>{{ __('Paid') }}:</td>
-                                    <td>{{ currency_format_with_sym($invoice->getTotal() - $invoice->getDue() - $invoice->invoiceTotalCreditNote(), $invoice->created_by, $invoice->workspace) }}
+                                    <td>{{ number_format($invoice->getTotal() - $invoice->getDue() - $invoice->invoiceTotalCreditNote(), 2) . ' ' . company_setting('defult_currancy') }}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>{{ __('Credit Note') }}:</td>
-                                    <td>{{ currency_format_with_sym($invoice->invoiceTotalCreditNote(), $invoice->created_by, $invoice->workspace) }}
+                                    <td>{{ number_format($invoice->invoiceTotalCreditNote(), 2) . ' ' . company_setting('defult_currancy') }}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>{{ __('Due Amount') }}:</td>
-                                    <td>{{ currency_format_with_sym($invoice->getDue(), $invoice->created_by, $invoice->workspace) }}
+                                    <td>{{ number_format($invoice->getDue(), 2) . ' ' . company_setting('defult_currancy') }}
                                     </td>
                                 </tr>
 

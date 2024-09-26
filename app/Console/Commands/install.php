@@ -80,6 +80,16 @@ class Install extends Command
             '--path' => 'database/migrations/2024_09_20_064200_alter_bill_products_table.php',
         ]);
 
+        // empty the warehouse_products table to remove all of the orphan leftover records
+        $this->call('migrate', [
+            '--path' => 'database/migrations/2024_09_25_062018_empty_warehouse_products_table.php',
+        ]);
+
+        // added currency column to both customers and vendors tables
+        $this->call('migrate', [
+            '--path' => 'database/migrations/2024_09_25_074719_add_currency_to_vendor_and_customer_table.php',
+        ]);
+
         $this->info('# updating chart of accounts.');
 
         try {

@@ -159,9 +159,14 @@ class ProductService extends Model
     {
       if(module_is_active('Account'))
       {
-        // 'product_id' -> 'purchase_products:purchase_id' -> 'purchases:lot_number'
-        
-        return $this->hasOne(\Modules\Account\Entities\PurchaseProduct::class, 'product_id', 'id')->first();
+        if(module_is_active('Pos'))
+        {
+            return $this->hasOne(\Modules\Pos\Entities\PurchaseProduct::class, 'product_id', 'id')->first();
+        }
+        else
+        {
+            return $this->hasOne(\Modules\Account\Entities\PurchaseProduct::class, 'product_id', 'id')->first();
+        }
       }
     }
 }

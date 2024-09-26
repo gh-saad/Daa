@@ -768,15 +768,7 @@ class InvoiceController extends Controller
                     // update product status
                     $product->sold_status = 'Awaiting Payment';
                     $product->sold_to = $customer->name;
-                    $product->save();
                 
-                    // adding Journal Entries
-                    // Inventory = Credit = Net price after discount before tax
-                    // Account Recievable = Debit = Net price after tax
-                    // Sales Income = Credit = Net price after discount before tax
-                    // VAT Pay / Refund = Credit = Tax amount
-                    // Cost of Sales - Purchases = Debit =  Net price after discount before tax
-                    
                     // values
                     $netPriceAfterDiscount = $item->price - $item->discount;
                     $tax = \Modules\ProductService\Entities\Tax::find($item->tax);
@@ -788,6 +780,16 @@ class InvoiceController extends Controller
                     $convertedTaxAmount = currency_conversion($taxAmount, $item->currency, company_setting("defult_currancy"));
                     $convertedAmountAfterTax = currency_conversion($netPriceAfterTax, $item->currency, company_setting("defult_currancy")); 
 
+                    $product->sale_price = $convertedAmountAfterTax;
+                    $product->save();
+                    
+                    // adding Journal Entries
+                    // Inventory = Credit = Net price after discount before tax
+                    // Account Recievable = Debit = Net price after tax
+                    // Sales Income = Credit = Net price after discount before tax
+                    // VAT Pay / Refund = Credit = Tax amount
+                    // Cost of Sales - Purchases = Debit =  Net price after discount before tax
+                    
                     // new journal entry
                     $new_journal_entry = new \Modules\DoubleEntry\Entities\JournalEntry();
                     $new_journal_entry->date = now();
@@ -863,6 +865,9 @@ class InvoiceController extends Controller
                     $fifth_journal_item->save();
 
                     $fifth_transaction = add_quick_transaction('Debit', 59, $convertedAmountBeforeTax);
+
+                    // since the product has now been sold remove it from the warehouse
+                    $warehouseProduct = \Modules\Pos\Entities\WarehouseProduct::where('product_id', '=', $item->product_id)->delete();
 
                 }else{
                     // if invoice was made for a service performed on a product for a customer
@@ -1109,14 +1114,16 @@ class InvoiceController extends Controller
             }
             $item->quantity    = $product->quantity;
             $item->tax         = $product->tax;
-            $item->discount    = $product->discount;
-            $item->price       = $product->price;
+            $item->discount    = currency_conversion($product->discount, $product->currency, company_setting('defult_currancy'));
+            $item->price       = currency_conversion($product->price, $product->currency, company_setting('defult_currancy'));
+            $item->currency    = $product->currency;
             $item->description = $product->description;
             $totalQuantity += $item->quantity;
             $totalRate     += $item->price;
             $totalDiscount += $item->discount;
             if(module_is_active('ProductService'))
             {
+                $default_tax = \Modules\ProductService\Entities\Tax::find(1);
                 $taxes = \Modules\ProductService\Entities\Tax::tax($product->tax);
                 $itemTaxes = [];
                 $tax_price = 0;
@@ -1124,13 +1131,16 @@ class InvoiceController extends Controller
                 {
                     foreach($taxes as $tax)
                     {
+                        if (empty($tax)) {
+                            $tax = $default_tax;
+                        }
                         $taxPrice      = Invoice::taxRate($tax->rate, $item->price, $item->quantity,$item->discount);
                         $tax_price  += $taxPrice;
                         $totalTaxPrice += $taxPrice;
 
                         $itemTax['name']  = $tax->name;
                         $itemTax['rate']  = $tax->rate . '%';
-                        $itemTax['price'] = currency_format_with_sym($taxPrice,$invoice->created_by);
+                        $itemTax['price'] = number_format($taxPrice, 2) . ' ' . company_setting('defult_currancy');
                         $itemTaxes[]      = $itemTax;
 
                         if(array_key_exists($tax->name, $taxesData))
@@ -1659,7 +1669,7 @@ class InvoiceController extends Controller
                     $customer = $customer_acc;
                 }
 
-                \Modules\Account\Entities\AccountUtility::updateUserBalance('customer', $invoice->customer_id, $request->amount, 'credit');
+                // \Modules\Account\Entities\AccountUtility::updateUserBalance('customer', $invoice->customer_id, $request->amount, 'credit');
 
                 // \Modules\Account\Entities\Transfer::bankAccountBalance($request->account_id, $request->amount, 'credit');
             }
