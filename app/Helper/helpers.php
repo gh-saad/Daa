@@ -1673,7 +1673,8 @@ if (!function_exists('get_default_currency_rate'))
 {
     function get_default_currency_rate()
     {
-        $default_currency_rate = currency(company_setting('defult_currancy'))->rate;
+        $currency_code = !empty(company_setting('defult_currancy')) ? company_setting('defult_currancy') : 'KES';
+        $default_currency_rate = currency($currency_code)->rate;
         return $default_currency_rate;
     }
 }
@@ -1682,6 +1683,7 @@ if (!function_exists('get_currency_rate'))
 {
     function get_currency_rate($code)
     {
+        $currency_code = !empty($code) ? $code : 'KES';
         $currency_rate = currency($code)->rate;
         return $currency_rate;
     }
@@ -1709,6 +1711,7 @@ if (!function_exists('currency_conversion'))
 if (!function_exists('getRate'))
 {
     function getRate($currency){
+        $currency_code = !empty($currency) ? $currency : 'KES';
         // locate currency by code
         $currency = Currency::where('code', $currency)->first();
         // get and return rate

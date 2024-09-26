@@ -250,11 +250,6 @@ class PurchaseController extends Controller
                     Purchase::addProductStock($products[$i], $purchaseProduct->quantity, $type, $description, $type_id);
                 }
             
-                // Warehouse Stock Report
-                if (isset($products[$i])) {
-                    Purchase::addWarehouseStock($products[$i], $purchaseProduct->quantity, $request->warehouse_id);
-                }
-            
             }                
 
             return redirect()->route('purchase.index', $purchase->id)->with('success', __('Purchase successfully created.'));
@@ -500,11 +495,6 @@ class PurchaseController extends Controller
                         Purchase::addProductStock($products[$i], $purchaseProduct->quantity, $type, $description, $type_id);
                     }
                 
-                    // Warehouse Stock Report
-                    if (isset($products[$i])) {
-                        Purchase::addWarehouseStock($products[$i], $purchaseProduct->quantity, $request->warehouse_id);
-                    }
-            
                     // $purchaseProduct = PurchaseProduct::find($products[$i]['id']);
                     // if ($purchaseProduct == null){
                     //     $purchaseProduct             = new PurchaseProduct();
@@ -712,14 +702,16 @@ class PurchaseController extends Controller
                     $product->purchased_status = 'Awaiting Payment';
                     $product->purchased_by = \Auth::user()->id;
                     $product->purchased_from = $vender->name;
+                    
+                    $netPriceAfterDiscount = $item->price - $item->discount;
+                    $convertedAmount = currency_conversion($netPriceAfterDiscount, $item->currency, company_setting("defult_currancy"));
+
+                    $product->purchase_price = $convertedAmount;
                     $product->save();
                     
                     // adding Journal Entries
                     // Inventory = Debit = Net price after discount
                     // Account Payable = Credit = Net price after discount
-
-                    $netPriceAfterDiscount = $item->price - $item->discount;
-                    $convertedAmount = currency_conversion($netPriceAfterDiscount, $item->currency, company_setting("defult_currancy"));
 
                     $new_journal_entry = new \Modules\DoubleEntry\Entities\JournalEntry();
                     $new_journal_entry->date = now();
@@ -754,6 +746,15 @@ class PurchaseController extends Controller
                     $second_journal_item->save();
 
                     $second_transaction = add_quick_transaction('Credit', 15, $convertedAmount);
+
+                    // create a warehouse product record since the product has now been purchased
+                    $warehouseProduct = new \Modules\Pos\Entities\WarehouseProduct();
+                    $warehouseProduct->warehouse_id = 1;
+                    $warehouseProduct->product_id = $item->product_id;
+                    $warehouseProduct->quantity = 1;
+                    $warehouseProduct->workspace = getActiveWorkSpace();
+                    $warehouseProduct->created_by = \Auth::user()->id;
+                    $warehouseProduct->save();
 
                 }
 
@@ -1097,7 +1098,7 @@ class PurchaseController extends Controller
                 $bill_payment->amount = currency_format_with_sym($amount);
                 $bill_payment->bill   = 'purchase' . Purchase::purchaseNumberFormat($purchasePayment->purchase_id);
 
-                \Modules\Account\Entities\AccountUtility::userBalance('Vendor', $purchase->vender_id, $amount, 'debit');
+                // \Modules\Account\Entities\AccountUtility::userBalance('Vendor', $purchase->vender_id, $amount, 'debit');
 
                 if(!empty(company_setting('Bill Payment Create')) && company_setting('Bill Payment Create')  == true)
                 {
@@ -1172,7 +1173,7 @@ class PurchaseController extends Controller
             $payment->amount = currency_format_with_sym($amount);
             $payment->bill   = 'purchase' . Purchase::purchaseNumberFormat($purchasePayment->purchase_id);
 
-            Purchase::userBalance('vendor', $purchase->vender_id, $amount, 'debit');
+            // Purchase::userBalance('vendor', $purchase->vender_id, $amount, 'debit');
 
             // adding Journal Entries
             // Bank Account = Credit = Payment Amount

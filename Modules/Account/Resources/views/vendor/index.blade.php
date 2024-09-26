@@ -81,7 +81,7 @@
                                         <td>{{ $Vendor['name'] }}</td>
                                         <td>{{ $Vendor['contact'] }}</td>
                                         <td>{{ $Vendor['email'] }}</td>
-                                        <td>{{ currency_format_with_sym($Vendor['balance']) }}</td>
+                                        <td>{{ number_format($Vendor['balance'], 2) . ' ' .  company_setting('defult_currancy') }}</td>
                                         @if (Gate::check('vendor edit') || Gate::check('vendor delete') || Gate::check('vendor show'))
                                             <td class="Action">
                                                 @if($Vendor->is_disable == 1)

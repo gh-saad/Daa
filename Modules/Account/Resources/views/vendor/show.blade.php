@@ -180,11 +180,11 @@
                                 <div class="card-body cus-card">
                                     <h3 class="card-title">{{__('Shipping Info')}}</h3>
                                     @if(company_setting('bill_shipping_display')=='on')
-                                    <p class="card-text mb-0">{{$vendor->shipping_name}}</p>
-                                    <p class="card-text mb-0">{{$vendor->shipping_address}}</p>
-                                    <p class="card-text mb-0">{{$vendor->shipping_city.' ,'. $vendor->shipping_state .' ,'.$vendor->shipping_zip}}</p>
-                                    <p class="card-text mb-0">{{$vendor->shipping_country}}</p>
-                                    <p class="card-text mb-0">{{$vendor->shipping_phone}}</p>
+                                        <p class="card-text mb-0">{{$vendor->shipping_name}}</p>
+                                        <p class="card-text mb-0">{{$vendor->shipping_address}}</p>
+                                        <p class="card-text mb-0">{{$vendor->shipping_city.' ,'. $vendor->shipping_state .' ,'.$vendor->shipping_zip}}</p>
+                                        <p class="card-text mb-0">{{$vendor->shipping_country}}</p>
+                                        <p class="card-text mb-0">{{$vendor->shipping_phone}}</p>
                                     @endif
                                 </div>
                             </div>
@@ -206,7 +206,7 @@
                                                 <p class="card-text mb-0">{{__('Vendor Id')}}</p>
                                                 <h6 class="report-text mb-3">{{ Modules\Account\Entities\Vender::vendorNumberFormat($vendor->vendor_id)}}</h6>
                                                 <p class="card-text mb-0">{{__('Total Sum of Bills')}}</p>
-                                                <h6 class="report-text mb-0">{{ currency_format_with_sym($totalBillSum)}}</h6>
+                                                <h6 class="report-text mb-0">{{ number_format($totalBillSum, 2) . ' ' .  company_setting('defult_currancy') }}</h6>
                                             </div>
                                         </div>
                                         <div class="col-md-3 col-sm-6">
@@ -220,15 +220,15 @@
                                         <div class="col-md-3 col-sm-6">
                                             <div class="p-2">
                                                 <p class="card-text mb-0">{{__('Balance')}}</p>
-                                                <h6 class="report-text mb-3">{{ currency_format_with_sym($vendor->balance)}}</h6>
+                                                <h6 class="report-text mb-3">{{ number_format($vendor->balance, 2) . ' ' .  company_setting('defult_currancy') }}</h6>
                                                 <p class="card-text mb-0">{{__('Average Sales')}}</p>
-                                                <h6 class="report-text mb-0">{{ currency_format_with_sym($averageSale)}}</h6>
+                                                <h6 class="report-text mb-0">{{ number_format($averageSale, 2) . ' ' .  company_setting('defult_currancy') }}</h6>
                                             </div>
                                         </div>
                                         <div class="col-md-3 col-sm-6">
                                             <div class="p-2">
                                                 <p class="card-text mb-0">{{__('Overdue')}}</p>
-                                                <h6 class="report-text mb-3">{{ currency_format_with_sym($vendor->vendorOverdue($vendor->id))}}</h6>
+                                                <h6 class="report-text mb-3">{{ number_format($vendor->vendorOverdue($vendor->id), 2) . ' ' .  company_setting('defult_currancy') }}</h6>
                                             </div>
                                         </div>
                                     </div>
@@ -278,7 +278,7 @@
                                                             {{  company_date_formate($bill->due_date) }}
                                                         @endif
                                                     </td>
-                                                    <td>{{ currency_format_with_sym($bill->getDue())  }}</td>
+                                                    <td>{{ number_format($bill->getDue(), 2) . ' ' .  company_setting('defult_currancy') }}</td>
                                                     <td>
                                                         @if($bill->status == 0)
                                                             <span class="badge bg-primary p-2 px-3 rounded">{{ __(\App\Models\Invoice::$statues[$bill->status]) }}</span>
@@ -296,42 +296,43 @@
                                                         <td class="Action">
                                                             <span>
                                                             @can(' bill duplicate')
-                                                                    <div class="action-btn bg-secondary ms-2">
+                                                                <div class="action-btn bg-secondary ms-2">
 
-                                                                        {!! Form::open(['method' => 'get', 'route' => ['bill.duplicate', $bill->id],'id'=>'bill-duplicate-form-'.$bill->id]) !!}
-                                                                            <a  class="mx-3 btn btn-sm align-items-center bs-pass-para" data-bs-toggle="tooltip"  title="{{ __('Duplicate Bill') }}" data-original-title="{{__('Duplicate')}}" data-confirm="{{__('You want to confirm this action. Press Yes to continue or Cancel to go back')}}" data-confirm-yes="document.getElementById('bill-duplicate-form-{{$bill->id}}').submit();">
-                                                                                <i class="ti ti-copy text-white text-white"></i>
-                                                                            </a>
-                                                                        {!! Form::close() !!}
+                                                                {!! Form::open(['method' => 'get', 'route' => ['bill.duplicate', $bill->id],'id'=>'bill-duplicate-form-'.$bill->id]) !!}
+                                                                    <a  class="mx-3 btn btn-sm align-items-center bs-pass-para" data-bs-toggle="tooltip"  title="{{ __('Duplicate Bill') }}" data-original-title="{{__('Duplicate')}}" data-confirm="{{__('You want to confirm this action. Press Yes to continue or Cancel to go back')}}" data-confirm-yes="document.getElementById('bill-duplicate-form-{{$bill->id}}').submit();">
+                                                                        <i class="ti ti-copy text-white text-white"></i>
+                                                                    </a>
+                                                                {!! Form::close() !!}
 
-                                                                    </div>
-                                                                @endcan
-                                                                @can('bill show')
-                                                                    <div class="action-btn bg-warning ms-2">
-                                                                        <a href="{{ route('bill.show',\Crypt::encrypt($bill->id)) }}" class="mx-3 btn btn-sm  align-items-center" data-bs-toggle="tooltip" title="{{__('Show')}}" data-original-title="{{__('Detail')}}">
-                                                                            <i class="ti ti-eye text-white text-white"></i>
-                                                                        </a>
-                                                                    </div>
-                                                                @endcan
+                                                            </div>
+                                                            @endcan
+                                                            @can('bill show')
+                                                                <div class="action-btn bg-warning ms-2">
+                                                                    <a href="{{ route('bill.show',\Crypt::encrypt($bill->id)) }}" class="mx-3 btn btn-sm  align-items-center" data-bs-toggle="tooltip" title="{{__('Show')}}" data-original-title="{{__('Detail')}}">
+                                                                        <i class="ti ti-eye text-white text-white"></i>
+                                                                    </a>
+                                                                </div>
+                                                            @endcan
+                                                            @if($bill->status == 0)
                                                                 @can('bill edit')
                                                                 <div class="action-btn bg-info ms-2">
                                                                     <a href="{{ route('bill.edit',\Crypt::encrypt($bill->id)) }}" class="mx-3 btn btn-sm align-items-center" data-toggle="popover" title="Edit" data-original-title="{{__('Edit')}}">
                                                                         <i class="ti ti-pencil text-white"></i>
                                                                     </a>
                                                                 </div>
-                                                            @endcan
-                                                            @can('bill delete')
-                                                                <div class="action-btn bg-danger ms-2">
-                                                                    {{Form::open(array('route'=>array('bill.destroy', $bill->id),'class' => 'm-0'))}}
-                                                                        @method('DELETE')
-                                                                        <a
-                                                                            class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
-                                                                            data-toggle="popover" title="Delete" data-bs-original-title="Delete"
-                                                                            aria-label="Delete" data-confirm="{{__('Are You Sure?')}}" data-text="{{__('This action can not be undone. Do you want to continue?')}}"  data-confirm-yes="delete-form-{{$bill->id}}"><i
-                                                                                class="ti ti-trash text-white text-white"></i></a>
-                                                                    {{Form::close()}}
-                                                                </div>
-                                                            @endcan
+                                                                @endcan
+                                                                @can('bill delete')
+                                                                    <div class="action-btn bg-danger ms-2">
+                                                                        {{Form::open(array('route'=>array('bill.destroy', $bill->id),'class' => 'm-0'))}}
+                                                                            @method('DELETE')
+                                                                            <a class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
+                                                                                data-toggle="popover" title="Delete" data-bs-original-title="Delete"
+                                                                                aria-label="Delete" data-confirm="{{__('Are You Sure?')}}" data-text="{{__('This action can not be undone. Do you want to continue?')}}"  data-confirm-yes="delete-form-{{$bill->id}}"><i
+                                                                                    class="ti ti-trash text-white text-white"></i></a>
+                                                                        {{Form::close()}}
+                                                                    </div>
+                                                                @endcan
+                                                            @endif
                                                             </span>
                                                         </td>
                                                     @endif
@@ -367,16 +368,13 @@
                                                     <th>{{ __('Reference') }}</th>
                                                     <th>{{ __('Description') }}</th>
                                                     <th>{{ __('Payment Receipt') }}</th>
-                                                    @if (Gate::check('expense payment delete') || Gate::check('expense payment edit'))
-                                                        <th>{{ __('Action') }}</th>
-                                                    @endif
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @foreach ($vendor->vendorPayment($vendor->id) as $payment)
                                                     <tr class="font-style">
                                                         <td>{{ company_date_formate($payment->date) }}</td>
-                                                        <td>{{ currency_format_with_sym($payment->amount) }}</td>
+                                                        <td>{{ number_format($payment->amount, 2) . ' ' .  (!empty($payment->currency)?$payment->currency:company_setting('defult_currancy')) }}</td>
                                                         <td>{{ !empty($payment->bankAccount) ? $payment->bankAccount->bank_name . ' ' . $payment->bankAccount->holder_name : '' }}
                                                         </td>
                                                         @if (module_is_active('ProductService'))
@@ -412,36 +410,6 @@
                                                                 -
                                                             @endif
                                                         </td>
-                                                        @if (Gate::check('expense payment delete') || Gate::check('expense payment edit'))
-                                                            <td class="action text-end">
-                                                                @can('expense payment edit')
-                                                                    <div class="action-btn bg-info ms-2">
-                                                                        <a  class="mx-3 btn btn-sm align-items-center"
-                                                                            data-url="{{ route('payment.edit', $payment->id) }}"
-                                                                            data-ajax-popup="true" data-title="{{ __('Edit Payment') }}"
-                                                                            data-size="lg" data-bs-toggle="tooltip" title="{{ __('Edit') }}"
-                                                                            data-original-title="{{ __('Edit') }}">
-                                                                            <i class="ti ti-pencil text-white"></i>
-                                                                        </a>
-                                                                    </div>
-                                                                @endcan
-                                                                @can('expense payment delete')
-                                                                    <div class="action-btn bg-danger ms-2">
-                                                                        {{ Form::open(['route' => ['payment.destroy', $payment->id], 'class' => 'm-0']) }}
-                                                                        @method('DELETE')
-                                                                        <a
-                                                                            class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
-                                                                            data-bs-toggle="tooltip" title=""
-                                                                            data-bs-original-title="Delete" aria-label="Delete"
-                                                                            data-confirm="{{ __('Are You Sure?') }}"
-                                                                            data-text="{{ __('This action can not be undone. Do you want to continue?') }}"
-                                                                            data-confirm-yes="delete-form-{{ $payment->id }}"><i
-                                                                                class="ti ti-trash text-white text-white"></i></a>
-                                                                        {{ Form::close() }}
-                                                                    </div>
-                                                                @endcan
-                                                            </td>
-                                                        @endif
                                                     </tr>
                                                 @endforeach
                                             </tbody>
@@ -562,7 +530,7 @@
                                                                     <thead>
                                                                     <tr>
                                                                         <th scope="col">{{__('Date')}}</th>
-                                                                        <th scope="col">{{__('Bill')}}</th>
+                                                                        <th scope="col">{{__('Type')}}</th>
                                                                         <th scope="col">{{__('Amount')}}</th>
                                                                     </tr>
                                                                     </thead>
@@ -570,11 +538,17 @@
                                                                         @php
                                                                             $total = 0;
                                                                         @endphp
-                                                                        @forelse($bill_payment as $payment)
+                                                                        @forelse($vendor->vendorPayment($vendor->id) as $payment)
                                                                             <tr>
                                                                                 <td>{{ company_date_formate($payment->date)}} </td>
-                                                                                <td>{{\Modules\Account\Entities\Bill::billNumberFormat($payment->bill_id)}}</td>
-                                                                                <td> {{currency_format_with_sym(($payment->amount))}}</td>
+                                                                                @if($payment->purchase_id)
+                                                                                    <td>Purchase Payment</td>
+                                                                                @elseif($payment->bill_id)
+                                                                                    <td>Bill Payment</td>
+                                                                                @else
+                                                                                    <td>Payment</td>
+                                                                                @endif
+                                                                                <td>{{ number_format($payment->amount, 2) . ' ' .  company_setting('defult_currancy') }}</td>
                                                                         @empty
                                                                             <tr>
                                                                                 <td colspan="6" class="text-center text-dark"><p>{{__('No Data Found')}}</p></td>
@@ -585,13 +559,13 @@
                                                                         <tr class="total">
                                                                             <td class="light_blue"><span></span><strong>{{__('TOTAL :')}}</strong></td>
                                                                             <td class="light_blue"></td>
-                                                                            @foreach($bill_payment as $key=>$payment)
+                                                                            @foreach($vendor->vendorPayment($vendor->id) as $payment)
                                                                                 @php
                                                                                     $total += $payment->amount;
                                                                                 @endphp
                                                                             @endforeach
 
-                                                                            <td class="light_blue" id="total-amount"><strong>{{currency_format_with_sym($total)}}</strong></td>
+                                                                            <td class="light_blue" id="total-amount"><strong>{{ number_format($total, 2) . ' ' .  company_setting('defult_currancy') }}</strong></td>
                                                                         </tr>
                                                                     </tfoot>
                                                                 </table>

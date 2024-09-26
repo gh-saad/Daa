@@ -35,6 +35,7 @@ class Vender extends Model
         'shipping_address',
         'lang',
         'balance',
+        'currency',
         'workspace',
         'created_by',
         'remember_token'
@@ -88,8 +89,33 @@ class Vender extends Model
     }
     public function vendorPayment($vendorId)
     {
-        $payment = Payment::where('vendor_id', $vendorId)->orderBy('date', 'desc')->get();
-        return $payment;
+        // create an empty collection variable
+        $vendorPayments = collect([]);
+
+        // get all payments
+        $payments = Payment::where('vendor_id', $vendorId)->orderBy('date', 'desc')->get();
+        // append to collection
+        $vendorPayments = $vendorPayments->merge($payments);
+
+        // find bills with this vendor
+        $bills = Bill::where('vendor_id', $vendorId)->get();
+        // loop through bills and find payments for each bill
+        foreach ($bills as $bill) {
+            $billPayments = BillPayment::where('bill_id', $bill->id)->orderBy('date', 'desc')->get();
+            // append to collection
+            $vendorPayments = $vendorPayments->merge($billPayments);
+        }
+
+        // find purchases with this vendor
+        $purchases = Purchase::where('vender_id', $vendorId)->get();
+        // loop through purchases and find payments for each purchase
+        foreach ($purchases as $purchase) {
+            $purchasePayments = PurchasePayment::where('purchase_id', $purchase->id)->orderBy('date', 'desc')->get();
+            // append to collection
+            $vendorPayments = $vendorPayments->merge($purchasePayments);
+        }
+
+        return $vendorPayments;
     }
     public function user()
     {

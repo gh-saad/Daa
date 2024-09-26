@@ -111,29 +111,15 @@ class WarehouseController extends Controller
     public function show(warehouse $warehouse)
     {
         $id = WarehouseProduct::where('warehouse_id' , $warehouse->id)->first();
-
-        if(\Auth::user()->can('warehouse show'))
-        {
-
-            if(WarehouseProduct::where('warehouse_id' , $warehouse->id)->exists())
-            {
-
-                $warehouse = WarehouseProduct::where('warehouse_id' , $warehouse->id)->where('created_by', creatorId())->where('workspace',getActiveWorkSpace())->get();
-
-
-
-                return view('pos::warehouse.show', compact('warehouse'));
+        if(\Auth::user()->can('warehouse show')){
+            if(WarehouseProduct::where('warehouse_id' , $warehouse->id)->exists()){
+                $warehouseProducts = WarehouseProduct::where('warehouse_id' , $warehouse->id)->where('created_by', creatorId())->where('workspace',getActiveWorkSpace())->get();
+                return view('pos::warehouse.show', compact('warehouseProducts'));
+            }else{
+                $warehouseProducts = [];
+                return view('pos::warehouse.show', compact('warehouseProducts'));
             }
-            else
-            {
-
-
-                $warehouse = [];
-                return view('pos::warehouse.show', compact('warehouse'));
-            }
-        }
-        else
-        {
+        }else{
             return response()->json(['error' => __('Permission denied.')], 401);
         }
     }

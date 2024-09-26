@@ -93,6 +93,7 @@ class Purchase extends Model
     public function getTotalTax()
     {
         $totalTax = 0;
+        $convertedTax = 0;
         foreach ($this->items as $product)
         {
             if(module_is_active('ProductService'))
@@ -104,10 +105,11 @@ class Purchase extends Model
                 $taxes = 0;
             }
 
-            $totalTax += currency_conversion((($taxes / 100) * ($product->price * $product->quantity - $product->discount)), $product->currency, company_setting('defult_currancy'));
+            $totalTax += ($taxes / 100) * (($product->price * $product->quantity) - $product->discount);
+            $convertedTax = currency_conversion($totalTax, $product->currency, company_setting('defult_currancy'));
         }
 
-        return $totalTax;
+        return $convertedTax;
     }
 
     public function getTotalDiscount()

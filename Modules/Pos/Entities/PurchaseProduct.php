@@ -14,9 +14,11 @@ class PurchaseProduct extends Model
         'product_id',
         'purchase_id',
         'quantity',
+        'currency',
         'tax',
         'discount',
-        'total',
+        'price',
+        'description',
         'workspace',
     ];
 
@@ -36,5 +38,13 @@ class PurchaseProduct extends Model
 
     public function purchase() {
         return $this->hasOne(\Modules\Pos\Entities\Purchase::class, 'id', 'purchase_id')->first();
+    }
+
+    // get price after discount
+    public function getPriceAfterDiscount(){
+        $price = $this->price;
+        $discount = $this->discount;
+        $priceAfterDiscount = $price - $discount;
+        return $priceAfterDiscount;
     }
 }

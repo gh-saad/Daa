@@ -76,7 +76,7 @@
                                 <td class="font-style">{{$customer['name']}}</td>
                                 <td>{{$customer['contact_no']}}</td>
                                 <td>{{$customer['email']}}</td>
-                                <td>{{ currency_format_with_sym($customer['balance'])}}</td>
+                                <td>{{ number_format($customer['balance'], 2) . ' ' .  company_setting('defult_currancy') }}</td>
                                 @if (Gate::check('customer edit') || Gate::check('customer delete') || Gate::check('customer show'))
                                     <td class="Action">
                                         @if($customer->is_disable == 1)

@@ -167,6 +167,7 @@ class VenderController extends Controller
             }
             $vendor->lang             = $user->lang;
             $vendor->created_by       = \Auth::user()->id;
+            $vendor->currency         = company_setting('defult_currancy');
             $vendor->workspace        = getActiveWorkSpace();
             $vendor->save();
             if(module_is_active('CustomField'))
@@ -569,6 +570,7 @@ class VenderController extends Controller
                             'shipping_phone' => $row[$request->shipping_phone],
                             'shipping_zip' => $row[$request->shipping_zip],
                             'shipping_address' => $row[$request->shipping_address],
+                            'currency' => company_setting('defult_currancy'),
                             'created_by' => creatorId(),
                             'workspace' => getActiveWorkSpace(),
                         ]);
@@ -748,6 +750,7 @@ class VenderController extends Controller
             }
 
             $vendor->lang             = $user->lang;
+            $vendor->currency         = company_setting('defult_currancy');
             $vendor->created_by       = \Auth::user()->id;
             $vendor->workspace        = getActiveWorkSpace();
             $vendor->save();

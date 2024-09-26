@@ -467,7 +467,7 @@
                                                                     @endif
                                                                 </td>
                                                                 <td style="white-space: break-spaces;">{{!empty($iteam->description)?$iteam->description:'-'}}</td>
-                                                                <td class="text-end">{{ number_format(currency_conversion(($iteam->price - $iteam->discount) + $thisTax, $iteam->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>{{--text-right--}}
+                                                                <td class="text-end">{{ number_format(currency_conversion(($iteam->price - $iteam->discount), $iteam->currency, company_setting('defult_currancy')) + $thisTax, 2) . ' ' . company_setting('defult_currancy') }}</td>{{--text-right--}}
                                                             </tr>
                                                         @endforeach
                                                         <tfoot>
