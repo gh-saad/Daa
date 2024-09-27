@@ -105,7 +105,9 @@ class RevenueController extends Controller
             }
             $accounts   = BankAccount::select('*', \DB::raw("CONCAT(bank_name,' ',holder_name) AS name"))->where('workspace', getActiveWorkSpace())->get()->pluck('name', 'id');
 
-            return view('account::revenue.create', compact('customers', 'categories', 'accounts'));
+            $revenue_chart_accounts = \Modules\Account\Entities\ChartOfAccount::where('created_by', '=', creatorId())->where('type', '=', 4)->where('workspace', getActiveWorkSpace())->get()->pluck('name', 'id');
+
+            return view('account::revenue.create', compact('customers', 'categories', 'accounts', 'revenue_chart_accounts'));
         }
         else
         {
@@ -127,30 +129,35 @@ class RevenueController extends Controller
                 $request->all(), [
                                    'date' => 'required',
                                    'amount' => 'required|numeric|gt:0',
+                                   'chart_account_id' => 'required',
                                    'account_id' => 'required',
                                    'category_id' => 'required',
-                                   'reference' => 'required',
-                                   'description' => 'required',
                                ]
             );
             if($validator->fails())
             {
                 $messages = $validator->getMessageBag();
-
                 return redirect()->back()->with('error', $messages->first());
             }
-            $customer    = Customer::where('id',$request->customer_id)->where('workspace',getActiveWorkSpace())->first();
+
+            if ($request->type == 'customer_included'){
+                $customer = Customer::where('id',$request->customer_id)->where('workspace',getActiveWorkSpace())->first();
+            }
+
+            $amount = currency_conversion($request->amount, $request->currency, company_setting("defult_currancy"));
 
             $revenue                 = new Revenue();
             $revenue->date           = $request->date;
-            $revenue->amount         = $request->amount;
+            $revenue->amount         = $amount;
+            $revenue->currency       = company_setting("defult_currancy");
             $revenue->account_id     = $request->account_id;
-            $revenue->customer_id    = $request->customer_id;
-            $revenue->user_id        = $customer->user_id;
+            $revenue->customer_id    = $request->type == 'customer_included' ? $request->customer_id : null;
+            $revenue->user_id        = $request->type == 'customer_included' ? $customer->user_id : null;
             $revenue->category_id    = $request->category_id;
             $revenue->payment_method = 0;
-            $revenue->reference      = $request->reference;
-            $revenue->description    = $request->description;
+            $revenue->reference      = !empty($request->reference)?$request->reference:'-';
+            $revenue->description    = !empty($request->description)?$request->description:'-';
+
             if(!empty($request->add_receipt))
             {
                 $fileName = time() . "_" . $request->add_receipt->getClientOriginalName();
@@ -166,58 +173,109 @@ class RevenueController extends Controller
                 $revenue->add_receipt = $url;
 
             }
+
             $revenue->created_by     = \Auth::user()->id;
             $revenue->workspace        = getActiveWorkSpace();
             $revenue->save();
-            if(module_is_active('ProductService'))
-            {
-                $category            = \Modules\ProductService\Entities\Category::where('id', $request->category_id)->first();
-            }
-            else
-            {
-                $category = [];
-            }
-            $revenue->payment_id = $revenue->id;
-            $revenue->type       = 'Revenue';
-            $revenue->category   = !empty($category) ? $category->name : '';
-            $revenue->user_id    = $revenue->customer_id;
-            $revenue->user_type  = 'Customer';
-            $revenue->account    = $request->account_id;
-            Transaction::addTransaction($revenue);
 
-            $customer         = Customer::where('id', $request->customer_id)->first();
-            $payment          = new InvoicePayment();
-            $payment->name    = !empty($customer) ? $customer['name'] : '';
-            $payment->date    = company_date_formate($request->date);
-            $payment->amount  = currency_format_with_sym($request->amount);
-            $payment->invoice = '';
-            if(!empty($customer))
-            {
+            // if(module_is_active('ProductService'))
+            // {
+            //     $category            = \Modules\ProductService\Entities\Category::where('id', $request->category_id)->first();
+            // }
+            // else
+            // {
+            //     $category = [];
+            // }
+
+            if (!empty($customer)){
                 AccountUtility::userBalance('customer', $customer->id, $revenue->amount, 'credit');
             }
 
-            Transfer::bankAccountBalance($request->account_id, $revenue->amount, 'credit');
+            // $revenue->payment_id = $revenue->id;
+            // $revenue->type       = 'Revenue';
+            // $revenue->category   = !empty($category) ? $category->name : '';
+            // $revenue->user_id    = $revenue->customer_id;
+            // $revenue->user_type  = 'Customer';
+            // $revenue->account    = $request->account_id;
+            // Transaction::addTransaction($revenue);
+
+            // $customer         = Customer::where('id', $request->customer_id)->first();
+            // $payment          = new InvoicePayment();
+            // $payment->name    = !empty($customer) ? $customer['name'] : '';
+            // $payment->date    = company_date_formate($request->date);
+            // $payment->amount  = currency_format_with_sym($request->amount);
+            // $payment->invoice = '';
+            // if(!empty($customer))
+            // {
+            //     AccountUtility::userBalance('customer', $customer->id, $revenue->amount, 'credit');
+            // }
+
+            // Transfer::bankAccountBalance($request->account_id, $revenue->amount, 'credit');
+
+            // currency conversion
+            $convertedAmount = currency_conversion($revenue->amount, $revenue->currency, company_setting("defult_currancy"));
+            $bank_account = \Modules\Account\Entities\BankAccount::find($request->account_id);
+
+            // adding Journal Entries
+            // Revenue Account = Credit = Provided amount
+            // Cash/Bank Account = Debit = Provided amount
+            
+            // new journal entry
+            $new_journal_entry = new \Modules\DoubleEntry\Entities\JournalEntry();
+            $new_journal_entry->date = now();
+            $new_journal_entry->reference = !empty($request->reference)?$request->reference:'-';
+            $new_journal_entry->description = !empty($request->description)?$request->description:'Direct Revenue';
+            $new_journal_entry->journal_id = $this->journalNumber();
+            $new_journal_entry->currency = company_setting("defult_currancy");
+            $new_journal_entry->workspace = getActiveWorkSpace();
+            $new_journal_entry->created_by = \Auth::user()->id;
+            $new_journal_entry->save();
+
+            // for revenue account provided by the user in the request
+            $first_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+            $first_journal_item->journal = $new_journal_entry->id;
+            $first_journal_item->account = $request->chart_account_id; // Revenue Account
+            $first_journal_item->description = '-';
+            $first_journal_item->debit = 0.00;
+            $first_journal_item->credit = $convertedAmount;
+            $first_journal_item->workspace = getActiveWorkSpace();
+            $first_journal_item->created_by = \Auth::user()->id;
+            $first_journal_item->save();
+
+            $first_transaction = add_quick_transaction('Credit', $request->chart_account_id, $convertedAmount);
+
+            // for cash/bank account provided by the user in the request
+            $second_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+            $second_journal_item->journal = $new_journal_entry->id;
+            $second_journal_item->account = $bank_account->chart_account_id; // Cash/Bank Account
+            $second_journal_item->description = '-';
+            $second_journal_item->debit = $convertedAmount;
+            $second_journal_item->credit = 0.00;
+            $second_journal_item->workspace = getActiveWorkSpace();
+            $second_journal_item->created_by = \Auth::user()->id;
+            $second_journal_item->save();
+
+            $second_transaction = add_quick_transaction('Debit', $bank_account->chart_account_id, $convertedAmount);
 
             event(new CreateRevenue($request,$revenue));
-
-            if(!empty(company_setting('Revenue Payment Create')) && company_setting('Revenue Payment Create')  == true)
-            {
-                $uArr = [
-                    'payment_name' => $payment->name,
-                    'payment_amount' => $payment->amount,
-                    'revenue_type' =>$revenue->type,
-                    'payment_date' => $payment->date,
-                ];
-                try
-                {
-                    $resp = EmailTemplate::sendEmailTemplate('Revenue Payment Create', [$customer->id => $customer->email], $uArr);
-                }
-                catch(\Exception $e)
-                {
-                    $resp['error'] = $e->getMessage();
-                    }
-                    return redirect()->route('revenue.index')->with('success', __('Revenue successfully created.') . ((isset($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
-            }
+            // if(!empty(company_setting('Revenue Payment Create')) && company_setting('Revenue Payment Create')  == true)
+            // {
+            //     $uArr = [
+            //         'payment_name' => $payment->name,
+            //         'payment_amount' => $payment->amount,
+            //         'revenue_type' =>$revenue->type,
+            //         'payment_date' => $payment->date,
+            //     ];
+            //     try
+            //     {
+            //         $resp = EmailTemplate::sendEmailTemplate('Revenue Payment Create', [$customer->id => $customer->email], $uArr);
+            //     }
+            //     catch(\Exception $e)
+            //     {
+            //         $resp['error'] = $e->getMessage();
+            //         }
+            //         return redirect()->route('revenue.index')->with('success', __('Revenue successfully created.') . ((isset($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
+            // }
 
             return redirect()->route('revenue.index')->with('success', __('Revenue successfully created.'));
 
@@ -259,7 +317,9 @@ class RevenueController extends Controller
             }
             $accounts   = BankAccount::select('*', \DB::raw("CONCAT(bank_name,' ',holder_name) AS name"))->where('workspace', getActiveWorkSpace())->get()->pluck('name', 'id');
 
-            return view('account::revenue.edit', compact('customers', 'categories', 'accounts', 'revenue'));
+            $revenue_chart_accounts = \Modules\Account\Entities\ChartOfAccount::where('created_by', '=', creatorId())->where('type', '=', 4)->where('workspace', getActiveWorkSpace())->get()->pluck('name', 'id');
+
+            return view('account::revenue.edit', compact('customers', 'categories', 'accounts', 'revenue', 'revenue_chart_accounts'));
         }
         else
         {
@@ -275,6 +335,13 @@ class RevenueController extends Controller
      */
     public function update(Request $request, Revenue $revenue)
     {
+        // task1: revenue table requires chart_account_id to store user provided chart of account id
+        // task2: use this chart of account id to find and delete old journal entries and transactions
+        // task3: use the new provided chart of account id and details to create new journal entries and transations similar to in the create function
+
+        // disabling until tasks are completed
+        return redirect()->back()->with('error', 'cannot update or delete for now, please notify us where and when you encountered this error.');
+
         if(Auth::user()->can('revenue edit'))
         {
             $validator = \Validator::make(
@@ -283,8 +350,6 @@ class RevenueController extends Controller
                                     'amount' => 'required|numeric|gt:0',
                                     'account_id' => 'required',
                                     'category_id' => 'required',
-                                    'reference' => 'required',
-                                    'description' => 'required',
                                ]
             );
             if($validator->fails())
@@ -294,23 +359,35 @@ class RevenueController extends Controller
                 return redirect()->back()->with('error', $messages->first());
             }
 
-            $customer = Customer::where('id', $request->customer_id)->first();
-            if(!empty($customer))
-            {
-                AccountUtility::userBalance('customer', $customer->id, $revenue->amount, 'debit');
+            $amount = currency_conversion($request->amount, $request->currency, company_setting("defult_currancy"));
+
+            $requires_new_journal_entries = false;
+            if ($request->amount != $revenue->amount || $request->currency != ($revenue->currency ? $revenue->currency : 'KES') || $request->account_id != $revenue->account_id || $request->chart_account_id != null){
+                $requires_new_journal_entries = true;
             }
 
-            Transfer::bankAccountBalance($revenue->account_id, $revenue->amount, 'debit');
+            dd($request->all());
 
-            $revenue->date           = $request->date;
-            $revenue->amount         = $request->amount;
-            $revenue->account_id     = $request->account_id;
-            $revenue->customer_id    = $request->customer_id;
-            $revenue->user_id        = $customer->user_id;
-            $revenue->category_id    = $request->category_id;
-            $revenue->payment_method = 0;
-            $revenue->reference      = $request->reference;
-            $revenue->description    = $request->description;
+            if ($request->type == 'customer_included'){
+                $customer = Customer::where('id',$request->customer_id)->where('workspace',getActiveWorkSpace())->first();
+            }
+
+            // Reverse old customer balance if customer included in the original entry
+            if ($revenue->customer_id) {
+                AccountUtility::userBalance('customer', $revenue->customer_id, $revenue->amount, 'debit');
+            }
+    
+            // Update revenue details
+            $revenue->date = $request->date;
+            $revenue->amount = $amount;
+            $revenue->currency = company_setting("defult_currancy");
+            $revenue->account_id = $request->account_id;
+            $revenue->customer_id = $request->type == 'customer_included' ? $request->customer_id : null;
+            $revenue->customer_id = $request->type == 'customer_included' ? $customer->user_id : null;
+            $revenue->category_id = $request->category_id;
+            $revenue->reference = !empty($request->reference) ? $request->reference : '-';
+            $revenue->description = !empty($request->description) ? $request->description : '-';
+
             if(!empty($request->add_receipt))
             {
                 if(!empty($revenue->add_receipt))
@@ -337,6 +414,14 @@ class RevenueController extends Controller
             }
 
             $revenue->save();
+            
+            // Update user balance if customer is included
+            if($request->type == 'customer_included') {
+                if (!empty($customer)) {
+                    AccountUtility::userBalance('customer', $customer->id, $amount, 'credit');
+                }
+            }
+
             if(module_is_active('ProductService'))
             {
                 $category            = \Modules\ProductService\Entities\Category::where('id', $request->category_id)->first();
@@ -349,14 +434,16 @@ class RevenueController extends Controller
             $revenue->payment_id = $revenue->id;
             $revenue->type       = 'Revenue';
             $revenue->account    = $request->account_id;
-            Transaction::editTransaction($revenue);
+            
+            // Transaction::editTransaction($revenue);
 
-            if(!empty($customer))
-            {
-                AccountUtility::userBalance('customer', $customer->id, $request->amount, 'credit');
-            }
+            // if(!empty($customer))
+            // {
+            //     AccountUtility::userBalance('customer', $customer->id, $request->amount, 'credit');
+            // }
 
-            Transfer::bankAccountBalance($request->account_id, $request->amount, 'credit');
+            // Transfer::bankAccountBalance($request->account_id, $request->amount, 'credit');
+
             event(new UpdateRevenue($request,$revenue));
             return redirect()->route('revenue.index')->with('success', __('Revenue successfully updated.'));
         }
@@ -366,6 +453,16 @@ class RevenueController extends Controller
         }
     }
 
+    function journalNumber()
+    {
+        $latest = \Modules\DoubleEntry\Entities\JournalEntry::where('created_by', '=', creatorId())->where('workspace', getActiveWorkSpace())->latest()->first();
+        if (!$latest) {
+            return 1;
+        }
+
+        return $latest->journal_id + 1;
+    }
+
     /**
      * Remove the specified resource from storage.
      * @param int $id
@@ -373,6 +470,12 @@ class RevenueController extends Controller
      */
     public function destroy(Revenue $revenue)
     {
+        // task1: revenue table requires chart_account_id to store user provided chart of account id
+        // task2: use this chart of account id to find and delete old journal entries and transactions
+        
+        // disabling until tasks are completed
+        return redirect()->back()->with('error', 'cannot update or delete for now, please notify us where and when you encountered this error.');
+        
         if(Auth::user()->can('revenue delete'))
         {
             if($revenue->workspace == getActiveWorkSpace())
