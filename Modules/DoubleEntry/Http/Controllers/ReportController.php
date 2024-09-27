@@ -101,6 +101,7 @@ class ReportController extends Controller
     public function balanceSheet(Request $request, $view = '', $collapseview = 'expand')
     {
         if (Auth::user()->can('report balance sheet')) {
+            // accounting period start and accounting period end
             $start = $request->start_date ?? date('Y-01-01');
             $end = $request->end_date ?? date('Y-m-d', strtotime('+1 day'));
     
@@ -116,7 +117,8 @@ class ReportController extends Controller
                     $accounts = ChartOfAccount::where('sub_type', $subType->id)
                         ->where('type', $type->id)->where('workspace', getActiveWorkSpace())->get();
                     foreach ($accounts as $account) {
-                        $balance = $account->balance($account->id);
+                        $balance = $account->balance($account->id, $start, $end);
+                        if($account->name == "Retained income"){$balance = $account->getRetainedEarnings($start, $end);}
                         if ($balance != 0) {
                             $totalAccounts[$type->name][$subType->name][$account->id] = [
                                 'account_id' => $account->id,

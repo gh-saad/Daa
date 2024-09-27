@@ -23,6 +23,23 @@
         @endcan
     </div>
 @endsection
+
+@push('css')
+    <!-- Add any custom CSS here if needed -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-selection__rendered {
+            line-height: 36px !important;
+        }
+        .select2-container .select2-selection--single {
+            height: 40px !important;
+        }
+        .select2-selection__arrow {
+            height: 39px !important;
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="row">
         <div class="col-sm-12">
@@ -97,16 +114,16 @@
                                     <th>{{ __('Reference') }}</th>
                                     <th>{{ __('Description') }}</th>
                                     <th>{{ __('Payment Receipt') }}</th>
-                                    @if (Gate::check('expense payment delete') || Gate::check('expense payment edit'))
+                                    <!-- @if (Gate::check('expense payment delete') || Gate::check('expense payment edit'))
                                         <th>{{ __('Action') }}</th>
-                                    @endif
+                                    @endif -->
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($payments as $payment)
                                     <tr class="font-style">
                                         <td>{{ company_date_formate($payment->date) }}</td>
-                                        <td>{{ currency_format_with_sym($payment->amount) }}</td>
+                                        <td>{{ number_format(currency_conversion($payment->amount, $payment->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                         <td>{{ !empty($payment->bankAccount) ? $payment->bankAccount->bank_name . ' ' . $payment->bankAccount->holder_name : '' }}
                                         </td>
                                         <td>{{ !empty($payment->vendor) ? $payment->vendor->name : '-' }}</td>
@@ -143,7 +160,7 @@
                                                 -
                                             @endif
                                         </td>
-                                        @if (Gate::check('expense payment delete') || Gate::check('expense payment edit'))
+                                        <!-- @if (Gate::check('expense payment delete') || Gate::check('expense payment edit'))
                                             <td class="action text-end">
                                                 @can('expense payment edit')
                                                     <div class="action-btn bg-info ms-2">
@@ -172,7 +189,7 @@
                                                     </div>
                                                 @endcan
                                             </td>
-                                        @endif
+                                        @endif -->
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -183,3 +200,50 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- select2 modal init -->
+    <script>
+        $(document).ready(function() {
+            $('#commonModal').on('shown.bs.modal', function () {
+                $('.select2').select2({
+                    dropdownParent: $('#commonModal'),
+                    width: '100%'
+                });
+            });
+        });
+    </script>
+
+    <!-- revenue type -->
+    <script>
+        $(document).ready(function() {
+            $('#commonModal').on('shown.bs.modal', function () {
+                // Function to toggle vendor field visibility and required status
+                function toggleVendorField() {
+                    var typeValue = $('#typeSelect').val();
+
+                    if (typeValue === 'vendor_not_included') {
+                        // Hide vendor select and remove 'required' attribute
+                        $('#vendorSelect').closest('.form-group').hide();
+                        $('#vendorSelect').prop('required', false);
+                    } else {
+                        // Show vendor select and add 'required' attribute
+                        $('#vendorSelect').closest('.form-group').show();
+                        $('#vendorSelect').prop('required', true);
+                    }
+                }
+
+                // Run on modal load
+                toggleVendorField();
+
+                // Run when 'typeSelect' changes
+                $('#typeSelect').change(function() {
+                    toggleVendorField();
+                });
+            });
+        });
+    </script>
+@endpush

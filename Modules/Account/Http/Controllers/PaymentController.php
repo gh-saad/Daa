@@ -97,7 +97,9 @@ class PaymentController extends Controller
             }
             $accounts   = BankAccount::select('*', \DB::raw("CONCAT(bank_name,' ',holder_name) AS name"))->where('workspace', getActiveWorkSpace())->get()->pluck('name', 'id');
 
-            return view('account::payment.create', compact('vendors', 'categories', 'accounts'));
+            $revenue_chart_accounts = \Modules\Account\Entities\ChartOfAccount::where('created_by', '=', creatorId())->where('type', '=', 6)->where('workspace', getActiveWorkSpace())->get()->pluck('name', 'id');
+
+            return view('account::payment.create', compact('vendors', 'categories', 'accounts', 'revenue_chart_accounts'));
         }
         else
         {
@@ -118,11 +120,9 @@ class PaymentController extends Controller
                 $request->all(), [
                     'date' => 'required',
                     'amount' => 'required|min:0',
+                    'chart_account_id' => 'required',
                     'account_id' => 'required',
-                    'vendor_id' => 'required',
                     'category_id' => 'required',
-                    'reference' => 'required',
-                    'description' => 'required',
                 ]
             );
             if ($validator->fails()) {
@@ -130,24 +130,75 @@ class PaymentController extends Controller
                 return redirect()->back()->with('error', $messages->first());
             }
     
+            if ($request->type == 'vendor_included'){
+                $vendor = \Modules\Account\Entities\Vender::where('id', $request->vendor_id)->where('workspace',getActiveWorkSpace())->first();
+            }
+
+            $amount = currency_conversion($request->amount, $request->currency, company_setting("defult_currancy"));
+
             $payment = new Payment();
             $payment->date = $request->date;
-            $payment->amount = $request->amount;
+            $payment->amount = $amount;
+            $payment->currency = company_setting("defult_currancy");
             $payment->account_id = $request->account_id;
-            $payment->vendor_id = $request->vendor_id;
+            $payment->chart_account_id = $request->chart_account_id;
+            $payment->vendor_id = $request->type == 'vendor_included' ? $vendor->id : null;
             $payment->category_id = $request->category_id;
             $payment->payment_method = 0; // Assuming 0 is a valid payment method ID
-            $payment->reference = $request->reference;
-            $payment->description = $request->description;
+            $payment->reference = !empty($request->reference)?$request->reference:'-';
+            $payment->description = !empty($request->description)?$request->description:'-';
 
-            $category = \Modules\ProductService\Entities\Category::where('id', $request->category_id)->first();
+            // $category = \Modules\ProductService\Entities\Category::where('id', $request->category_id)->first();
 
+            // if(!empty($request->add_receipt))
+            // {
+
+            //     // use the user provided receipt
+            //     $fileName = time() . "_" . $request->add_receipt->getClientOriginalName();
+            //     $uplaod = upload_file($request,'add_receipt',$fileName,'payment');
+            //     if($uplaod['flag'] == 1)
+            //     {
+            //         $url = $uplaod['url'];
+            //     }
+            //     else{
+            //         return redirect()->back()->with('error',$uplaod['msg']);
+            //     }
+
+            //     $payment->add_receipt = $url;
+
+            // }else{
+
+            //     // Generate receipt
+            //     $receiptController = new ReceiptController();
+            //     $accountDetails = \Modules\Account\Entities\BankAccount::where('id', $request->account_id)->first();
+            //     $vendorDetails = \Modules\Account\Entities\Vender::where('id', $request->vendor_id)->first();
+
+            //     $paymentDetails = [
+            //         'Date' => $request->date,
+            //         'Amount' => $request->amount,
+            //         'Account Holder Name' => $accountDetails->holder_name,
+            //         'Vendor Name' => $vendorDetails->name,
+            //         'Bank Name' => $vendorDetails->bank_name,
+            //         'Vendor Name' => $vendorDetails->name,
+            //         'Vendor Billing Address' => $vendorDetails->billing_address,
+            //         'Vendor Billing Phone' => $vendorDetails->billing_phone,
+            //         'Vendor Tax Number' => $vendorDetails->tax_number,
+            //         'Category Name' => $category->name,
+            //         'Reference' => $request->reference,
+            //         'Description' => $request->description,
+            //     ];
+        
+            //     $filePath = $receiptController->generatePdf($paymentDetails);
+        
+            //     $payment->add_receipt = 'uploads/receipts/' . basename($filePath);
+        
+            // }
+            
             if(!empty($request->add_receipt))
             {
-
-                // use the user provided receipt
                 $fileName = time() . "_" . $request->add_receipt->getClientOriginalName();
-                $uplaod = upload_file($request,'add_receipt',$fileName,'payment');
+
+                $uplaod = upload_file($request,'add_receipt',$fileName,'revenue');
                 if($uplaod['flag'] == 1)
                 {
                     $url = $uplaod['url'];
@@ -155,80 +206,102 @@ class PaymentController extends Controller
                 else{
                     return redirect()->back()->with('error',$uplaod['msg']);
                 }
+                $revenue->add_receipt = $url;
 
-                $payment->add_receipt = $url;
-
-            }else{
-
-                // Generate receipt
-                $receiptController = new ReceiptController();
-                $accountDetails = \Modules\Account\Entities\BankAccount::where('id', $request->account_id)->first();
-                $vendorDetails = \Modules\Account\Entities\Vender::where('id', $request->vendor_id)->first();
-
-                $paymentDetails = [
-                    'Date' => $request->date,
-                    'Amount' => $request->amount,
-                    'Account Holder Name' => $accountDetails->holder_name,
-                    'Vendor Name' => $vendorDetails->name,
-                    'Bank Name' => $vendorDetails->bank_name,
-                    'Vendor Name' => $vendorDetails->name,
-                    'Vendor Billing Address' => $vendorDetails->billing_address,
-                    'Vendor Billing Phone' => $vendorDetails->billing_phone,
-                    'Vendor Tax Number' => $vendorDetails->tax_number,
-                    'Category Name' => $category->name,
-                    'Reference' => $request->reference,
-                    'Description' => $request->description,
-                ];
-        
-                $filePath = $receiptController->generatePdf($paymentDetails);
-        
-                $payment->add_receipt = 'uploads/receipts/' . basename($filePath);
-        
             }
 
             $payment->workspace = getActiveWorkSpace();
             $payment->created_by = \Auth::user()->id;
             $payment->save();
     
-            $payment->payment_id = $payment->id;
-            $payment->type = 'Payment';
-            $payment->category = $category->name;
-            $payment->user_id = $payment->vendor_id;
-            $payment->user_type = 'Vendor';
-            $payment->account = $request->account_id;
+            if (!empty($vendor)){
+                AccountUtility::userBalance('vendor', $vendor->id, $payment->amount, 'credit');
+            }
+
+            // $payment->payment_id = $payment->id;
+            // $payment->type = 'Payment';
+            // $payment->category = $category->name;
+            // $payment->user_id = $payment->vendor_id;
+            // $payment->user_type = 'Vendor';
+            // $payment->account = $request->account_id;
     
-            Transaction::addTransaction($payment);
+            // Transaction::addTransaction($payment);
     
-            $vendor = Vender::where('id', $request->vendor_id)->first();
-            $payment = new BillPayment();
-            $payment->name = !empty($vendor) ? $vendor['name'] : '';
-            $payment->method = '-';
-            $payment->date = company_date_formate($request->date);
-            $payment->amount = currency_format_with_sym($request->amount);
-            $payment->bill = '';
+            // $vendor = Vender::where('id', $request->vendor_id)->first();
+            // $payment = new BillPayment();
+            // $payment->name = !empty($vendor) ? $vendor['name'] : '';
+            // $payment->method = '-';
+            // $payment->date = company_date_formate($request->date);
+            // $payment->amount = currency_format_with_sym($request->amount);
+            // $payment->bill = '';
     
-            Transfer::bankAccountBalance($request->account_id, $request->amount, 'debit');
+            // Transfer::bankAccountBalance($request->account_id, $request->amount, 'debit');
     
+            // currency conversion
+            $convertedAmount = currency_conversion($payment->amount, $payment->currency, company_setting("defult_currancy"));
+            $bank_account = \Modules\Account\Entities\BankAccount::find($request->account_id);
+
+            // adding Journal Entries
+            // Expense Account = Debit = Provided amount
+            // Cash/Bank Account = Credit = Provided amount
+            
+            // new journal entry
+            $new_journal_entry = new \Modules\DoubleEntry\Entities\JournalEntry();
+            $new_journal_entry->date = now();
+            $new_journal_entry->reference = !empty($request->reference)?$request->reference:'-';
+            $new_journal_entry->description = !empty($request->description)?$request->description:'Direct Expense';
+            $new_journal_entry->journal_id = $this->journalNumber();
+            $new_journal_entry->currency = company_setting("defult_currancy");
+            $new_journal_entry->workspace = getActiveWorkSpace();
+            $new_journal_entry->created_by = \Auth::user()->id;
+            $new_journal_entry->save();
+
+            // for expense account provided by the user in the request
+            $first_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+            $first_journal_item->journal = $new_journal_entry->id;
+            $first_journal_item->account = $request->chart_account_id; // Expense Account
+            $first_journal_item->description = '-';
+            $first_journal_item->debit = $convertedAmount;
+            $first_journal_item->credit = 0.00;
+            $first_journal_item->workspace = getActiveWorkSpace();
+            $first_journal_item->created_by = \Auth::user()->id;
+            $first_journal_item->save();
+
+            $first_transaction = add_quick_transaction('Debit', $request->chart_account_id, $convertedAmount);
+
+            // for cash/bank account provided by the user in the request
+            $second_journal_item = new \Modules\DoubleEntry\Entities\JournalItem();
+            $second_journal_item->journal = $new_journal_entry->id;
+            $second_journal_item->account = $bank_account->chart_account_id; // Cash/Bank Account
+            $second_journal_item->description = '-';
+            $second_journal_item->debit = 0.00;
+            $second_journal_item->credit = $convertedAmount;
+            $second_journal_item->workspace = getActiveWorkSpace();
+            $second_journal_item->created_by = \Auth::user()->id;
+            $second_journal_item->save();
+
+            $second_transaction = add_quick_transaction('Credit', $bank_account->chart_account_id, $convertedAmount);
+
             event(new CreatePayment($request, $payment));
     
-            if (!empty($vendor)) {
-                AccountUtility::userBalance('vendor', $vendor->id, $request->amount, 'debit');
-                if (!empty(company_setting('Bill Payment Create')) && company_setting('Bill Payment Create') == true) {
-                    $uArr = [
-                        'payment_name' => $payment->name,
-                        'payment_bill' => $payment->bill,
-                        'payment_amount' => $payment->amount,
-                        'payment_date' => $payment->date,
-                        'payment_method' => $payment->method
-                    ];
-                    try {
-                        $resp = EmailTemplate::sendEmailTemplate('Bill Payment Create', [$vendor->id => $vendor->email], $uArr);
-                    } catch (\Exception $e) {
-                        $resp['error'] = $e->getMessage();
-                    }
-                    return redirect()->route('payment.index')->with('success', __('Payment successfully created.') . ((isset($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
-                }
-            }
+            // if (!empty($vendor)) {
+            //     AccountUtility::userBalance('vendor', $vendor->id, $request->amount, 'debit');
+            //     if (!empty(company_setting('Bill Payment Create')) && company_setting('Bill Payment Create') == true) {
+            //         $uArr = [
+            //             'payment_name' => $payment->name,
+            //             'payment_bill' => $payment->bill,
+            //             'payment_amount' => $payment->amount,
+            //             'payment_date' => $payment->date,
+            //             'payment_method' => $payment->method
+            //         ];
+            //         try {
+            //             $resp = EmailTemplate::sendEmailTemplate('Bill Payment Create', [$vendor->id => $vendor->email], $uArr);
+            //         } catch (\Exception $e) {
+            //             $resp['error'] = $e->getMessage();
+            //         }
+            //         return redirect()->route('payment.index')->with('success', __('Payment successfully created.') . ((isset($resp['error'])) ? '<br> <span class="text-danger">' . $resp['error'] . '</span>' : ''));
+            //     }
+            // }
     
             return redirect()->route('payment.index')->with('success', __('Payment successfully created.'));
         } else {
@@ -281,6 +354,12 @@ class PaymentController extends Controller
      */
     public function update(Request $request, Payment $payment)
     {
+        // task1: use chart of account id from the payment to find and delete old journal entries and transactions
+        // task2: use the new provided chart of account id and details to create new journal entries and transations similar to in the create function
+
+        // disabling until tasks are completed
+        return redirect()->back()->with('error', 'cannot update or delete for now, please notify us where and when you encountered this error.');
+
         if(Auth::user()->can('expense payment edit'))
         {
 
@@ -365,6 +444,16 @@ class PaymentController extends Controller
         }
     }
 
+    function journalNumber()
+    {
+        $latest = \Modules\DoubleEntry\Entities\JournalEntry::where('created_by', '=', creatorId())->where('workspace', getActiveWorkSpace())->latest()->first();
+        if (!$latest) {
+            return 1;
+        }
+
+        return $latest->journal_id + 1;
+    }
+
     /**
      * Remove the specified resource from storage.
      * @param int $id
@@ -372,6 +461,11 @@ class PaymentController extends Controller
      */
     public function destroy(Payment $payment)
     {
+        // task1: use chart of account id from the payment to find and delete old journal entries and transactions
+        
+        // disabling until tasks are completed
+        return redirect()->back()->with('error', 'cannot update or delete for now, please notify us where and when you encountered this error.');
+        
         if(Auth::user()->can('expense payment delete'))
         {
             if($payment->workspace == getActiveWorkSpace())

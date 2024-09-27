@@ -125,6 +125,9 @@
                                 @foreach ($accounts as $account)
                                     @php
                                         $netAmount = $account->balance($account->id);
+                                        if($account->name == 'Retained income'){
+                                            $netAmount = $account->getRetainedEarnings($filter['startDateRange'], $filter['endDateRange']);
+                                        }
                                     @endphp
                                     <tr>
                                         <td>{{ !empty($account->code) ? $account->code  :'-'}}</td>

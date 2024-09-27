@@ -22,6 +22,23 @@
         @endcan
     </div>
 @endsection
+
+@push('css')
+    <!-- Add any custom CSS here if needed -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-selection__rendered {
+            line-height: 36px !important;
+        }
+        .select2-container .select2-selection--single {
+            height: 40px !important;
+        }
+        .select2-selection__arrow {
+            height: 39px !important;
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="row">
         <div class="mt-2" id="multiCollapseExample1">
@@ -92,16 +109,16 @@
                                     <th> {{ __('Reference') }}</th>
                                     <th> {{ __('Description') }}</th>
                                     <th>{{ __('Payment Receipt') }}</th>
-                                    @if (Gate::check('revenue edit') || Gate::check('revenue delete'))
+                                    <!-- @if (Gate::check('revenue edit') || Gate::check('revenue delete'))
                                         <th width="10%"> {{ __('Action') }}</th>
-                                    @endif
+                                    @endif -->
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($revenues as $revenue)
                                     <tr class="font-style">
                                         <td>{{ company_date_formate($revenue->date) }}</td>
-                                        <td>{{ currency_format_with_sym($revenue->amount) }}</td>
+                                        <td>{{ number_format(currency_conversion($revenue->amount, $revenue->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                         <td>{{ !empty($revenue->bankAccount) ? $revenue->bankAccount->bank_name . ' ' . $revenue->bankAccount->holder_name : '' }}
                                         </td>
                                         <td>{{ !empty($revenue->customer) ? $revenue->customer->name : '-' }}</td>
@@ -138,7 +155,7 @@
                                                 -
                                             @endif
                                         </td>
-                                        @if (Gate::check('revenue edit') || Gate::check('revenue delete'))
+                                        <!-- @if (Gate::check('revenue edit') || Gate::check('revenue delete'))
                                             <td class="Action">
                                                 <span>
                                                     @can('revenue edit')
@@ -169,7 +186,7 @@
                                                     @endcan
                                                 </span>
                                             </td>
-                                        @endif
+                                        @endif -->
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -181,3 +198,50 @@
 
     </div>
 @endsection
+
+@push('scripts')
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- select2 modal init -->
+    <script>
+        $(document).ready(function() {
+            $('#commonModal').on('shown.bs.modal', function () {
+                $('.select2').select2({
+                    dropdownParent: $('#commonModal'),
+                    width: '100%'
+                });
+            });
+        });
+    </script>
+
+    <!-- revenue type -->
+    <script>
+        $(document).ready(function() {
+            $('#commonModal').on('shown.bs.modal', function () {
+                // Function to toggle customer field visibility and required status
+                function toggleCustomerField() {
+                    var typeValue = $('#typeSelect').val();
+
+                    if (typeValue === 'customer_not_included') {
+                        // Hide customer select and remove 'required' attribute
+                        $('#customerSelect').closest('.form-group').hide();
+                        $('#customerSelect').prop('required', false);
+                    } else {
+                        // Show customer select and add 'required' attribute
+                        $('#customerSelect').closest('.form-group').show();
+                        $('#customerSelect').prop('required', true);
+                    }
+                }
+
+                // Run on modal load
+                toggleCustomerField();
+
+                // Run when 'typeSelect' changes
+                $('#typeSelect').change(function() {
+                    toggleCustomerField();
+                });
+            });
+        });
+    </script>
+@endpush

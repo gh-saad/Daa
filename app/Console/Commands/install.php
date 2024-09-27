@@ -90,6 +90,21 @@ class Install extends Command
             '--path' => 'database/migrations/2024_09_25_074719_add_currency_to_vendor_and_customer_table.php',
         ]);
 
+        // added currency column to revenues table
+        $this->call('migrate', [
+            '--path' => 'database/migrations/2024_09_26_070220_alter_revenues_table.php',
+        ]);
+
+        // change customer_id and user_id to nullable in the revenues table
+        $this->call('migrate', [
+            '--path' => 'database/migrations/2024_09_26_101131_add_nullable_to_revenues_table.php',
+        ]);
+
+        // add currency, chart_account_id to the payments table, also update the vendor_id to be nullable
+        $this->call('migrate', [
+            '--path' => 'database/migrations/2024_09_27_091223_alter_payments_table.php',
+        ]);
+
         $this->info('# updating chart of accounts.');
 
         try {
