@@ -481,3 +481,7 @@ Route::get('/currency/header/change/{code}', 'SettingController@currencyHeaderCh
 
 // get customer details
 Route::get('/get/customer/{id}', [\Modules\Account\Http\Controllers\CustomerController::class, 'getCustomerDetails'])->name('get.customer.details');
+
+
+Route::get('/expence/cash', 'ExpanceController@cash')->name('expence.cash');
+Route::get('/expence/bank', 'ExpanceController@bank')->name('expence.bank');

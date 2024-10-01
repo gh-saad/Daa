@@ -1901,8 +1901,8 @@ class ReportController extends Controller
 
                 // transfer Equity
                 $transferEquityKesToCashTotal = Transfer::where(['from_account' => $equity_kes_account->id, 'to_account'=> $cash_account->id, 'date' => $date])->sum('amount');
-                $transferCashToPrimeKesTotal = Transfer::where(['from_account' => $cash_account->id, 'to_account'=> $prime_kes_account->id, 'date' => $date])->sum('amount');
-                $transferEquityKesToPrimeKesTotal = Transfer::where(['from_account' => $equity_kes_account->id, 'to_account'=> $prime_kes_account->id, 'date' => $date])->sum('amount');
+                // $transferCashToPrimeKesTotal = Transfer::where(['from_account' => $cash_account->id, 'to_account'=> $prime_kes_account->id, 'date' => $date])->sum('amount');
+                // $transferEquityKesToPrimeKesTotal = Transfer::where(['from_account' => $equity_kes_account->id, 'to_account'=> $prime_kes_account->id, 'date' => $date])->sum('amount');
                 $tranferFromEquityKes = $transferEquityKesToCashTotal + $transferEquityKesToPrimeKesTotal;
                 $transferPrimeKesTotal = $transferCashToPrimeKesTotal + $transferEquityKesToPrimeKesTotal;
                 // transfer Equity
