@@ -16,7 +16,7 @@
         </div>
         <div class="form-group col-md-6">
             {{ Form::label('chart_account_id', __('Expense Account'),['class'=>'form-label']) }}
-            {{ Form::select('chart_account_id', $revenue_chart_accounts,null, array('class' => 'form-control select2','required'=>'required','placeholder' => 'Select Revenue Account', 'id' => 'chartAccountSelect')) }}
+            {{ Form::select('chart_account_id', $revenue_chart_accounts,null, array('class' => 'form-control select2','required'=>'required','placeholder' => 'Select Expense Account', 'id' => 'chartAccountSelect')) }}
         </div>
         <div class="form-group col-md-6">
             {{ Form::label('account_id', __('Cash/Bank Account'),['class'=>'form-label']) }}

@@ -15,6 +15,7 @@ class Payment extends Model
         'date',
         'amount',
         'account_id',
+        'chart_account_id',
         'vendor_id',
         'description',
         'category_id',
@@ -33,6 +34,10 @@ class Payment extends Model
     public function category()
     {
         return $this->hasOne(Category::class, 'id', 'category_id');
+    }
+
+    public function chartAccount(){
+        return $this->hasOne(\Modules\Account\Entities\ChartOfAccount::class,'id','chart_account_id');
     }
 
     public function vendor()

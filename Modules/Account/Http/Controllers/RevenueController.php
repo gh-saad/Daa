@@ -151,6 +151,7 @@ class RevenueController extends Controller
             $revenue->amount         = $amount;
             $revenue->currency       = company_setting("defult_currancy");
             $revenue->account_id     = $request->account_id;
+            $revenue->chart_account_id = $request->chart_account_id;
             $revenue->customer_id    = $request->type == 'customer_included' ? $request->customer_id : null;
             $revenue->user_id        = $request->type == 'customer_included' ? $customer->user_id : null;
             $revenue->category_id    = $request->category_id;

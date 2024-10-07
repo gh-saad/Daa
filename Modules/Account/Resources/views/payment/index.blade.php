@@ -108,8 +108,8 @@
                                 <tr>
                                     <th>{{ __('Date') }}</th>
                                     <th>{{ __('Amount') }}</th>
-                                    <th>{{ __('Account') }}</th>
                                     <th>{{ __('Vendor') }}</th>
+                                    <th>{{ __('Account') }}</th>
                                     <th>{{ __('Category') }}</th>
                                     <th>{{ __('Reference') }}</th>
                                     <th>{{ __('Description') }}</th>
@@ -124,9 +124,8 @@
                                     <tr class="font-style">
                                         <td>{{ company_date_formate($payment->date) }}</td>
                                         <td>{{ number_format(currency_conversion($payment->amount, $payment->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>
-                                        <td>{{ !empty($payment->bankAccount) ? $payment->bankAccount->bank_name . ' ' . $payment->bankAccount->holder_name : '' }}
-                                        </td>
                                         <td>{{ !empty($payment->vendor) ? $payment->vendor->name : '-' }}</td>
+                                        <td>{{ !empty($payment->chartAccount) ? $payment->chartAccount->name : '-' }}</td>
                                         @if (module_is_active('ProductService'))
                                             <td>{{ !empty($payment->category) ? $payment->category->name : '-' }}</td>
                                         @else
