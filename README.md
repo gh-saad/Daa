@@ -1,3 +1,8 @@
+# Daa ERP
+
+## Important Commands
+- `php artisan installer:run`
+
 ## for Prodcuts
 
 - `php artisan migrate --path=/database/migrations/2024_03_27_095109_alter_product_service_table.php`
