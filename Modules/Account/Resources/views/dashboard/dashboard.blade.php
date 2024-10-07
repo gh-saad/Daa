@@ -139,9 +139,8 @@
                                         <div class="ms-2">
                                             <p class="text-muted text-sm mb-0">{{ __('Income Today') }}</p>
                                             <h4 class="mb-0 text-success">
-                                                {{ currency_format_with_sym(\Modules\Account\Entities\AccountUtility::todayIncome()) }}
+                                                {{ number_format(\Modules\Account\Entities\AccountUtility::todayIncome(), 2) . ' ' . company_setting('defult_currancy') }}
                                             </h4>
-
                                         </div>
                                     </div>
                                 </div>
@@ -153,7 +152,7 @@
                                         <div class="ms-2">
                                             <p class="text-muted text-sm mb-0">{{ __('Expense Today') }}</p>
                                             <h4 class="mb-0 text-info">
-                                                {{ currency_format_with_sym(\Modules\Account\Entities\AccountUtility::todayExpense()) }}
+                                                {{ number_format(\Modules\Account\Entities\AccountUtility::todayExpense(), 2) . ' ' . company_setting('defult_currancy') }}
                                             </h4>
 
                                         </div>
@@ -167,7 +166,7 @@
                                         <div class="ms-2">
                                             <p class="text-muted text-sm mb-0">{{ __('Income This Month') }}</p>
                                             <h4 class="mb-0 text-warning">
-                                                {{ currency_format_with_sym(\Modules\Account\Entities\AccountUtility::incomeCurrentMonth()) }}
+                                                {{ number_format(\Modules\Account\Entities\AccountUtility::incomeCurrentMonth(), 2) . ' ' . company_setting('defult_currancy') }}
                                             </h4>
 
                                         </div>
@@ -181,9 +180,8 @@
                                         <div class="ms-2">
                                             <p class="text-muted text-sm mb-0">{{ __('Expense This Month') }}</p>
                                             <h4 class="mb-0 text-danger">
-                                                {{ currency_format_with_sym(\Modules\Account\Entities\AccountUtility::expenseCurrentMonth()) }}
+                                                {{ number_format(\Modules\Account\Entities\AccountUtility::expenseCurrentMonth(), 2) . ' ' . company_setting('defult_currancy') }}
                                             </h4>
-
                                         </div>
                                     </div>
                                 </div>
@@ -229,6 +227,7 @@
                                     <thead>
                                         <tr>
                                             <th>{{ __('Date') }}</th>
+                                            <th>{{ __('Account') }}</th>
                                             <th>{{ __('Customer') }}</th>
                                             <th>{{ __('Amount Due') }}</th>
                                         </tr>
@@ -237,8 +236,9 @@
                                         @forelse($latestIncome as $income)
                                             <tr>
                                                 <td>{{ company_date_formate($income->date) }}</td>
+                                                <td>{{ !empty($income->chartAccount) ? $income->chartAccount->name : '-' }}</td>
                                                 <td>{{ !empty($income->customer) ? $income->customer->name : '-' }}</td>
-                                                <td>{{ currency_format_with_sym($income->amount) }}</td>
+                                                <td>{{ number_format(currency_conversion($income->amount, $income->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                             </tr>
                                         @empty
                                             @include('layouts.nodatafound')
@@ -277,6 +277,7 @@
                                     <thead>
                                         <tr>
                                             <th>{{ __('Date') }}</th>
+                                            <th>{{ __('Account') }}</th>
                                             <th>{{ __('Customer') }}</th>
                                             <th>{{ __('Amount Due') }}</th>
                                         </tr>
@@ -285,8 +286,9 @@
                                         @forelse($latestExpense as $expense)
                                             <tr>
                                                 <td>{{ company_date_formate($expense->date) }}</td>
+                                                <td>{{ !empty($expense->chartAccount) ? $expense->chartAccount->name : '-' }}</td>
                                                 <td>{{ !empty($expense->customer) ? $expense->customer->name : '-' }}</td>
-                                                <td>{{ currency_format_with_sym($expense->amount) }}</td>
+                                                <td>{{ number_format(currency_conversion($expense->amount, $expense->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                             </tr>
                                         @empty
                                             @include('layouts.nodatafound')
@@ -323,7 +325,7 @@
                                                 <td>{{ !empty($invoice->customer) ? $invoice->customer->name : '' }} </td>
                                                 <td>{{ company_date_formate($invoice->issue_date) }}</td>
                                                 <td>{{ company_date_formate($invoice->due_date) }}</td>
-                                                <td>{{ currency_format_with_sym($invoice->getTotal()) }}</td>
+                                                <td>{{ number_format($invoice->getTotal(), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                                 <td>
                                                     @if ($invoice->status == 0)
                                                         <span

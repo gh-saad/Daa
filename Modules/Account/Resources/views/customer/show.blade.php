@@ -146,6 +146,11 @@
                                 data-bs-toggle="pill" data-bs-target="#customer-revenue"
                                 type="button">{{ __('Revenue') }}</button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link " id="customer-iou-tab"
+                                data-bs-toggle="pill" data-bs-target="#customer-iou"
+                                type="button">{{ __('IOU') }}</button>
+                        </li>
                         @stack('customer_project_tab')
                         <li class="nav-item" role="presentation">
                             <button class="nav-link " id="statement-tab"
@@ -651,6 +656,157 @@
                                                                 @endif
                                                             </td>
                                                         </tr>
+                                                            @empty
+                                                            @include('layouts.nodatafound')
+                                                        @endforelse
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="customer-iou" role="tabpanel"
+                        aria-labelledby="pills-user-tab-3">
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-body table-border-style table-border-style">
+                                            <h5 class="d-inline-block mb-5">{{ __('IOU') }}</h5>
+                                            <div class="table-responsive">
+                                                <table class="table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>{{ __('Invoice') }}</th>
+                                                            <th>{{ __('Issue Date') }}</th>
+                                                            <th>{{ __('Due Date') }}</th>
+                                                            <th>{{ __('Due Amount') }}</th>
+                                                            <th>{{ __('Status') }}</th>
+                                                            @if (Gate::check('invoice edit') || Gate::check('invoice delete') || Gate::check('invoice show'))
+                                                                <th width="10%"> {{ __('Action') }}</th>
+                                                            @endif
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @forelse ($customer->customerIOU($customer->id) as $invoice)
+                                                            <tr>
+                                                                <td class="Id">
+                                                                @can('invoice show')
+                                                                    <a href="{{ route('invoice.show', \Crypt::encrypt($invoice->id)) }}"
+                                                                        class="btn btn-outline-primary">{{ \App\Models\Invoice::invoiceNumberFormat($invoice->invoice_id) }}
+                                                                    </a>
+                                                                @else
+                                                                    <a
+                                                                        class="btn btn-outline-primary">{{ \App\Models\Invoice::invoiceNumberFormat($invoice->invoice_id) }}
+                                                                    </a>
+                                                                @endcan
+                                                                </td>
+                                                                <td>{{ company_date_formate($invoice->issue_date) }}</td>
+                                                                <td>
+                                                                    @if ($invoice->due_date < date('Y-m-d'))
+                                                                        <p class="text-danger"> {{ company_date_formate($invoice->due_date) }}</p>
+                                                                    @else
+                                                                        {{ company_date_formate($invoice->due_date) }}
+                                                                    @endif
+                                                                </td>
+                                                                <td>{{ number_format($invoice->getDue(), 2) . ' ' .  company_setting('defult_currancy') }}</td>
+                                                                <td>
+                                                                    @if ($invoice->status == 0)
+                                                                        <span
+                                                                            class="badge bg-primary p-2 px-3 rounded">{{ __(\App\Models\Invoice::$statues[$invoice->status]) }}</span>
+                                                                    @elseif($invoice->status == 1)
+                                                                        <span
+                                                                            class="badge bg-warning p-2 px-3 rounded">{{ __(\App\Models\Invoice::$statues[$invoice->status]) }}</span>
+                                                                    @elseif($invoice->status == 2)
+                                                                        <span
+                                                                            class="badge bg-danger p-2 px-3 rounded">{{ __(\App\Models\Invoice::$statues[$invoice->status]) }}</span>
+                                                                    @elseif($invoice->status == 3)
+                                                                        <span
+                                                                            class="badge bg-info p-2 px-3 rounded">{{ __(\App\Models\Invoice::$statues[$invoice->status]) }}</span>
+                                                                    @elseif($invoice->status == 4)
+                                                                        <span
+                                                                            class="badge bg-success p-2 px-3 rounded">{{ __(\App\Models\Invoice::$statues[$invoice->status]) }}</span>
+                                                                    @endif
+                                                                </td>
+                                                                @if (Gate::check('invoice edit') || Gate::check('invoice delete') || Gate::check('invoice show'))
+                                                                    <td class="Action">
+                                                                        <span>
+                                                                            @can('duplicate invoice')
+                                                                                <div class="action-btn bg-secondary ms-2">
+
+                                                                                    {!! Form::open([
+                                                                                        'method' => 'get',
+                                                                                        'route' => ['invoice.duplicate', $invoice->id],
+                                                                                        'id' => 'invoice-duplicate-form-' . $invoice->id,
+                                                                                    ]) !!}
+
+                                                                                    <a
+                                                                                        class="mx-3 btn btn-sm align-items-center bs-pass-para"
+                                                                                        data-bs-toggle="tooltip"
+                                                                                        title="{{ __('Duplicate Invoice') }}"
+                                                                                        data-original-title="{{ __('Duplicate') }}"
+                                                                                        data-confirm="{{ __('You want to confirm this action. Press Yes to continue or Cancel to go back') }}"
+                                                                                        data-confirm-yes="document.getElementById('invoice-duplicate-form-{{ $invoice->id }}').submit();">
+                                                                                        <i class="ti ti-copy text-white text-white"></i>
+                                                                                    </a>
+                                                                                    {!! Form::close() !!}
+
+                                                                                </div>
+                                                                            @endcan
+                                                                            @can('invoice show')
+                                                                                @if (\Auth::user()->type == 'client')
+                                                                                    <div class="action-btn bg-warning ms-2">
+                                                                                        <a href="{{ route('customer.invoice.show', \Crypt::encrypt($invoice->id)) }}"
+                                                                                            class="mx-3 btn btn-sm align-items-center"
+                                                                                            data-bs-toggle="tooltip" title="{{ __('Show') }}"
+                                                                                            data-original-title="{{ __('Detail') }}">
+                                                                                            <i class="ti ti-eye text-white text-white"></i>
+                                                                                        </a>
+                                                                                    </div>
+                                                                                @else
+                                                                                    <div class="action-btn bg-warning ms-2">
+                                                                                        <a href="{{ route('invoice.show', \Crypt::encrypt($invoice->id)) }}"
+                                                                                            class="mx-3 btn btn-sm align-items-center"
+                                                                                            data-bs-toggle="tooltip" title="{{ __('View') }}">
+                                                                                            <i class="ti ti-eye text-white text-white"></i>
+                                                                                        </a>
+                                                                                    </div>
+                                                                                @endif
+                                                                            @endcan
+                                                                            @if ($invoice->status == 0)
+                                                                                @can('invoice edit')
+                                                                                    <div class="action-btn bg-info ms-2">
+                                                                                        <a href="{{ route('invoice.edit', \Crypt::encrypt($invoice->id)) }}"
+                                                                                            class="mx-3 btn btn-sm  align-items-center"
+                                                                                            data-bs-toggle="tooltip"
+                                                                                            data-bs-original-title="{{ __('Edit') }}">
+                                                                                            <i class="ti ti-pencil text-white"></i>
+                                                                                        </a>
+                                                                                    </div>
+                                                                                @endcan
+                                                                                @can('invoice delete')
+                                                                                    <div class="action-btn bg-danger ms-2">
+                                                                                        {{ Form::open(['route' => ['invoice.destroy', $invoice->id], 'class' => 'm-0']) }}
+                                                                                        @method('DELETE')
+                                                                                        <a
+                                                                                            class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
+                                                                                            data-bs-toggle="tooltip" title=""
+                                                                                            data-bs-original-title="Delete" aria-label="Delete"
+                                                                                            data-confirm="{{ __('Are You Sure?') }}"
+                                                                                            data-text="{{ __('This action can not be undone. Do you want to continue?') }}"
+                                                                                            data-confirm-yes="delete-form-{{ $invoice->id }}">
+                                                                                            <i class="ti ti-trash text-white text-white"></i>
+                                                                                        </a>
+                                                                                        {{ Form::close() }}
+                                                                                    </div>
+                                                                                @endcan
+                                                                            @endif
+                                                                        </span>
+                                                                    </td>
+                                                                @endif
+                                                            </tr>
                                                             @empty
                                                             @include('layouts.nodatafound')
                                                         @endforelse

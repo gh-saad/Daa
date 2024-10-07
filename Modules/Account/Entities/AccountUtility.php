@@ -32,31 +32,34 @@ class AccountUtility extends Model
     }
     public static function todayIncome()
     {
-        $revenue      = Revenue::where('workspace', '=', getActiveWorkSpace())->whereRaw('Date(date) = CURDATE()')->sum('amount');
-        $invoices     = \App\Models\Invoice:: select('*')->where('workspace', getActiveWorkSpace())->where('invoice_module','account')->whereRAW('Date(send_date) = CURDATE()')->get();
+        $revenue      = Revenue::where('workspace', '=', getActiveWorkSpace())->whereRaw('Date(date) = CURDATE()')->get();
+        $revenueArray = array();
+        foreach($revenue as $rev){
+            $revenueArray[] = currency_conversion($rev->amount, $rev->currency, company_setting('defult_currancy'));
+        }
+        $invoices     = \App\Models\Invoice:: select('*')->where('workspace', getActiveWorkSpace())->where('invoice_module','account')->where('status', '!=', 0)->whereRAW('Date(send_date) = CURDATE()')->get();
         $invoiceArray = array();
-        foreach($invoices as $invoice)
-        {
+        foreach($invoices as $invoice){
             $invoiceArray[] = $invoice->getTotal();
         }
-        $totalIncome = (!empty($revenue) ? $revenue : 0) + (!empty($invoiceArray) ? array_sum($invoiceArray) : 0);
+        $totalIncome = (!empty($revenueArray) ? array_sum($revenueArray) : 0) + (!empty($invoiceArray) ? array_sum($invoiceArray) : 0);
 
         return $totalIncome;
     }
 
     public static function todayExpense()
     {
-        $payment = Payment::where('workspace', '=', getActiveWorkSpace())->whereRaw('Date(date) = CURDATE()')->sum('amount');
-
-        $bills = Bill:: select('*')->where('workspace', getActiveWorkSpace())->whereRAW('Date(send_date) = CURDATE()')->get();
-
+        $payment = Payment::where('workspace', '=', getActiveWorkSpace())->whereRaw('Date(date) = CURDATE()')->get();
+        $paymentArray = array();
+        foreach($payment as $pay){
+            $paymentArray[] = currency_conversion($pay->amount, $pay->currency, company_setting('defult_currancy'));
+        }
+        $bills = Bill:: select('*')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->whereRAW('Date(send_date) = CURDATE()')->get();
         $billArray = array();
-        foreach($bills as $bill)
-        {
+        foreach($bills as $bill){
             $billArray[] = $bill->getTotal();
         }
-
-        $totalExpense = (!empty($payment) ? $payment : 0) + (!empty($billArray) ? array_sum($billArray) : 0);
+        $totalExpense = (!empty($paymentArray) ? array_sum($paymentArray) : 0) + (!empty($billArray) ? array_sum($billArray) : 0);
 
         return $totalExpense;
     }
@@ -64,35 +67,38 @@ class AccountUtility extends Model
     public static function incomeCurrentMonth()
     {
         $currentMonth = date('m');
-        $revenue      = Revenue::where('workspace', '=', getActiveWorkSpace())->whereRaw('MONTH(date) = ?', [$currentMonth])->sum('amount');
-
-        $invoices = \App\Models\Invoice:: select('*')->where('workspace', getActiveWorkSpace())->where('invoice_module','account')->whereRAW('MONTH(send_date) = ?', [$currentMonth])->get();
+        $revenue      = Revenue::where('workspace', '=', getActiveWorkSpace())->whereRaw('MONTH(date) = ?', [$currentMonth])->get();
+        $revenueArray = array();
+        foreach($revenue as $rev){
+            $revenueArray[] = currency_conversion($rev->amount, $rev->currency, company_setting('defult_currancy'));
+        }
+        $invoices = \App\Models\Invoice:: select('*')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->where('invoice_module','account')->whereRAW('MONTH(send_date) = ?', [$currentMonth])->get();
 
         $invoiceArray = array();
-        foreach($invoices as $invoice)
-        {
+        foreach($invoices as $invoice){
             $invoiceArray[] = $invoice->getTotal();
         }
-        $totalIncome = (!empty($revenue) ? $revenue : 0) + (!empty($invoiceArray) ? array_sum($invoiceArray) : 0);
+        $totalIncome = (!empty($revenueArray) ? array_sum($revenueArray) : 0) + (!empty($invoiceArray) ? array_sum($invoiceArray) : 0);
 
         return $totalIncome;
-
     }
 
     public static function expenseCurrentMonth()
     {
         $currentMonth = date('m');
 
-        $payment = Payment::where('workspace', '=', getActiveWorkSpace())->whereRaw('MONTH(date) = ?', [$currentMonth])->sum('amount');
-
-        $bills     = Bill:: select('*')->where('workspace', getActiveWorkSpace())->whereRAW('MONTH(send_date) = ?', [$currentMonth])->get();
+        $payment = Payment::where('workspace', '=', getActiveWorkSpace())->whereRaw('MONTH(date) = ?', [$currentMonth])->get();
+        $paymentArray = array();
+        foreach($payment as $pay){
+            $paymentArray[] = currency_conversion($pay->amount, $pay->currency, company_setting('defult_currancy'));
+        }
+        $bills     = Bill:: select('*')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->whereRAW('MONTH(send_date) = ?', [$currentMonth])->get();
         $billArray = array();
-        foreach($bills as $bill)
-        {
+        foreach($bills as $bill){
             $billArray[] = $bill->getTotal();
         }
 
-        $totalExpense = (!empty($payment) ? $payment : 0) + (!empty($billArray) ? array_sum($billArray) : 0);
+        $totalExpense = (!empty($paymentArray) ? array_sum($paymentArray) : 0) + (!empty($billArray) ? array_sum($billArray) : 0);
 
         return $totalExpense;
     }
@@ -333,15 +339,18 @@ class AccountUtility extends Model
         if($id != null)
         {
             $year    = date('Y');
-            $revenue = Revenue::where('category_id', $id)->where('workspace', getActiveWorkSpace())->whereRAW('YEAR(date) =?', [$year])->sum('amount');
-
-            $invoices     = \App\Models\Invoice::where('category_id',$id)->where('workspace', getActiveWorkSpace())->where('invoice_module','account')->whereRAW('YEAR(send_date) =?', [$year])->get();
+            $revenue = Revenue::where('category_id', $id)->where('workspace', getActiveWorkSpace())->whereRAW('YEAR(date) =?', [$year])->get();
+            $revenueArray = array();
+            foreach($revenue as $rev){
+                $revenueArray[] = currency_conversion($rev->amount, $rev->currency, company_setting('defult_currancy'));
+            }
+            $invoices     = \App\Models\Invoice::where('category_id',$id)->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->where('invoice_module','account')->whereRAW('YEAR(send_date) =?', [$year])->get();
             $invoiceArray = array();
             foreach($invoices as $invoice)
             {
                 $invoiceArray[] = $invoice->getTotal();
             }
-            $totalIncome = (!empty($revenue) ? $revenue : 0) + (!empty($invoiceArray) ? array_sum($invoiceArray) : 0);
+            $totalIncome = (!empty($revenueArray) ? array_sum($revenueArray) : 0) + (!empty($invoiceArray) ? array_sum($invoiceArray) : 0);
             return $totalIncome;
         }
         else
@@ -356,16 +365,20 @@ class AccountUtility extends Model
         if($id != null)
         {
             $year    = date('Y');
-            $payment = Payment::where('category_id', $id)->where('workspace', getActiveWorkSpace())->whereRAW('YEAR(date) =?', [$year])->sum('amount');
+            $payment = Payment::where('category_id', $id)->where('workspace', getActiveWorkSpace())->whereRAW('YEAR(date) =?', [$year])->get();
+            $paymentArray = array();
+            foreach($payment as $pay){
+                $paymentArray[] = currency_conversion($pay->amount, $pay->currency, company_setting('defult_currancy'));
+            }
 
-            $bills     = Bill::where('category_id', $id)->where('workspace', getActiveWorkSpace())->whereRAW('YEAR(send_date) =?', [$year])->get();
+            $bills     = Bill::where('category_id', $id)->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->whereRAW('YEAR(send_date) =?', [$year])->get();
             $billArray = array();
             foreach($bills as $bill)
             {
                 $billArray[] = $bill->getTotal();
             }
 
-            $totalExpense = (!empty($payment) ? $payment : 0) + (!empty($billArray) ? array_sum($billArray) : 0);
+            $totalExpense = (!empty($paymentArray) ?  array_sum($paymentArray) : 0) + (!empty($billArray) ? array_sum($billArray) : 0);
 
             return $totalExpense;
         }
@@ -392,27 +405,38 @@ class AccountUtility extends Model
 
         for($i = 1; $i <= 12; $i++)
         {
-            $monthlyIncome = Revenue::selectRaw('sum(amount) amount')->where('workspace', '=', getActiveWorkSpace())->whereRaw('year(`date`) = ?', array(date('Y')))->whereRaw('month(`date`) = ?', $i)->first();
-            $invoices      = \App\Models\Invoice::select('*')->where('workspace', getActiveWorkSpace())->whereRaw('year(`send_date`) = ?', array(date('Y')))->where('invoice_module','account')->whereRaw('month(`send_date`) = ?', $i)->get();
-
+            //// income
+            // direct revenue
+            $monthlyIncome = Revenue::select('*')->where('workspace', '=', getActiveWorkSpace())->whereRaw('year(`date`) = ?', array(date('Y')))->whereRaw('month(`date`) = ?', $i)->get();
+            $revenueArray = array();
+            foreach($monthlyIncome as $rev){
+                $revenueArray[] = currency_conversion($rev->amount, $rev->currency, company_setting('defult_currancy'));
+            }
+            // invoice
+            $invoices      = \App\Models\Invoice::select('*')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->whereRaw('year(`send_date`) = ?', array(date('Y')))->where('invoice_module','account')->whereRaw('month(`send_date`) = ?', $i)->get();
             $invoiceArray = array();
-            foreach($invoices as $invoice)
-            {
+            foreach($invoices as $invoice){
                 $invoiceArray[] = $invoice->getTotal();
             }
-            $totalIncome = (!empty($monthlyIncome) ? $monthlyIncome->amount : 0) + (!empty($invoiceArray) ? array_sum($invoiceArray) : 0);
-
+            //// total income
+            $totalIncome = (!empty($revenueArray) ? array_sum($revenueArray) : 0) + (!empty($invoiceArray) ? array_sum($invoiceArray) : 0);
             $incomeArr[] = !empty($totalIncome) ? number_format($totalIncome, 2) : 0;
 
-            $monthlyExpense = Payment::selectRaw('sum(amount) amount')->where('workspace', '=', getActiveWorkSpace())->whereRaw('year(`date`) = ?', array(date('Y')))->whereRaw('month(`date`) = ?', $i)->first();
-            $bills          = Bill::select('*')->where('workspace', getActiveWorkSpace())->whereRaw('year(`send_date`) = ?', array(date('Y')))->whereRaw('month(`send_date`) = ?', $i)->get();
+            //// expense
+            // direct expense
+            $monthlyExpense = Payment::select('*')->where('workspace', '=', getActiveWorkSpace())->whereRaw('year(`date`) = ?', array(date('Y')))->whereRaw('month(`date`) = ?', $i)->get();
+            $paymentArray = array();
+            foreach($monthlyExpense as $pay){
+                $paymentArray[] = currency_conversion($pay->amount, $pay->currency, company_setting('defult_currancy'));
+            }
+            // bill
+            $bills          = Bill::select('*')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->whereRaw('year(`send_date`) = ?', array(date('Y')))->whereRaw('month(`send_date`) = ?', $i)->get();
             $billArray      = array();
-            foreach($bills as $bill)
-            {
+            foreach($bills as $bill){
                 $billArray[] = $bill->getTotal();
             }
-            $totalExpense = (!empty($monthlyExpense) ? $monthlyExpense->amount : 0) + (!empty($billArray) ? array_sum($billArray) : 0);
-
+            //// total expense
+            $totalExpense = (!empty($paymentArray) ? array_sum($paymentArray) : 0) + (!empty($billArray) ? array_sum($billArray) : 0);
             $expenseArr[] = !empty($totalExpense) ? number_format($totalExpense, 2) : 0;
         }
 
@@ -441,27 +465,32 @@ class AccountUtility extends Model
 
         for($i = 0; $i < count($arrDate); $i++)
         {
-            $dayIncome = Revenue::selectRaw('sum(amount) amount')->where('workspace', getActiveWorkSpace())->whereRaw('date = ?', $arrDate[$i])->first();
-
-            $invoices     = \App\Models\Invoice:: select('*')->where('workspace', getActiveWorkSpace())->where('invoice_module','account')->whereRAW('send_date = ?', $arrDate[$i])->get();
+            $dayIncome = Revenue::select('*')->where('workspace', getActiveWorkSpace())->whereRaw('date = ?', $arrDate[$i])->get();
+            $revenueArray = array();
+            foreach($dayIncome as $rev){
+                $revenueArray[] = currency_conversion($rev->amount, $rev->currency, company_setting('defult_currancy'));
+            }
+            $invoices     = \App\Models\Invoice:: select('*')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->where('invoice_module','account')->whereRAW('send_date = ?', $arrDate[$i])->get();
             $invoiceArray = array();
-            foreach($invoices as $invoice)
-            {
+            foreach($invoices as $invoice){
                 $invoiceArray[] = $invoice->getTotal();
             }
 
-            $incomeAmount = (!empty($dayIncome->amount) ? $dayIncome->amount : 0) + (!empty($invoiceArray) ? array_sum($invoiceArray) : 0);
+            $incomeAmount = (!empty($revenueArray) ? array_sum($revenueArray) : 0) + (!empty($invoiceArray) ? array_sum($invoiceArray) : 0);
             $incomeArr[]  = str_replace(",", "", number_format($incomeAmount, 2));
 
-            $dayExpense = Payment::selectRaw('sum(amount) amount')->where('workspace', getActiveWorkSpace())->whereRaw('date = ?', $arrDate[$i])->first();
-
-            $bills     = Bill:: select('*')->where('workspace', getActiveWorkSpace())->whereRAW('send_date = ?', $arrDate[$i])->get();
+            $dayExpense = Payment::select('*')->where('workspace', getActiveWorkSpace())->whereRaw('date = ?', $arrDate[$i])->get();
+            $paymentArray = array();
+            foreach($dayExpense as $pay){
+                $paymentArray[] = currency_conversion($pay->amount, $pay->currency, company_setting('defult_currancy'));
+            }
+            $bills     = Bill:: select('*')->where('workspace', getActiveWorkSpace())->where('status', '!=', 0)->whereRAW('send_date = ?', $arrDate[$i])->get();
             $billArray = array();
             foreach($bills as $bill)
             {
                 $billArray[] = $bill->getTotal();
             }
-            $expenseAmount = (!empty($dayExpense->amount) ? $dayExpense->amount : 0) + (!empty($billArray) ? array_sum($billArray) : 0);
+            $expenseAmount = (!empty($paymentArray) ? array_sum($paymentArray) : 0) + (!empty($billArray) ? array_sum($billArray) : 0);
             $expenseArr[]  = str_replace(",", "", number_format($expenseAmount, 2));
         }
 
@@ -1412,83 +1441,83 @@ class AccountUtility extends Model
             $end   = date('Y-m-t');
         }
 
-        $invoiceAmount = [];
-        if(module_is_active('ProductService'))
-        {
-            $invoice_product = \Modules\ProductService\Entities\ProductService::where('sale_chartaccount_id',$account_id)->get()->pluck('id');
-            $invoiceData = InvoiceProduct::select(DB::raw('sum(price * quantity) as amount'));
-            if(!empty($start_date) && !empty($end_date))
-            {
-                $invoiceData->where('created_at', '>=', $start);
-                $invoiceData->where('created_at', '<=', $end);
-            }
-            $invoiceData=$invoiceData->whereIn('product_id',$invoice_product)->first();
+        // $invoiceAmount = [];
+        // if(module_is_active('ProductService'))
+        // {
+        //     $invoice_product = \Modules\ProductService\Entities\ProductService::where('sale_chartaccount_id',$account_id)->get()->pluck('id');
+        //     $invoiceData = InvoiceProduct::select('*')->where('status', '!=', 0);
+        //     if(!empty($start_date) && !empty($end_date))
+        //     {
+        //         $invoiceData->where('created_at', '>=', $start);
+        //         $invoiceData->where('created_at', '<=', $end);
+        //     }
+        //     $invoiceData=$invoiceData->whereIn('product_id',$invoice_product)->first();
 
-        }
-        $invoiceAmount=!empty($invoiceData->amount)?$invoiceData->amount:0;
-
-
-        $getAccount = BankAccount::where('chart_account_id',$account_id)->get()->pluck('id');
-
-        $invoicePaymentAmount = InvoicePayment::whereIn('account_id',$getAccount);
-        if(!empty($start_date) && !empty($end_date))
-        {
-            $invoicePaymentAmount->where('date', '>=', $start);
-            $invoicePaymentAmount->where('date', '<=', $end);
-        }
-        $invoicePaymentAmount= $invoicePaymentAmount->sum('amount');
-
-        $revenueAmount = Revenue::whereIn('account_id',$getAccount);
-        if(!empty($start_date) && !empty($end_date))
-        {
-            $revenueAmount->where('date', '>=', $start);
-            $revenueAmount->where('date', '<=', $end);
-        }
-        $revenueAmount= $revenueAmount->sum('amount');
+        // }
+        // $invoiceAmount=!empty($invoiceData->amount)?$invoiceData->amount:0;
 
 
-        $bill_product=[];
-        if(module_is_active('ProductService'))
-        {
-            $bill_product = \Modules\ProductService\Entities\ProductService::where('expense_chartaccount_id',$account_id)->get()->pluck('id');
+        // $getAccount = BankAccount::where('chart_account_id',$account_id)->get()->pluck('id');
 
-        }
+        // $invoicePaymentAmount = InvoicePayment::whereIn('account_id',$getAccount);
+        // if(!empty($start_date) && !empty($end_date))
+        // {
+        //     $invoicePaymentAmount->where('date', '>=', $start);
+        //     $invoicePaymentAmount->where('date', '<=', $end);
+        // }
+        // $invoicePaymentAmount= $invoicePaymentAmount->sum('amount');
 
-        $billData = BillProduct::select(DB::raw('sum(price * quantity) as amount'));
+        // $revenueAmount = Revenue::whereIn('account_id',$getAccount);
+        // if(!empty($start_date) && !empty($end_date))
+        // {
+        //     $revenueAmount->where('date', '>=', $start);
+        //     $revenueAmount->where('date', '<=', $end);
+        // }
+        // $revenueAmount= $revenueAmount->sum('amount');
 
 
-        if(!empty($start_date) && !empty($end_date))
-        {
-            $billData->where('created_at', '>=', $start);
-            $billData->where('created_at', '<=', $end);
-        }
-        $billData=$billData->whereIn('product_id',$bill_product)->first();
+        // $bill_product=[];
+        // if(module_is_active('ProductService'))
+        // {
+        //     $bill_product = \Modules\ProductService\Entities\ProductService::where('expense_chartaccount_id',$account_id)->get()->pluck('id');
 
-        $billProductAmount=!empty($billData->amount)?$billData->amount:0;
+        // }
 
-        $billAmount = BillAccount::where('chart_account_id',$account_id);
-        if(!empty($start_date) && !empty($end_date))
-        {
-            $billAmount->where('created_at', '>=', $start);
-            $billAmount->where('created_at', '<=', $end);
-        }
-        $billAmount= $billAmount->sum('price');
+        // $billData = BillProduct::select(DB::raw('sum(price * quantity) as amount'));
 
-        $billPaymentAmount =BillPayment::whereIn('account_id',$getAccount);
-        if(!empty($start_date) && !empty($end_date))
-        {
-            $billPaymentAmount->where('date', '>=', $start);
-            $billPaymentAmount->where('date', '<=', $end);
-        }
-        $billPaymentAmount= $billPaymentAmount->sum('amount');
 
-        $paymentAmount = Payment::whereIn('account_id',$getAccount);
-        if(!empty($start_date) && !empty($end_date))
-        {
-            $paymentAmount->where('date', '>=', $start);
-            $paymentAmount->where('date', '<=', $end);
-        }
-        $paymentAmount= $paymentAmount->sum('amount');
+        // if(!empty($start_date) && !empty($end_date))
+        // {
+        //     $billData->where('created_at', '>=', $start);
+        //     $billData->where('created_at', '<=', $end);
+        // }
+        // $billData=$billData->whereIn('product_id',$bill_product)->first();
+
+        // $billProductAmount=!empty($billData->amount)?$billData->amount:0;
+
+        // $billAmount = BillAccount::where('chart_account_id',$account_id);
+        // if(!empty($start_date) && !empty($end_date))
+        // {
+        //     $billAmount->where('created_at', '>=', $start);
+        //     $billAmount->where('created_at', '<=', $end);
+        // }
+        // $billAmount= $billAmount->sum('price');
+
+        // $billPaymentAmount =BillPayment::whereIn('account_id',$getAccount);
+        // if(!empty($start_date) && !empty($end_date))
+        // {
+        //     $billPaymentAmount->where('date', '>=', $start);
+        //     $billPaymentAmount->where('date', '<=', $end);
+        // }
+        // $billPaymentAmount= $billPaymentAmount->sum('amount');
+
+        // $paymentAmount = Payment::whereIn('account_id',$getAccount);
+        // if(!empty($start_date) && !empty($end_date))
+        // {
+        //     $paymentAmount->where('date', '>=', $start);
+        //     $paymentAmount->where('date', '<=', $end);
+        // }
+        // $paymentAmount= $paymentAmount->sum('amount');
 
         $journalCredit = [];
         $journalDebit = [];
@@ -1513,12 +1542,10 @@ class AccountUtility extends Model
             $journalDebit = $journalDebit->sum('debit');
         }
 
-
         $journalCredit = !empty($journalCredit)?$journalCredit:0;
         $journalDebit = !empty($journalDebit)?$journalDebit:0;
 
-
-        $balance   =  ($journalDebit + $billProductAmount + $billAmount + $billPaymentAmount + $paymentAmount) - ($invoiceAmount + $invoicePaymentAmount + $revenueAmount + $journalCredit);
+        $balance   =  $journalDebit - $journalCredit;
 
         return $balance;
 

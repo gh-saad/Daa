@@ -54,7 +54,7 @@
                                         <td>{{ !empty($warehouses->product())? $warehouses->product()->mfg_year:'' }}</td>
                                         <td>{{ !empty($warehouses->product())? $warehouses->product()->engine_cc:'' }}</td>
                                         <td>{{ !empty($warehouses->product())? $warehouses->product()->engine_no:'' }}</td>
-                                        <td>{{ !empty($warehouses->product()->purchase_product())? number_format($warehouses->product()->purchase_product()->getPriceAfterDiscount() currency_conversion($warehouses->product()->purchase_product()->getPriceAfterDiscount(), $warehouses->product()->purchase_product()->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') :'' }}</td>
+                                        <td>{{ !empty($warehouses->product()->purchase_product())? number_format(currency_conversion($warehouses->product()->purchase_product()->getPriceAfterDiscount(), $warehouses->product()->purchase_product()->currency, company_setting('defult_currancy')), 2) . ' ' . company_setting('defult_currancy') :'' }}</td>
                                         <td>{{ !empty($warehouses->product())? $warehouses->product()->purchased_from:'' }}</td>
                                         <td>{{ !empty($warehouses->product())? $warehouses->product()->purchased_status:'' }}</td>
                                         <td>{{ !empty($warehouses->product())? $warehouses->product()->bid_no:'' }}</td>

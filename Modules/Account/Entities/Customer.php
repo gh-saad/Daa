@@ -105,6 +105,12 @@ class Customer extends Model
 
         return $invoices;
     }
+    public function customerIOU($customerId)
+    {
+        $invoices  = \App\Models\Invoice:: where('customer_id', $customerId)->whereIn('status', [1,2,3])->orderBy('issue_date', 'desc')->get();
+
+        return $invoices;
+    }
     public function GetUserIdByCustomerId($customerId)
     {
         $customer                   = Customer::find($customerId);

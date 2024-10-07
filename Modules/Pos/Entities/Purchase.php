@@ -366,4 +366,9 @@ class Purchase extends Model
         $purchase = Purchase::where('vender_id', $vendorId)->orderBy('purchase_date', 'desc')->get();
         return $purchase;
     }
+    public static function vendorIOU($vendorId)
+    {
+        $purchase = Purchase::where('vender_id', $vendorId)->whereIn('status', [1,2,3])->orderBy('purchase_date', 'desc')->get();
+        return $purchase;
+    }
 }

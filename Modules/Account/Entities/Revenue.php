@@ -13,6 +13,7 @@ class Revenue extends Model
         'date',
         'amount',
         'account_id',
+        'chart_account_id',
         'customer_id',
         'user_id',
         'category_id',
@@ -37,6 +38,10 @@ class Revenue extends Model
         {
             return [];
         }
+    }
+
+    public function chartAccount(){
+        return $this->hasOne(\Modules\Account\Entities\ChartOfAccount::class,'id','chart_account_id');
     }
 
     public function customer()
