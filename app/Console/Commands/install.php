@@ -105,6 +105,11 @@ class Install extends Command
             '--path' => 'database/migrations/2024_09_27_091223_alter_payments_table.php',
         ]);
 
+        // update currency table to include manual_rate
+        $this->call('migrate', [
+            '--path' => 'database/migrations/2024_09_30_103550_alter_currency_table.php',
+        ]);
+
         $this->info('# updating chart of accounts.');
 
         try {

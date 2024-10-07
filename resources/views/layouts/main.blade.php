@@ -65,6 +65,27 @@
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
         @stack('css')
+        <style>
+            /* Custom switch size */
+            .large-switch {
+                width: 60px;
+                height: 34px;
+            }
+
+            .large-switch:checked {
+                background-color: #0d6efd;
+            }
+
+            .large-switch::before {
+                width: 28px;
+                height: 28px;
+                transform: translateX(4px);
+            }
+
+            .large-switch:checked::before {
+                transform: translateX(30px);
+            }
+        </style>
         @stack('availabilitylink')
         <script src="{{ asset('js/jquery.min.js') }}"></script>
         <link rel='stylesheet' href='https://unpkg.com/nprogress@0.2.0/nprogress.css'/>
@@ -242,6 +263,44 @@
                     console.error(error);
                 });
                 
+            });
+        </script>
+
+        <!-- static rate script -->
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                // Store the initial rates for each currency
+                const initialRates = {
+                    'KES': '{{ currency("KES")->rate }}',
+                    'AED': '{{ currency("AED")->rate }}',
+                    'EUR': '{{ currency("EUR")->rate }}'
+                };
+
+                // Select all rate type checkboxes
+                const rateTypeCheckboxes = document.querySelectorAll('.form-check-input');
+
+                // Loop through checkboxes and attach event listeners
+                rateTypeCheckboxes.forEach(function(checkbox) {
+                    checkbox.addEventListener('change', function() {
+                        // Get corresponding input based on checkbox id
+                        const rateInputId = checkbox.id.replace('rate-type', 'currency-rate');
+                        const rateInput = document.getElementById(rateInputId);
+
+                        // Extract the currency code (KES, AED, EUR, etc.) from the input id
+                        const currencyCode = rateInputId.split('-')[0].toUpperCase();
+
+                        if (checkbox.checked) {
+                            rateInput.removeAttribute('readonly');
+                            rateInput.disabled = false;
+                        } else {
+                            rateInput.setAttribute('readonly', true);
+                            rateInput.disabled = true;
+
+                            // Reset the input value to the original rate for that currency
+                            rateInput.value = initialRates[currencyCode];
+                        }
+                    });
+                });
             });
         </script>
     </body>

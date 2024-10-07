@@ -146,32 +146,11 @@
                 @endcan
 
                 @can('setting manage')
-                <li class="dropdown dash-h-item drp-language">
-                    <a class="dash-head-link dropdown-toggle arrow-none me-0" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="false" aria-expanded="false">
-                        <i class="ti ti-wallet nocolor"></i>
-                        <span class="drp-text hide-mob">{{ company_setting('defult_currancy') }}</span>
-                        <i class="ti ti-chevron-down drp-arrow nocolor"></i>
-                    </a>
-                    <div class="dropdown-menu dash-h-dropdown dropdown-menu-end">
-
-                        <a href="{{ route('currency.header.change', 'KES')}}" class="dropdown-item @if(company_setting('defult_currancy') == 'KES') text-danger @endif">
-                            <span>{{ currency('KES')->name . ' - ' . currency('KES')->code }}</span>
-                        </a>
-
-                        <a href="{{ route('currency.header.change', 'USD')}}" class="dropdown-item @if(company_setting('defult_currancy') == 'USD') text-danger @endif">
-                            <span>{{ currency('USD')->name . ' - ' . currency('USD')->code  }}</span>
-                        </a>
-
-                        <a href="{{ route('currency.header.change', 'AED')}}" class="dropdown-item @if(company_setting('defult_currancy') == 'AED') text-danger @endif">
-                            <span>{{ currency('AED')->name . ' - ' . currency('AED')->code }}</span>
-                        </a>
-
-                        <a href="{{ route('currency.header.change', 'EUR')}}" class="dropdown-item @if(company_setting('defult_currancy') == 'EUR') text-danger @endif">
-                            <span>{{ currency('EUR')->name . ' - ' . currency('EUR')->code  }}</span>
-                        </a>
-
-                    </div>
-                </li>
+                    <li class="dash-h-item">
+                        <button type="button" class="dash-head-link me-0 btn btn-light text-primary" data-bs-toggle="modal" data-bs-target="#currencyModal">
+                            <i class="text-muted ti ti-wallet nocolor"></i> Currency
+                        </button>
+                    </li>
                 @endcan
 
                 <li class="dropdown dash-h-item drp-language">
@@ -214,3 +193,84 @@
     </div>
  </header>
 
+<!-- Currency Select Modal -->
+<div class="modal fade" id="currencyModal" tabindex="-1" aria-labelledby="currencyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="currencyForm" action="{{ route('currency.rate.change') }}" method="POST">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title" id="currencyModalLabel">Currency Details</h5>
+                        <p class="text-muted mb-0">currency rates are updated daily from the API if left unchecked.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Select Currency Input -->
+                    <div class="mb-3">
+                        <label for="currency-select" class="form-label">Default Currency</label>
+                        <select id="currency-select" class="form-select" name="default_currency" aria-label="Select Currency">
+                            <option value="{{ currency('KES')->code }}" @if(company_setting('defult_currancy') == 'KES') selected @endif>
+                                {{ currency('KES')->name }} - {{ currency('KES')->code }}
+                            </option>
+                            <option value="{{ currency('USD')->code }}" @if(company_setting('defult_currancy') == 'USD') selected @endif>
+                                {{ currency('USD')->name }} - {{ currency('USD')->code }}
+                            </option>
+                            <option value="{{ currency('AED')->code }}" @if(company_setting('defult_currancy') == 'AED') selected @endif>
+                                {{ currency('AED')->name }} - {{ currency('AED')->code }}
+                            </option>
+                            <option value="{{ currency('EUR')->code }}" @if(company_setting('defult_currancy') == 'EUR') selected @endif>
+                                {{ currency('EUR')->name }} - {{ currency('EUR')->code }}
+                            </option>
+                        </select>
+                    </div>
+                    <hr>
+                    <!-- Display Current Rate -->
+                    <table class="table table-sm table-vcenter">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width: 40px;">Name</th>
+                                <th>Rate</th>
+                                <th class="text-center" style="width: 20%;">Using Static?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th class="text-center" scope="row">USD to KES</th>
+                                <td>
+                                    <input type="text" id="kes-currency-rate" class="form-control" name="kes_rate" @if(currency('KES')->type != 1) readonly disabled @endif value="{{ currency('KES')->type != 1 ? currency('KES')->rate : currency('KES')->manual_rate }}">
+                                </td>
+                                <td class="text-center" scope="row">
+                                    <input class="form-check-input large-switch" type="checkbox" value="true" id="kes-rate-type" name="kes_rate_type" @if(currency('KES')->type == 1) checked @endif>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="text-center" scope="row">USD to AED</th>
+                                <td>
+                                    <input type="text" id="aed-currency-rate" class="form-control" name="aed_rate" @if(currency('AED')->type != 1) readonly disabled @endif value="{{ currency('AED')->type != 1 ? currency('AED')->rate : currency('AED')->manual_rate }}">
+                                </td>
+                                <td class="text-center" scope="row">
+                                    <input class="form-check-input large-switch" type="checkbox" value="true" id="aed-rate-type" name="aed_rate_type" @if(currency('AED')->type == 1) checked @endif>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="text-center" scope="row">USD to EUR</th>
+                                <td>
+                                    <input type="text" id="eur-currency-rate" class="form-control" name="eur_rate" @if(currency('EUR')->type != 1) readonly disabled @endif value="{{ currency('EUR')->type != 1 ? currency('EUR')->rate : currency('EUR')->manual_rate }}">
+                                </td>
+                                <td class="text-center" scope="row">
+                                    <input class="form-check-input large-switch" type="checkbox" value="true" id="eur-rate-type" name="eur_rate_type" @if(currency('EUR')->type == 1) checked @endif>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" id="save-currency" class="btn btn-primary">Save Changes</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
