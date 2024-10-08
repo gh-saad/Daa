@@ -310,6 +310,11 @@ if (!function_exists('currency')) {
             // Check if the provided code is in the allowed list
             if (in_array($code, $allowedCurrencies)) {
                 $c = Currency::where('code', $code)->first();
+
+                if ($c) {
+                    // Automatically return manual_rate if type is not 0
+                    $c->rate = $c->type == 0 ? $c->rate : $c->manual_rate;
+                }
             } else {
                 // Return null or handle the case where the currency is not allowed
                 $c = null;

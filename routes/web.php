@@ -476,8 +476,11 @@ Route::get('/logout-without-contract', 'UserController@logout_new')->name('logou
 // contract approval routes
 Route::post('/approval/submit', 'ApprovalController@submit')->name('approval.submit');
 
-// currency change
+// currency change (NOT USED NOW)
 Route::get('/currency/header/change/{code}', 'SettingController@currencyHeaderChange')->name('currency.header.change')->middleware(['auth']);
+
+// currency rate change
+Route::post('/currency/rate/change', 'SettingController@currencyRateChange')->name('currency.rate.change')->middleware(['auth']);
 
 // get customer details
 Route::get('/get/customer/{id}', [\Modules\Account\Http\Controllers\CustomerController::class, 'getCustomerDetails'])->name('get.customer.details');

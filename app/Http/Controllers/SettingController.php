@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\TestMail;
 use App\Models\ApikeySetiings;
 use App\Models\Notification;
+use App\Models\Currency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
@@ -592,6 +593,75 @@ class SettingController extends Controller
             \Settings::context($userContext)->set('defult_currancy_symbol', $currency->symbol);
             return redirect()->back()->with('success','Setting save sucessfully.');
         }else{
+            return redirect()->back()->with('error', __('Permission denied.'));
+        }
+    }
+
+    public function currencyRateChange(Request $request){
+        if (Auth::user()->can('setting manage')) {
+            // Update default currency
+            $userContext = new Context([
+                'user_id' => \Auth::user()->id,
+                'workspace_id' => getActiveWorkSpace(),
+            ]);
+            $currency = currency($request->default_currency);
+            \Settings::context($userContext)->set('defult_currancy', $currency->code);
+            \Settings::context($userContext)->set('defult_currancy_symbol', $currency->symbol);
+
+            // Check and update manual static rates for KES, EUR, and AED
+            
+            // For KES
+            $kesCurrency = Currency::where('code', 'KES')->first();
+            if (!empty($request->kes_rate_type)) {
+                $provided_rate = !empty($request->kes_rate) ? $request->kes_rate : 1;
+                if ($kesCurrency) {
+                    $kesCurrency->type = 1;
+                    $kesCurrency->manual_rate = $provided_rate;
+                    $kesCurrency->save();
+                }
+            } else {
+                if ($kesCurrency) {
+                    $kesCurrency->type = 0;
+                    $kesCurrency->save();
+                }
+            }
+
+            // For EUR
+            $eurCurrency = Currency::where('code', 'EUR')->first();
+            if (!empty($request->eur_rate_type)) {
+                $provided_rate = !empty($request->eur_rate) ? $request->eur_rate : 1;
+                if ($eurCurrency) {
+                    $eurCurrency->type = 1;
+                    $eurCurrency->manual_rate = $provided_rate;
+                    $eurCurrency->save();
+                }
+            } else {
+                if ($eurCurrency) {
+                    $eurCurrency->type = 0;
+                    $eurCurrency->save();
+                }
+            }
+
+            // For AED
+            $aedCurrency = Currency::where('code', 'AED')->first();
+            if (!empty($request->aed_rate_type)) {
+                $provided_rate = !empty($request->aed_rate) ? $request->aed_rate : 1;
+                if ($aedCurrency) {
+                    $aedCurrency->type = 1;
+                    $aedCurrency->manual_rate = $provided_rate;
+                    $aedCurrency->save();
+                }
+            } else {
+                if ($aedCurrency) {
+                    $aedCurrency->type = 0;
+                    $aedCurrency->save();
+                }
+            }
+
+            // USD is not updated as it remains static
+
+            return redirect()->back()->with('success', 'Setting saved successfully.');
+        } else {
             return redirect()->back()->with('error', __('Permission denied.'));
         }
     }
