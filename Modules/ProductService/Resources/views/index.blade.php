@@ -105,7 +105,7 @@
                                 <td class="text-center">{{ $productService->mfg_year}}</td>
                                 <td class="text-center">{{ $productService->engine_cc}}</td>
                                 <td class="text-center">{{ $productService->engine_no}}</td>
-                                <td>{{ currency_format_with_sym($productService->sale_price) }}</td>
+                                <td>{{ number_format($productService->sale_price, 2) . ' KES' }}</td>
                                 <td class="text-center">{{ $productService->purchased_from}}</td>
                                 <td class="text-center">{{ $productService->purchased_status}}</td>
                                 <td class="text-center">{{ $productService->bid_no}}</td>

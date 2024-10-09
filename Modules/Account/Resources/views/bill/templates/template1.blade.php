@@ -358,9 +358,9 @@
                                 @endif
                                 <td>{{!empty($item->name) ? $item->name : '' }}</td>
                                 <td>{{ $item->quantity }}</td>
-                                <td>{{ currency_format_with_sym($item->price, $bill->created_by, $bill->workspace) }}
+                                <td>{{ number_format($item->price, 2) . ' ' . company_setting('defult_currancy') }}
                                 </td>
-                                <td>{{ $item->discount != 0 ? currency_format_with_sym($item->discount, $bill->created_by, $bill->workspace) : '-' }}
+                                <td>{{ $item->discount != 0 ? number_format($item->discount, 2) . ' ' . company_setting('defult_currancy') : '-' }}
                                 </td>
                                 <td>
                                     @if (!empty($item->itemTax))
@@ -372,7 +372,7 @@
                                         <p>-</p>
                                     @endif
                                 </td>
-                                <td>{{ currency_format_with_sym($item->price * $item->quantity, $bill->created_by, $bill->workspace) }}
+                                <td>{{ number_format($item->price * $item->quantity - $item->discount + (isset($item->tax_price) ? $item->tax_price : 0), 2) . ' ' . company_setting('defult_currancy') }}
                                 </td>
                                 @if ($item->description != null)
                             <tr class="border-0 itm-description ">
@@ -405,13 +405,13 @@
                         @endif
                         <td>{{ __('Total') }}</td>
                         <td>{{ $bill->totalQuantity }}</td>
-                        <td>{{ currency_format_with_sym($bill->totalRate, $bill->created_by, $bill->workspace) }}</td>
-                        <td>{{ currency_format_with_sym($bill->totalDiscount, $bill->created_by, $bill->workspace) }}
+                        <td>{{ number_format($bill->totalRate, 2) . ' ' . company_setting('defult_currancy') }}
                         </td>
-                        <td>{{ currency_format_with_sym($bill->totalTaxPrice, $bill->created_by, $bill->workspace) }}
+                        <td>{{ number_format($bill->totalDiscount, 2) . ' ' . company_setting('defult_currancy') }}
                         </td>
-                        <td>{{ currency_format_with_sym($bill->getSubTotal(), $bill->created_by, $bill->workspace) }}
+                        <td>{{ number_format($bill->totalTaxPrice, 2) . ' ' . company_setting('defult_currancy') }}
                         </td>
+                        <td></td>
                     </tr>
                     @php
                         $colspan = 4;
@@ -425,13 +425,13 @@
                             <table class="total-table">
                                 <tr>
                                     <td>{{ __('Subtotal') }}:</td>
-                                    <td>{{ currency_format_with_sym($bill->getSubTotal(), $bill->created_by, $bill->workspace) }}
+                                    <td>{{ number_format($bill->getSubTotal(), 2) . ' ' . company_setting('defult_currancy') }}
                                     </td>
                                 </tr>
                                 @if ($bill->getTotalDiscount())
                                     <tr>
                                         <td>{{ __('Discount') }}:</td>
-                                        <td>{{ currency_format_with_sym($bill->getTotalDiscount(), $bill->created_by, $bill->workspace) }}
+                                        <td>{{ number_format($bill->getTotalDiscount(), 2) . ' ' . company_setting('defult_currancy') }}
                                         </td>
                                     </tr>
                                 @endif
@@ -439,29 +439,29 @@
                                     @foreach ($bill->taxesData as $taxName => $taxPrice)
                                         <tr>
                                             <td>{{ $taxName }} :</td>
-                                            <td>{{ currency_format_with_sym($taxPrice, $bill->created_by, $bill->workspace) }}
+                                            <td>{{ number_format($taxPrice, 2) . ' ' . company_setting('defult_currancy') }}
                                             </td>
                                         </tr>
                                     @endforeach
                                 @endif
                                 <tr>
                                     <td>{{ __('Total') }}:</td>
-                                    <td>{{ currency_format_with_sym($bill->getSubTotal() - $bill->getTotalDiscount() + $bill->getTotalTax(), $bill->created_by, $bill->workspace) }}
+                                    <td>{{ number_format($bill->getSubTotal() - $bill->getTotalDiscount() + $bill->getTotalTax(), 2) . ' ' . company_setting('defult_currancy') }}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>{{ __('Paid') }}:</td>
-                                    <td>{{ currency_format_with_sym($bill->getTotal() - $bill->getDue() - $bill->billTotalDebitNote(), $bill->created_by, $bill->workspace) }}
+                                    <td>{{ number_format($bill->getTotal() - $bill->getDue() - $bill->billTotalDebitNote(), 2) . ' ' . company_setting('defult_currancy') }}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>{{ __('Debit Note') }}:</td>
-                                    <td>{{ currency_format_with_sym($bill->billTotalDebitNote(), $bill->created_by, $bill->workspace) }}
+                                    <td>{{ number_format($bill->billTotalDebitNote(), 2) . ' ' . company_setting('defult_currancy') }}
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>{{ __('Due Amount') }}:</td>
-                                    <td>{{ currency_format_with_sym($bill->getDue(), $bill->created_by, $bill->workspace) }}
+                                    <td>{{ number_format($bill->getDue(), 2) . ' ' . company_setting('defult_currancy') }}
                                     </td>
                                 </tr>
 

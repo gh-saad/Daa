@@ -7,17 +7,17 @@
     {{ __('Transaction Summary') }}
 @endsection
 @push('scripts')
-    <script src="{{ asset('Modules/Account/Resources/assets/js/html2pdf.bundle.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
     <script>
-        var filename = $('#filename').val();
         function saveAsPDF() {
             var element = document.getElementById('printableArea');
+            var filename = $('#filename').val(); // Ensure this value is correct
             var opt = {
                 margin: 0.3,
-                filename: filename,
-                image: {type: 'jpeg', quality: 1},
-                html2canvas: {scale: 4, dpi: 72, letterRendering: true},
-                jsPDF: {unit: 'in', format: 'A4'}
+                filename: filename || 'transaction_report.pdf', // Default if filename is not provided
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { scale: 4, dpi: 72, letterRendering: true },
+                jsPDF: { unit: 'in', format: 'A4' }
             };
             html2pdf().set(opt).from(element).save();
         }
@@ -43,31 +43,24 @@
                         <div class="row align-items-center justify-content-end">
                             <div class="col-xl-10">
                                 <div class="row">
-                                    <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
+                                    <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 col-12">
                                         <div class="btn-box">
                                         {{ Form::label('start_month', __('Start Month'), ['class' => 'form-label']) }}
                                         {{Form::month('start_month',isset($_GET['start_month'])?$_GET['start_month']:'',array('class'=>'month-btn form-control','placeholder'=>'Start Month'))}}
                                         </div>
                                     </div>
-                                    <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
+                                    <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 col-12">
                                         <div class="btn-box">
                                         {{ Form::label('end_month', __('End Month'), ['class' => 'form-label']) }}
                                         {{Form::month('end_month',isset($_GET['end_month'])?$_GET['end_month']:'',array('class'=>'month-btn form-control','placeholder'=>'Start Month'))}}
                                         </div>
                                     </div>
-                                    <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
+                                    <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 col-12">
                                         <div class="btn-box">
                                         {{ Form::label('account', __('Account'), ['class' => 'form-label']) }}
                                             {{ Form::select('account', $account,isset($_GET['account'])?$_GET['account']:'', array('class' => 'form-control ','placeholder' => 'Select Account')) }}
                                         </div>
                                     </div>
-                                    <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12">
-                                        <div class="btn-box">
-                                        {{ Form::label('category', __('Category'), ['class' => 'form-label']) }}
-                                            {{ Form::select('category', $category,isset($_GET['category'])?$_GET['category']:'', array('class' => 'form-control ','placeholder' => 'Select Category')) }}
-                                        </div>
-                                    </div>
-
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -99,7 +92,7 @@
     <div id="printableArea">
         <div class="row">
             <div class="col">
-                <input type="hidden" value="{{$filter['category'].' '.__('Category').' '.__('Transaction').' '.'Report of'.' '.$filter['startDateRange'].' to '.$filter['endDateRange']}}" id="filename">
+                <input type="hidden" value="{{__('Transaction').' '.'Report of'.' '.$filter['startDateRange'].' to '.$filter['endDateRange']}}" id="filename">
                 <div class="card p-4 mb-4">
                     <h5 class="report-text gray-text mb-0">{{__('Report')}} :</h5>
                     <h6 class="report-text mb-0">{{__('Transaction Summary')}}</h6>
@@ -113,14 +106,6 @@
                     </div>
                 </div>
             @endif
-            @if($filter['category']!= __('All'))
-                <div class="col">
-                    <div class="card p-4 mb-4">
-                        <h5 class="report-text gray-text mb-0">{{__('Category')}} :</h5>
-                        <h6 class="report-text mb-0">{{$filter['category']}}</h6>
-                    </div>
-                </div>
-            @endif
             <div class="col">
                 <div class="card p-4 mb-4">
                     <h5 class="report-text gray-text mb-0">{{__('Duration')}} :</h5>
@@ -128,62 +113,51 @@
                 </div>
             </div>
         </div>
-
         <div class="row">
-            @foreach($accounts as $account)
-                <div class="col-xl-3 col-md-6 col-lg-3">
-                    <div class="card p-4 mb-4">
-                        @if($account->holder_name =='Cash')
-                            <h6 class="report-text gray-text mb-0">{{$account->holder_name}}</h6>
-                        @elseif(empty($account->holder_name))
-                            <h6 class="report-text gray-text mb-0">{{__('Stripe / Paypal')}}</h6>
-                        @else
-                            <h6 class="report-text gray-text mb-0">{{$account->holder_name.' - '.$account->bank_name}}</h6>
-                        @endif
-                        <h5 class="report-text mb-0">{{ currency_format_with_sym($account->total)}}</h5>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-body table-border-style">
-                    <div class="table-responsive">
-                        <table class="table mb-0 pc-dt-simple" id="assets">
-                            <thead>
-                                <tr>
-                                    <th>{{__('Date')}}</th>
-                                    <th>{{__('Account')}}</th>
-                                    <th>{{__('Type')}}</th>
-                                    <th>{{__('Category')}}</th>
-                                    <th>{{__('Description')}}</th>
-                                    <th>{{__('Amount')}}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($transactions as $transaction)
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body table-border-style">
+                        <div class="table-responsive">
+                            <table class="table mb-0 pc-dt-simple" id="assets">
+                                <thead>
                                     <tr>
-                                        <td>{{ company_date_formate($transaction->date)}}</td>
-                                        <td>
-                                            @if(!empty($transaction->bankAccount()) && $transaction->bankAccount()->holder_name=='Cash')
-                                                {{$transaction->bankAccount()->holder_name}}
-                                            @else
-                                                {{!empty($transaction->bankAccount())?$transaction->bankAccount()->bank_name.' '.$transaction->bankAccount()->holder_name:'-'}}
-                                            @endif
-                                        </td>
-                                        <td>{{  $transaction->type}}</td>
-                                        <td>{{  $transaction->category}}</td>
-                                        <td>{{  !empty($transaction->description)?$transaction->description:'-'}}</td>
-                                        <td>{{currency_format_with_sym($transaction->amount)}}</td>
+                                        <th>{{__('Date')}}</th>
+                                        <th>{{__('Account')}}</th>
+                                        <th>{{__('Type')}}</th>
+                                        <th>{{__('Amount')}}</th>
                                     </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @foreach ($transactions as $transaction)
+                                        <tr>
+                                            <td>{{ company_date_formate($transaction->date) }}</td>
+                                            <td>
+                                                <!-- deprecated -->
+                                                <!-- @if(!empty($transaction->bankAccount()) && $transaction->bankAccount()->holder_name=='Cash')
+                                                    {{$transaction->bankAccount()->holder_name}}
+                                                @else
+                                                    {{!empty($transaction->bankAccount()) ? $transaction->bankAccount()->bank_name . ' ' . $transaction->bankAccount()->holder_name : '-'}}
+                                                @endif -->
+
+                                                <!-- new -->
+                                                <!-- check to see if date is before 01/09/2024 -->
+                                                @if($transaction->date < '2024-09-01')
+                                                    {{ $transaction->bankAccount()->bank_name . ' ' . $transaction->bankAccount()->holder_name }}
+                                                @else
+                                                    {{ $transaction->chartAccount()->name . ' (' . $transaction->chartAccount()->types->name . ') ' }}
+                                                @endif
+                                            </td>
+                                            <td>{{ $transaction->type }}</td>
+                                            <td>{{ number_format(currency_conversion($transaction->amount, $transaction->currency, company_setting("defult_currancy")), 2) . ' ' . company_setting("defult_currancy") }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 @endsection

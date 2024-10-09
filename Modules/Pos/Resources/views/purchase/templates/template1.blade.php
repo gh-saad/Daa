@@ -306,8 +306,8 @@
                                 <td>{{!empty($item->product_type) ? Str::ucfirst($item->product_type) : '--' }}</td>
                                 <td>{{$item->name}}</td>
                                 <td>{{$item->quantity}}</td>
-                                <td>{{currency_format_with_sym($item->price,$purchase->created_by,$purchase->workspace)}}</td>
-                                <td>{{($item->discount!=0)?currency_format_with_sym($item->discount,$purchase->created_by,$purchase->workspace):'-'}}</td>
+                                <td>{{ number_format($item->price, 2) . ' ' . company_setting('defult_currancy') }}
+                                <td>{{($item->discount!=0)? number_format($item->discount, 2) . ' ' . company_setting('defult_currancy') : '-' }}
                                 <td>
                                     @if(!empty($item->itemTax))
                                         @foreach($item->itemTax as $taxes)
@@ -317,7 +317,7 @@
                                        <p>-</p>
                                     @endif
                                 </td>
-                                <td>{{currency_format_with_sym(($item->price * $item->quantity),$purchase->created_by,$purchase->workspace)}}</td>
+                                <td>{{ number_format($item->price * $item->quantity - $item->discount + (isset($item->tax_price) ? $item->tax_price : 0), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                 @if ($item->description != null)
                                     <tr class="border-0 itm-description ">
                                         <td colspan="6">{{$item->description}} </td>
@@ -347,10 +347,10 @@
                         <td></td>
                         <td>{{__('Total')}}</td>
                         <td>{{$purchase->totalQuantity}}</td>
-                        <td>{{currency_format_with_sym($purchase->totalRate,$purchase->created_by,$purchase->workspace)}}</td>
-                        <td>{{currency_format_with_sym($purchase->totalDiscount,$purchase->created_by,$purchase->workspace)}}</td>
-                        <td>{{currency_format_with_sym($purchase->totalTaxPrice,$purchase->created_by,$purchase->workspace) }}</td>
-                        <td>{{currency_format_with_sym($purchase->getSubTotal(),$purchase->created_by,$purchase->workspace)}}</td>
+                        <td>{{ number_format($purchase->totalRate, 2) . ' ' . company_setting('defult_currancy') }}</td>
+                        <td>{{ number_format($purchase->totalDiscount, 2) . ' ' . company_setting('defult_currancy') }}</td>
+                        <td>{{ number_format($purchase->totalTaxPrice, 2) . ' ' . company_setting('defult_currancy') }}</td>
+                        <td></td>
                     </tr>
                     <tr>
                         <td colspan="5"></td>
@@ -358,33 +358,33 @@
                             <table class="total-table">
                                 <tr>
                                     <td>{{__('Subtotal')}}:</td>
-                                    <td>{{currency_format_with_sym($purchase->getSubTotal(),$purchase->created_by,$purchase->workspace)}}</td>
+                                    <td>{{ number_format($purchase->getSubTotal(), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                 </tr>
                                 @if($purchase->getTotalDiscount())
                                     <tr>
                                         <td>{{__('Discount')}}:</td>
-                                        <td>{{currency_format_with_sym($purchase->getTotalDiscount(),$purchase->created_by,$purchase->workspace)}}</td>
+                                        <td>{{ number_format($purchase->getTotalDiscount(), 2) . ' ' . company_setting('defult_currancy') }}</td>
                                     </tr>
                                 @endif
                                 @if(!empty($purchase->taxesData))
                                     @foreach($purchase->taxesData as $taxName => $taxPrice)
                                         <tr>
                                             <td>{{$taxName}} :</td>
-                                            <td>{{ currency_format_with_sym($taxPrice,$purchase->created_by,$purchase->workspace)  }}</td>
+                                            <td>{{ number_format($taxPrice, 2) . ' ' . company_setting('defult_currancy') }}</td>
                                         </tr>
                                     @endforeach
                                 @endif
                                 <tr>
                                     <td>{{__('Total')}}:</td>
-                                    <td>{{currency_format_with_sym(($purchase->getSubTotal()-$purchase->getTotalDiscount()+$purchase->getTotalTax()),$purchase->created_by,$purchase->workspace)}}</td>
+                                    <td>{{ number_format($purchase->getSubTotal()-$purchase->getTotalDiscount()+$purchase->getTotalTax(), 2) . ' ' . company_setting('defult_currancy') }}
                                 </tr>
                                 <tr>
                                     <td>{{__('Paid')}}:</td>
-                                    <td>{{currency_format_with_sym(($purchase->getTotal()-$purchase->getDue()),$purchase->created_by,$purchase->workspace)}}</td>
+                                    <td>{{ number_format($purchase->getTotal()-$purchase->getDue(), 2) . ' ' . company_setting('defult_currancy') }}
                                 </tr>
                                 <tr>
                                     <td>{{__('Due Amount')}}:</td>
-                                    <td>{{currency_format_with_sym($purchase->getDue(),$purchase->created_by,$purchase->workspace)}}</td>
+                                    <td>{{ number_format($purchase->getDue(), 2) . ' ' . company_setting('defult_currancy') }}
                                 </tr>
 
                             </table>

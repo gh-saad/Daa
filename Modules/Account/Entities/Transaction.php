@@ -27,10 +27,19 @@ class Transaction extends Model
     {
         return \Modules\Account\Database\factories\TransactionFactory::new();
     }
+
+    // this function should not be used since now the account column is used to store chart of account instead of bank account
+    // this function is left here because old entries done by the client require this funtion still
     public function bankAccount()
     {
         return $this->hasOne(BankAccount::class, 'id', 'account')->first();
     }
+
+    // new chart of account reference
+    public function chartAccount(){
+        return $this->hasOne(\Modules\Account\Entities\ChartOfAccount::class, 'id', 'account')->first();
+    }
+
     public static function addTransaction($request)
     {
         $transaction              = new Transaction();
