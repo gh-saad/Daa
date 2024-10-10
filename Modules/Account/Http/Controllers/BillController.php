@@ -1165,31 +1165,35 @@ class BillController extends Controller
             }
             $item->quantity          = $product->quantity;
             $item->tax               = $product->tax;
-            $item->discount          = $product->discount;
-            $item->price             = $product->price;
+            $item->discount          = currency_conversion($product->discount, $product->currency, company_setting('defult_currancy'));
+            $item->price             = currency_conversion($product->price, $product->currency, company_setting('defult_currancy'));
+            $item->currency    = $product->currency;
             $item->description       = $product->description;
 
             $totalQuantity += $item->quantity;
             $totalRate     += $item->price;
             $totalDiscount += $item->discount;
 
-
+            $default_tax = \Modules\ProductService\Entities\Tax::find(1);
             $taxes     = AccountUtility::tax($product->tax);
 
             $itemTaxes = [];
+            $tax_price = 0;
             if (!empty($item->tax))
             {
                 foreach ($taxes as $tax)
                 {
+                    if (empty($tax)) {
+                        $tax = $default_tax;
+                    }
                     $taxPrice      = AccountUtility::taxRate($tax->rate, $item->price, $item->quantity,$item->discount);
+                    $tax_price  += $taxPrice;
                     $totalTaxPrice += $taxPrice;
 
                     $itemTax['name']  = $tax->name;
                     $itemTax['rate']  = $tax->rate . '%';
-                    $itemTax['price'] = currency_format_with_sym($taxPrice,$bill->created_by,$bill->workspace);
-                    $itemTax['tax_price'] =$taxPrice;
+                    $itemTax['price'] = number_format($taxPrice, 2) . ' ' . company_setting('defult_currancy');
                     $itemTaxes[]      = $itemTax;
-
 
                     if (array_key_exists($tax->name, $taxesData))
                     {
@@ -1199,6 +1203,7 @@ class BillController extends Controller
                     }
                 }
                 $item->itemTax = $itemTaxes;
+                $item->tax_price = $tax_price;
             }
             else
             {

@@ -122,17 +122,6 @@ class InvoiceController extends Controller
                 $company_service_array = [];
                 if(module_is_active('Account'))
                 {
-                    if ($customerId > 0) {
-                        $temp_cm = \Modules\Account\Entities\Customer::where('customer_id',$customerId)->first();
-                        if($temp_cm)
-                        {
-                            $customerId = $temp_cm->user_id;
-                        }
-                        else
-                        {
-                            return redirect()->back()->with('error', __('Something went wrong please try again!'));
-                        }
-                    }
                     $category = \Modules\ProductService\Entities\Category::where('created_by', '=', creatorId())->where('workspace_id', getActiveWorkSpace())->where('type', 1)->get()->pluck('name', 'id');
                     
                     // Fetch customers based on active workspace

@@ -860,8 +860,8 @@ class PurchaseController extends Controller
             $item->name             = !empty($product->product()) ? $product->product()->name : '';
             $item->quantity         = $product->quantity;
             $item->tax              = $product->tax;
-            $item->discount         = $product->discount;
-            $item->price            = $product->price;
+            $item->discount         = currency_conversion($product->discount, $product->currency, company_setting('defult_currancy'));
+            $item->price            = currency_conversion($product->price, $product->currency, company_setting('defult_currancy'));
             $item->description      = $product->description;
 
             $totalQuantity += $item->quantity;
