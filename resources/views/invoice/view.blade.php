@@ -116,21 +116,21 @@
                                 <div class="timeline-icons"><span class="timeline-dots"></span>
                                     <i class="ti ti-mail text-warning"></i>
                                 </div>
-                                <h6 class="text-warning my-3">{{ __('Send Invoice') }}</h6>
+                                <h6 class="text-warning my-3">{{ __('Post Invoice') }}</h6>
                                 <p class="text-muted text-sm mb-3">
                                     @if ($invoice->status != 0)
-                                        <i class="ti ti-clock mr-2"></i>{{ __('Sent on') }}
+                                        <i class="ti ti-clock mr-2"></i>{{ __('Posted on') }}
                                         {{ company_date_formate($invoice->send_date) }}
                                     @else
-                                        <small>{{ __('Status') }} : {{ __('Not Sent') }}</small>
+                                        <small>{{ __('Status') }} : {{ __('Not Posted') }}</small>
                                     @endif
                                 </p>
 
                                 @if ($invoice->status == 0)
                                     @can('invoice send')
                                         <a href="{{ route('invoice.sent', $invoice->id) }}" class="btn btn-sm btn-warning"
-                                            data-bs-toggle="tooltip" data-original-title="{{ __('Mark Sent') }}"><i
-                                                class="ti ti-send mr-2"></i>{{ __('Send') }}</a>
+                                            data-bs-toggle="tooltip" data-original-title="{{ __('Mark Post') }}"><i
+                                                class="ti ti-send mr-2"></i>{{ __('Post') }}</a>
                                     @endcan
                                 @endif
                             </div>
@@ -202,7 +202,7 @@
                     @endif
                     <div class="all-button-box mx-2">
                         <a href="{{ route('invoice.resent', $invoice->id) }}"
-                            class="btn btn-sm btn-primary">{{ __('Resend Invoice') }}</a>
+                            class="btn btn-sm btn-primary">{{ __('Notify Again') }}</a>
                     </div>
                 @endif
                 <div class="all-button-box mx-2">

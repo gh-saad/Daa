@@ -963,7 +963,7 @@ class BillController extends Controller
             $billPayment->bill_id        = $bill_id;
             $billPayment->date           = $request->date;
             $billPayment->amount         = $request->amount;
-            $billPayment->currency       = company_setting('defult_currancy');
+            $billPayment->currency       = $request->currency;
             $billPayment->payment_method = 0;
             $billPayment->reference      = !empty($request->reference) ? $request->reference : '-';
             $billPayment->description    = !empty($request->description) ? $request->description : '-';

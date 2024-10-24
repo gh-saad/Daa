@@ -146,7 +146,7 @@
                                                 <tr>
                                                     <td>{{ company_date_formate($payment->date)}} </td>
                                                     <td>{{ 'user invoiceNumberFormat'.$payment->invoice_id}}</td>
-                                                    <td> {{ currency_format_with_sym(($payment->amount))}}</td>
+                                                    <td> {{ number_format(currency_conversion($payment->amount, $payment->currency, company_setting('defult_currancy')), 2) . ' ' .  company_setting('defult_currancy') }} </td>
                                                 </tr>
                                             @empty
                                                 <tr>
@@ -158,11 +158,11 @@
                                                 <td class="light_blue"></td>
                                                 @foreach($bill_payment as $key=>$payment)
                                                     @php
-                                                        $total += $payment->amount;
+                                                        $total += currency_conversion($payment->amount, $payment->currency, company_setting('defult_currancy'));
                                                     @endphp
                                                 @endforeach
 
-                                                <td class="light_blue"><strong>{{currency_format_with_sym($total)}}</strong></td>
+                                                <td class="light_blue"><strong>{{ number_format($total, 2) . ' ' .  company_setting('defult_currancy') }}</strong></td>
                                             </tr>
 
                                             </tbody>

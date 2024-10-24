@@ -31,7 +31,7 @@ class Invoice extends Model
     ];
     public static $statues = [
         'Draft',
-        'Sent',
+        'Posted',
         'Unpaid',
         'Partialy Paid',
         'Paid',

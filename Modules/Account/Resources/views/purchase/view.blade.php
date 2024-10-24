@@ -59,20 +59,20 @@
                                     <div class="timeline-icons"><span class="timeline-dots"></span>
                                         <i class="ti ti-mail text-warning"></i>
                                     </div>
-                                    <h6 class="text-warning my-3">{{__('purchase send')}}</h6>
+                                    <h6 class="text-warning my-3">{{__('Post Purchase')}}</h6>
                                     <p class="text-muted text-sm mb-3">
                                         @if($purchase->status!=0)
-                                            <i class="ti ti-clock mr-2"></i>{{__('Sent on')}} {{company_date_formate($purchase->send_date)}}
+                                            <i class="ti ti-clock mr-2"></i>{{__('Posted on')}} {{company_date_formate($purchase->send_date)}}
                                         @else
                                             @can('purchase send')
-                                                <small>{{__('Status')}} : {{__('Not Sent')}}</small>
+                                                <small>{{__('Status')}} : {{__('Not Posted')}}</small>
                                             @endcan
                                         @endif
                                     </p>
 
                                     @if($purchase->status==0)
                                             @can('purchase send')
-                                                <a href="{{ route('purchase.sent',$purchase->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" data-original-title="{{__('Mark Sent')}}"><i class="ti ti-send mr-2"></i>{{__('Send')}}</a>
+                                                <a href="{{ route('purchase.sent',$purchase->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" data-original-title="{{__('Mark Post')}}"><i class="ti ti-send mr-2"></i>{{__('Post')}}</a>
                                             @endcan
                                     @endif
                                 </div>
@@ -134,7 +134,7 @@
                                 @endif
                                     <div class="all-button-box mx-2">
                                         <a href="{{ route('purchase.resent',$purchase->id) }}" class="btn btn-sm btn-primary">
-                                            {{__('Resend purchase')}}
+                                            {{__('Notify Again')}}
                                         </a>
                                     </div>
                                 <div class="all-button-box">

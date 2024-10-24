@@ -101,19 +101,19 @@
                                     <div class="timeline-icons"><span class="timeline-dots"></span>
                                         <i class="ti ti-mail text-warning"></i>
                                     </div>
-                                    <h6 class="text-warning my-3">{{__('Send Bill')}}</h6>
+                                    <h6 class="text-warning my-3">{{__('Post Bill')}}</h6>
                                     <p class="text-muted text-sm mb-3">
                                         @if($bill->status!=0)
-                                            <i class="ti ti-clock mr-2"></i>{{__('Sent on')}} {{ company_date_formate($bill->send_date)}}
+                                            <i class="ti ti-clock mr-2"></i>{{__('Posted on')}} {{ company_date_formate($bill->send_date)}}
                                         @else
                                             @can('bill send')
-                                                <small>{{__('Status')}} : {{__('Not Sent')}}</small>
+                                                <small>{{__('Status')}} : {{__('Not Posted')}}</small>
                                             @endcan
                                         @endif
                                     </p>
                                     @if($bill->status==0)
                                         @can('bill send')
-                                                <a href="{{ route('bill.sent',$bill->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" data-original-title="{{__('Mark Sent')}}"><i class="ti ti-send mr-2"></i>{{__('Send')}}</a>
+                                                <a href="{{ route('bill.sent',$bill->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" data-original-title="{{__('Mark Post')}}"><i class="ti ti-send mr-2"></i>{{__('Post')}}</a>
                                         @endcan
                                     @endif
                                 </div>
@@ -170,7 +170,7 @@
                 @endif
                 <div class="all-button-box mx-2">
                     <a href="{{ route('bill.resent',$bill->id) }}" class="btn btn-sm btn-primary">
-                        {{__('Resend Bill')}}
+                        {{__('Notify Again')}}
                     </a>
                 </div>
                 <div class="all-button-box">
@@ -488,9 +488,6 @@
                                     <th class="text-dark">{{__('Account')}}</th>
                                     <th class="text-dark">{{__('Reference')}}</th>
                                     <th class="text-dark">{{__('Description')}}</th>
-                                    @can('bill payment delete')
-                                        <th class="text-dark">{{__('Action')}}</th>
-                                    @endcan
                                 </tr>
                             </thead>
                             <tbody>
@@ -513,23 +510,10 @@
                                             @endif
                                         </td>
                                         <td>{{ company_date_formate($payment->date)}}</td>
-                                        <td>{{ number_format($payment->amount, 2) . ' ' . company_setting('defult_currancy') }}</td>
+                                        <td>{{ number_format($payment->amount, 2) . ' ' . $payment->currency }}</td>
                                         <td>{{!empty($payment->bankAccount)?$payment->bankAccount->bank_name.' '.$payment->bankAccount->holder_name:''}}</td>
                                         <td>{{$payment->reference}}</td>
                                         <td style="white-space: break-spaces;">{{$payment->description}}</td>
-                                        <td class="text-dark">
-                                            @can('bill payment delete')
-                                                <div class="action-btn bg-danger ms-2">
-                                                    {{Form::open(array('route'=>array('bill.payment.destroy',$bill->id,$payment->id),'class' => 'm-0'))}}
-                                                        <a href="#" class="mx-3 btn btn-sm  align-items-center bs-pass-para show_confirm"
-                                                            data-bs-toggle="tooltip" title="" data-bs-original-title="Delete"
-                                                            aria-label="Delete" data-confirm="{{__('Are You Sure?')}}" data-text="{{__('This action can not be undone. Do you want to continue?')}}"  data-confirm-yes="delete-form-{{$payment->id}}">
-                                                            <i class="ti ti-trash text-white text-white"></i>
-                                                        </a>
-                                                    {{Form::close()}}
-                                                </div>
-                                            @endcan
-                                        </td>
                                     </tr>
                                 @empty
                                     @include('layouts.nodatafound')
