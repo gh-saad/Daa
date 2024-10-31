@@ -51,7 +51,7 @@ Route::group(['middleware' => 'PlanModuleCheck:Pos'], function ()
     Route::post('purchase/vender', 'PurchaseController@vender')->name('purchase.vender');
     Route::post('purchase/product', 'PurchaseController@product')->name('purchase.product');
     Route::get('purchase/create/{cid}', 'PurchaseController@create')->name('purchase.create');
-    Route::get('purchase/{id}/sent', 'PurchaseController@sent')->name('purchase.sent');
+    Route::get('purchase/{id}/posted', 'PurchaseController@sent')->name('purchase.sent');
     Route::get('purchase/{id}/resent', 'PurchaseController@resent')->name('purchase.resent');
     Route::get(
         'purchase/preview/{template}/{color}', [
@@ -66,6 +66,16 @@ Route::group(['middleware' => 'PlanModuleCheck:Pos'], function ()
         ]
     );
 
+    Route::get('purchase/{id}/review', 'PurchaseController@review')->name('purchase.review')->middleware(
+        [
+            'auth'
+        ]
+    );
+    Route::get('purchase/{id}/reject', 'PurchaseController@reject')->name('purchase.reject')->middleware(
+        [
+            'auth'
+        ]
+    );
     Route::get('purchase/{id}/debit-note', 'PurchaseDebitNoteController@create')->name('purchase.debit.note')->middleware(
         [
             'auth',

@@ -180,12 +180,22 @@ Route::group(['middleware' => 'PlanModuleCheck:Account'], function () {
             'auth',
         ]
     );
+    Route::get('bill/{id}/review', 'BillController@review')->name('bill.review')->middleware(
+        [
+            'auth'
+        ]
+    );
+    Route::get('bill/{id}/reject', 'BillController@reject')->name('bill.reject')->middleware(
+        [
+            'auth'
+        ]
+    );
     Route::get('bill/{id}/duplicate', 'BillController@duplicate')->name('bill.duplicate')->middleware(
         [
             'auth',
         ]
     );
-    Route::get('bill/{id}/sent', 'BillController@sent')->name('bill.sent')->middleware(
+    Route::get('bill/{id}/posted', 'BillController@sent')->name('bill.sent')->middleware(
         [
             'auth',
         ]

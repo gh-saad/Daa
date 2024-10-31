@@ -37,9 +37,10 @@ class Bill extends Model
     public static $statues = [
         'Draft',
         'Posted',
-        'Unpaid',
+        'Review',
         'Partialy Paid',
         'Paid',
+        'Void',
     ];
     public function vendor()
     {

@@ -32,9 +32,10 @@ class Invoice extends Model
     public static $statues = [
         'Draft',
         'Posted',
-        'Unpaid',
+        'Review',
         'Partialy Paid',
         'Paid',
+        'Void',
     ];
     public static function countInvoices()
     {

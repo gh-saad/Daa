@@ -306,6 +306,21 @@ Route::group(['middleware' => ['verified', 'check.contract.status']], function (
                 'auth'
             ]
         );
+        Route::get('invoice/{id}/review', 'InvoiceController@review')->name('invoice.review')->middleware(
+            [
+                'auth'
+            ]
+        );
+        Route::get('invoice/{id}/reject', 'InvoiceController@reject')->name('invoice.reject')->middleware(
+            [
+                'auth'
+            ]
+        );
+        Route::get('invoice/{id}/posted', 'InvoiceController@sent')->name('invoice.sent')->middleware(
+            [
+                'auth'
+            ]
+        );
         Route::get('invoice/{id}/sent', 'InvoiceController@sent')->name('invoice.sent')->middleware(
             [
                 'auth'

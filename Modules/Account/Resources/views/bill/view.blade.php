@@ -103,17 +103,51 @@
                                     </div>
                                     <h6 class="text-warning my-3">{{__('Post Bill')}}</h6>
                                     <p class="text-muted text-sm mb-3">
-                                        @if($bill->status!=0)
-                                            <i class="ti ti-clock mr-2"></i>{{__('Posted on')}} {{ company_date_formate($bill->send_date)}}
+                                        @if ($bill->status == 0)
+                                            <small>{{ __('Status') }} : {{ __('Not Posted') }}</small>
+                                        @elseif ($bill->status == 2)
+                                            <small>{{ __('Status') }} : {{ __('Awaiting For Approval') }}</small>
+                                        @elseif ($bill->status == 5)
+                                            <small>{{ __('Status') }} : {{ __('Rejected') }}</small>
                                         @else
-                                            @can('bill send')
-                                                <small>{{__('Status')}} : {{__('Not Posted')}}</small>
-                                            @endcan
+                                            <i class="ti ti-clock mr-2"></i>{{ __('Posted on') }}
+                                            {{ company_date_formate($bill->send_date) }}
                                         @endif
                                     </p>
                                     @if($bill->status==0)
+                                        @if (Auth::user()->type == 'company')
+                                            @can('bill send')
+                                                <a href="{{ route('bill.sent', $bill->id) }}" 
+                                                    class="btn btn-sm btn-warning" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-original-title="{{ __('Mark Post') }}">
+                                                    <i class="ti ti-send mr-2"></i>{{ __('Post') }}
+                                                </a>
+                                            @endcan
+                                        @else
+                                            @can('bill send')
+                                                <a href="{{ route('bill.review', $bill->id) }}" class="btn btn-sm btn-warning"
+                                                    data-bs-toggle="tooltip" data-original-title="{{ __('Mark Post') }}"><i
+                                                        class="ti ti-send mr-2"></i>{{ __('Post') }}</a>
+                                            @endcan
+                                        @endif
+                                    @endif
+                                    @if($bill->status == 2 && Auth::user()->type == 'company')
                                         @can('bill send')
-                                                <a href="{{ route('bill.sent',$bill->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" data-original-title="{{__('Mark Post')}}"><i class="ti ti-send mr-2"></i>{{__('Post')}}</a>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ route('bill.sent', $bill->id) }}" 
+                                                    class="btn btn-sm btn-success" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-original-title="{{ __('Approve') }}">
+                                                    <i class="fa fa-check mr-2"></i>{{ __('Approve') }}
+                                                </a>
+                                                <a href="{{ route('bill.reject', $bill->id) }}" 
+                                                    class="btn btn-sm btn-danger" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-original-title="{{ __('Reject') }}">
+                                                    <i class="fa fa-xmark mr-2"></i>{{ __('Reject') }}
+                                                </a>
+                                            </div>
                                         @endcan
                                     @endif
                                 </div>
@@ -123,7 +157,7 @@
                                     </div>
                                     <h6 class="text-info my-3">{{__('Get Paid')}}</h6>
                                     <p class="text-muted text-sm mb-3">{{__('Status')}} : {{__('Awaiting payment')}} </p>
-                                    @if($bill->status!=0)
+                                    @if($bill->status == 1 || $bill->status == 3 || $bill->status == 4)
                                         @can('bill payment create')
                                             <a href="#" data-url="{{ route('bill.payment',$bill->id) }}" data-ajax-popup="true" data-title="{{__('Add Payment')}}" class="btn btn-sm btn-info" data-original-title="{{__('Add Payment')}}"><i class="ti ti-report-money mr-2"></i>{{__('Add Payment')}}</a> <br>
                                         @endcan
@@ -159,7 +193,7 @@
         </ul>
     </div>
     @if(\Auth::user()->type=='company')
-        @if($bill->status!=0)
+        @if($bill->status == 1 || $bill->status == 3 || $bill->status == 4)
             <div class="col-md-6 d-flex align-items-center justify-content-between justify-content-md-end">
                 @if(!empty($billPayment))
                     <div class="all-button-box mx-2">

@@ -275,7 +275,7 @@ if (! function_exists('company_setting')) {
         // }
         $workspace_id = $user->active_workspace;
 
-        if(!in_array($user->type,['company','super admin'])){
+        if(!in_array($user->type,['accountant','company','super admin'])){
             $workspace_id = $user->workspace_id;
             $user = User::find($user->created_by);
         }
@@ -1313,7 +1313,7 @@ if(! function_exists('SubscriptionDetails'))
 
         if(isset($user) && !empty($user))
         {
-            if($user->type != 'company' && $user->type != 'super admin')
+            if($user->type != 'company' && $user->type != 'super admin' && $user->type != 'accountant')
             {
                 $user = User::find($user->created_by);
             }

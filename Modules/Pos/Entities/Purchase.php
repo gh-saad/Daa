@@ -26,9 +26,10 @@ class Purchase extends Model
     public static $statues = [
         'Draft',
         'Posted',
-        'Unpaid',
+        'Review',
         'Partialy Paid',
         'Paid',
+        'Void',
     ];
     protected static function newFactory()
     {
