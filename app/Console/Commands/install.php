@@ -261,7 +261,8 @@ class Install extends Command
                 ]);
             }
 
-            
+            // add seeder for accountant
+            $this->call('db:seed', ['--class' => 'AccountantSeeder']);
 
         } catch (\Exception $e) {
             $this->error("An error occurred: " . $e->getMessage());

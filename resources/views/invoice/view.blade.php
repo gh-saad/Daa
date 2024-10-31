@@ -116,21 +116,54 @@
                                 <div class="timeline-icons"><span class="timeline-dots"></span>
                                     <i class="ti ti-mail text-warning"></i>
                                 </div>
-                                <h6 class="text-warning my-3">{{ __('Send Invoice') }}</h6>
+                                <h6 class="text-warning my-3">{{ __('Post Invoice') }}</h6>
                                 <p class="text-muted text-sm mb-3">
-                                    @if ($invoice->status != 0)
-                                        <i class="ti ti-clock mr-2"></i>{{ __('Sent on') }}
-                                        {{ company_date_formate($invoice->send_date) }}
+                                    @if ($invoice->status == 0)
+                                        <small>{{ __('Status') }} : {{ __('Not Posted') }}</small>
+                                    @elseif ($invoice->status == 2)
+                                        <small>{{ __('Status') }} : {{ __('Awaiting For Approval') }}</small>
+                                    @elseif ($invoice->status == 5)
+                                        <small>{{ __('Status') }} : {{ __('Rejected') }}</small>
                                     @else
-                                        <small>{{ __('Status') }} : {{ __('Not Sent') }}</small>
+                                        <i class="ti ti-clock mr-2"></i>{{ __('Posted on') }}
+                                        {{ company_date_formate($invoice->send_date) }}
                                     @endif
                                 </p>
 
                                 @if ($invoice->status == 0)
+                                    @if (Auth::user()->type == 'company')
+                                        @can('invoice send')
+                                            <a href="{{ route('invoice.sent', $invoice->id) }}" 
+                                                class="btn btn-sm btn-warning" 
+                                                data-bs-toggle="tooltip" 
+                                                data-original-title="{{ __('Mark Post') }}">
+                                                <i class="ti ti-send mr-2"></i>{{ __('Post') }}
+                                            </a>
+                                        @endcan
+                                    @else
+                                        @can('invoice send')
+                                            <a href="{{ route('invoice.review', $invoice->id) }}" class="btn btn-sm btn-warning"
+                                                data-bs-toggle="tooltip" data-original-title="{{ __('Mark Post') }}"><i
+                                                    class="ti ti-send mr-2"></i>{{ __('Post') }}</a>
+                                        @endcan
+                                    @endif
+                                @endif
+                                @if($invoice->status == 2 && Auth::user()->type == 'company')
                                     @can('invoice send')
-                                        <a href="{{ route('invoice.sent', $invoice->id) }}" class="btn btn-sm btn-warning"
-                                            data-bs-toggle="tooltip" data-original-title="{{ __('Mark Sent') }}"><i
-                                                class="ti ti-send mr-2"></i>{{ __('Send') }}</a>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ route('invoice.sent', $invoice->id) }}" 
+                                                class="btn btn-sm btn-success" 
+                                                data-bs-toggle="tooltip" 
+                                                data-original-title="{{ __('Approve') }}">
+                                                <i class="fa fa-check mr-2"></i>{{ __('Approve') }}
+                                            </a>
+                                            <a href="{{ route('invoice.reject', $invoice->id) }}" 
+                                                class="btn btn-sm btn-danger" 
+                                                data-bs-toggle="tooltip" 
+                                                data-original-title="{{ __('Reject') }}">
+                                                <i class="fa fa-xmark mr-2"></i>{{ __('Reject') }}
+                                            </a>
+                                        </div>
                                     @endcan
                                 @endif
                             </div>
@@ -140,7 +173,7 @@
                                 </div>
                                 <h6 class="text-info my-3">{{ __('Get Paid') }}</h6>
                                 <p class="text-muted text-sm mb-3">{{ __('Status') }} : {{ __('Awaiting payment') }} </p>
-                                @if ($invoice->status != 0)
+                                @if ($invoice->status == 1 || $invoice->status == 3 || $invoice->status == 4)
                                     @can('invoice payment create')
                                         <a href="#" data-url="{{ route('invoice.payment', $invoice->id) }}"
                                             data-ajax-popup="true" data-title="{{ __('Add Payment') }}" class="btn btn-sm btn-info"
@@ -180,19 +213,21 @@
                 </ul>
             </div>
             <div class="col-md-6 d-flex align-items-center justify-content-between justify-content-md-end">
-                @can('creditnote create')
-                    @if (module_is_active('Account'))
-                        {{-- @if (!empty($invoicePayment)) --}}
-                        <div class="all-button-box mx-2">
-                            <a href="#" class="btn btn-sm btn-primary"
-                                data-url="{{ route('invoice.credit.note', $invoice->id) }}" data-ajax-popup="true"
-                                data-title="{{ __('Add Credit Note') }}">
-                                {{ __('Add Credit Note') }}
-                            </a>
-                        </div>
-                    @endif
-                    {{-- @endif --}}
-                @endcan
+                @if ($invoice->status == 1 || $invoice->status == 3 || $invoice->status == 4)
+                    @can('creditnote create')
+                        @if (module_is_active('Account'))
+                            {{-- @if (!empty($invoicePayment)) --}}
+                            <div class="all-button-box mx-2">
+                                <a href="#" class="btn btn-sm btn-primary"
+                                    data-url="{{ route('invoice.credit.note', $invoice->id) }}" data-ajax-popup="true"
+                                    data-title="{{ __('Add Credit Note') }}">
+                                    {{ __('Add Credit Note') }}
+                                </a>
+                            </div>
+                        @endif
+                        {{-- @endif --}}
+                    @endcan
+                @endif
                 @if (\Auth::user()->type == 'company')
                     @if ($invoice->status != 4)
                         <div class="all-button-box mx-2">
@@ -202,7 +237,7 @@
                     @endif
                     <div class="all-button-box mx-2">
                         <a href="{{ route('invoice.resent', $invoice->id) }}"
-                            class="btn btn-sm btn-primary">{{ __('Resend Invoice') }}</a>
+                            class="btn btn-sm btn-primary">{{ __('Notify Again') }}</a>
                     </div>
                 @endif
                 <div class="all-button-box mx-2">

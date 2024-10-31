@@ -919,6 +919,22 @@ class BillController extends Controller
         }
     }
 
+    public function review($id){
+        $bill = Bill::find($id);
+        $bill->status = 2;
+        $bill->save();
+        
+        return redirect()->back()->with('success', __('Your bill request has been processed and is now pending for review, please check back later.'));
+    }
+
+    public function reject($id){
+        $bill = Bill::find($id);
+        $bill->status = 0;
+        $bill->save();
+        
+        return redirect()->back()->with('success', __('Bill request has been rejected successfully!'));
+    }
+
     public function createPayment(Request $request, $bill_id)
     {
         if (Auth::user()->can('bill payment create'))
@@ -963,7 +979,7 @@ class BillController extends Controller
             $billPayment->bill_id        = $bill_id;
             $billPayment->date           = $request->date;
             $billPayment->amount         = $request->amount;
-            $billPayment->currency       = company_setting('defult_currancy');
+            $billPayment->currency       = $request->currency;
             $billPayment->payment_method = 0;
             $billPayment->reference      = !empty($request->reference) ? $request->reference : '-';
             $billPayment->description    = !empty($request->description) ? $request->description : '-';

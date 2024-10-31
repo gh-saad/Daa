@@ -478,8 +478,8 @@ class User extends Authenticatable implements JWTSubject,MustVerifyEmail
             }
             $company_setting = [
                 "currency_format" => !empty(admin_setting('currency_format')) ? admin_setting('currency_format') : "1",
-                "defult_currancy" => !empty(admin_setting('defult_currancy')) ? admin_setting('defult_currancy') : "USD",
-                "defult_currancy_symbol" => !empty(admin_setting('defult_currancy_symbol')) ? admin_setting('defult_currancy_symbol') : "$",
+                "defult_currancy" => !empty(admin_setting('defult_currancy')) ? admin_setting('defult_currancy') : "KES",
+                "defult_currancy_symbol" => !empty(admin_setting('defult_currancy_symbol')) ? admin_setting('defult_currancy_symbol') : "KES",
                 "defult_language" => !empty(admin_setting('defult_language')) ? admin_setting('defult_language') : 'en',
                 "defult_timezone" => !empty(admin_setting('defult_timezone')) ? admin_setting('defult_timezone') : 'Asia/Kolkata',
                 "site_currency_symbol_position" => "pre",

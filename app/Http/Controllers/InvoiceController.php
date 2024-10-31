@@ -714,6 +714,22 @@ class InvoiceController extends Controller
         }
     }
 
+    public function review($id){
+        $invoice = Invoice::find($id);
+        $invoice->status = 2;
+        $invoice->save();
+        
+        return redirect()->back()->with('success', __('Your invoice request has been processed and is now pending for review, please check back later.'));
+    }
+
+    public function reject($id){
+        $invoice = Invoice::find($id);
+        $invoice->status = 0;
+        $invoice->save();
+        
+        return redirect()->back()->with('success', __('Invoice request has been rejected successfully!'));
+    }
+
     public function sent($id)
     {
         if(Auth::user()->can('invoice send'))

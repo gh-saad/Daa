@@ -69,20 +69,54 @@
                                     <div class="timeline-icons"><span class="timeline-dots"></span>
                                         <i class="ti ti-mail text-warning"></i>
                                     </div>
-                                    <h6 class="text-warning my-3">{{__('purchase send')}}</h6>
+                                    <h6 class="text-warning my-3">{{__('Post Purchase')}}</h6>
                                     <p class="text-muted text-sm mb-3">
-                                        @if($purchase->status!=0)
-                                            <i class="ti ti-clock mr-2"></i>{{__('Sent on')}} {{company_date_formate($purchase->send_date)}}
+                                        @if ($purchase->status == 0)
+                                            <small>{{ __('Status') }} : {{ __('Not Posted') }}</small>
+                                        @elseif ($purchase->status == 2)
+                                            <small>{{ __('Status') }} : {{ __('Awaiting For Approval') }}</small>
+                                        @elseif ($purchase->status == 5)
+                                            <small>{{ __('Status') }} : {{ __('Rejected') }}</small>
                                         @else
-                                            @can('purchase send')
-                                                <small>{{__('Status')}} : {{__('Not Sent')}}</small>
-                                            @endcan
+                                            <i class="ti ti-clock mr-2"></i>{{ __('Posted on') }}
+                                            {{ company_date_formate($purchase->send_date) }}
                                         @endif
                                     </p>
 
                                     @if($purchase->status==0)
+                                        @if (Auth::user()->type == 'company')
+                                            @can('purchase send')
+                                                <a href="{{ route('purchase.sent', $purchase->id) }}" 
+                                                    class="btn btn-sm btn-warning" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-original-title="{{ __('Mark Post') }}">
+                                                    <i class="ti ti-send mr-2"></i>{{ __('Post') }}
+                                                </a>
+                                            @endcan
+                                        @else
+                                            @can('purchase send')
+                                                <a href="{{ route('purchase.review', $purchase->id) }}" class="btn btn-sm btn-warning"
+                                                    data-bs-toggle="tooltip" data-original-title="{{ __('Mark Post') }}"><i
+                                                        class="ti ti-send mr-2"></i>{{ __('Post') }}</a>
+                                            @endcan
+                                        @endif
+                                    @endif
+                                    @if($purchase->status == 2 && Auth::user()->type == 'company')
                                         @can('purchase send')
-                                            <a href="{{ route('purchase.sent',$purchase->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" data-original-title="{{__('Mark Sent')}}"><i class="ti ti-send mr-2"></i>{{__('Send')}}</a>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ route('purchase.sent', $purchase->id) }}" 
+                                                    class="btn btn-sm btn-success" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-original-title="{{ __('Approve') }}">
+                                                    <i class="fa fa-check mr-2"></i>{{ __('Approve') }}
+                                                </a>
+                                                <a href="{{ route('purchase.reject', $purchase->id) }}" 
+                                                    class="btn btn-sm btn-danger" 
+                                                    data-bs-toggle="tooltip" 
+                                                    data-original-title="{{ __('Reject') }}">
+                                                    <i class="fa fa-xmark mr-2"></i>{{ __('Reject') }}
+                                                </a>
+                                            </div>
                                         @endcan
                                     @endif
                                 </div>
@@ -92,7 +126,7 @@
                                     </div>
                                     <h6 class="text-info my-3">{{__('Get Paid')}}</h6>
                                     <p class="text-muted text-sm mb-3">{{__('Status')}} : {{__('Awaiting payment')}} </p>
-                                    @if($purchase->status!= 0)
+                                    @if ($purchase->status == 1 || $purchase->status == 3 || $purchase->status == 4)
                                         @can('purchase payment create')
                                             <a href="#" data-url="{{ route('purchase.payment',$purchase->id) }}" data-ajax-popup="true" data-title="{{__('Add Payment')}}" class="btn btn-sm btn-info" data-original-title="{{__('Add Payment')}}"><i class="ti ti-report-money mr-2"></i>{{__('Add Payment')}}</a> <br>
                                         @endcan
@@ -132,7 +166,7 @@
                     </ul>
                 </div>
                 <div class="col-md-6">
-                    @if($purchase->status!=0)
+                    @if($purchase->status == 1 || $purchase->status == 3 || $purchase->status == 4)
                         <div class="row justify-content-between align-items-center">    {{-- mb-3--}}
                             <div class="col-md-12 d-flex align-items-center justify-content-between justify-content-md-end">
                                 @if(!empty($purchasePayment))
@@ -144,7 +178,7 @@
                                 @endif
                                     <div class="all-button-box mx-2">
                                         <a href="{{ route('purchase.resent',$purchase->id) }}" class="btn btn-sm btn-primary">
-                                            {{__('Resend purchase')}}
+                                            {{__('Notify Again')}}
                                         </a>
                                     </div>
                                 <div class="all-button-box">

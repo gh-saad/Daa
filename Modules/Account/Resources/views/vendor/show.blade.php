@@ -63,7 +63,7 @@
 
         });
     </script>
-    <script src="{{ asset('Modules/Account/Resources/assets/js/html2pdf.bundle.min.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
     <script>
         var filename = $('#filename').val();
         function saveAsPDF() {
@@ -633,6 +633,7 @@
                                                                     <thead>
                                                                     <tr>
                                                                         <th scope="col">{{__('Date')}}</th>
+                                                                        <th scope="col">{{__('Paid From')}}</th>
                                                                         <th scope="col">{{__('Type')}}</th>
                                                                         <th scope="col">{{__('Amount')}}</th>
                                                                     </tr>
@@ -644,6 +645,7 @@
                                                                         @forelse($vendor->vendorPayment($vendor->id) as $payment)
                                                                             <tr>
                                                                                 <td>{{ company_date_formate($payment->date)}} </td>
+                                                                                <td>{{ $payment->bankAccount->holder_name . ' - ' . $payment->bankAccount->bank_name }} </td>
                                                                                 @if($payment->purchase_id)
                                                                                     <td>Purchase Payment</td>
                                                                                 @elseif($payment->bill_id)
@@ -651,7 +653,7 @@
                                                                                 @else
                                                                                     <td>Payment</td>
                                                                                 @endif
-                                                                                <td>{{ number_format($payment->amount, 2) . ' ' .  company_setting('defult_currancy') }}</td>
+                                                                                <td>{{ number_format($payment->amount, 2) . ' ' . $payment->currency }}</td>
                                                                         @empty
                                                                             <tr>
                                                                                 <td colspan="6" class="text-center text-dark"><p>{{__('No Data Found')}}</p></td>
@@ -662,9 +664,10 @@
                                                                         <tr class="total">
                                                                             <td class="light_blue"><span></span><strong>{{__('TOTAL :')}}</strong></td>
                                                                             <td class="light_blue"></td>
+                                                                            <td class="light_blue"></td>
                                                                             @foreach($vendor->vendorPayment($vendor->id) as $payment)
                                                                                 @php
-                                                                                    $total += $payment->amount;
+                                                                                    $total += currency_conversion($payment->amount, $payment->currency, company_setting('defult_currancy'));
                                                                                 @endphp
                                                                             @endforeach
 

@@ -983,6 +983,22 @@ class PurchaseController extends Controller
         }
     }
     
+    public function review($id){
+        $purchase = Purchase::find($id);
+        $purchase->status = 2;
+        $purchase->save();
+        
+        return redirect()->back()->with('success', __('Your purchase request has been processed and is now pending for review, please check back later.'));
+    }
+
+    public function reject($id){
+        $purchase = Purchase::find($id);
+        $purchase->status = 0;
+        $purchase->save();
+        
+        return redirect()->back()->with('success', __('Purchase request has been rejected successfully!'));
+    }
+
     public function createPayment(Request $request, $purchase_id)
     {
         if(\Auth::user()->can('purchase payment create'))
